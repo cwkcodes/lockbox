@@ -11,7 +11,7 @@ A data-driven workflow for predicting football match outcomes, likely scorers an
 | [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) | Phase 1 audit of free/freemium data sources: what each provides, cost, legality/practicality of automated access, and what role it plays in the model |
 | [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md) | The full 9-phase build plan: collection, schema, cleaning, feature engineering, model design (Elo / Poisson / Dixon–Coles / gradient boosting / ensemble + scorer model), back-testing gates, prediction workflow and coupon rules |
 | [`schema/schema.sql`](schema/schema.sql) | Database DDL (SQLite dialect): matches, teams, players, per-match stats, odds, weather, injuries, news, predictions, betting_results |
-| [`src/fpm/`](src/fpm/) | v0.1 pipeline: ingest (football-data.co.uk CSVs), SQLite loader, Elo + Dixon–Coles + market baselines, chronological backtest with calibration and flat-stake value simulation |
+| [`src/fpm/`](src/fpm/) | v0.1 pipeline: ingest (football-data.co.uk CSVs), SQLite loader, Elo + Dixon–Coles + market baselines and their stacked ensemble, chronological backtest with calibration, flat-stake value simulation, closing-line value (CLV) and an explicit promotion-gate verdict |
 
 ## Running v0.1
 
