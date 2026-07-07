@@ -80,9 +80,34 @@ def run() -> None:
         assert teams_n == 20 and odds_n > 0
 
         report = backtest.run(db, warmup_seasons=3)
-        print(f"\nSelf-test PASSED: {n} matches, {teams_n} teams, {odds_n} odds rows")
-        print(f"Report: {report}")
-        print("\n" + open(report).read())
+
+        # Phase 8/9: fake upcoming fixtures with odds -> prediction cards -> coupon.
+        from . import coupon, predict
+        upcoming = pd.DataFrame([
+            {"Date": "01/08/2020", "HomeTeam": "Team A", "AwayTeam": "Team B",
+             "B365H": 1.80, "B365D": 3.60, "B365A": 4.50},
+            {"Date": "01/08/2020", "HomeTeam": "Team C", "AwayTeam": "Team D",
+             "B365H": 2.50, "B365D": 3.30, "B365A": 2.80},
+            {"Date": "02/08/2020", "HomeTeam": "Team E", "AwayTeam": "Team F",
+             "B365H": 1.50, "B365D": 4.20, "B365A": 6.50},
+        ])
+        fx_csv = tmp / "fixtures.csv"
+        upcoming.to_csv(fx_csv, index=False)
+        n_fx = predict.load_fixtures_csv(fx_csv, db)
+        assert n_fx == 3, f"expected 3 fixtures, loaded {n_fx}"
+        cards = predict.run(db)
+        assert cards, "predict.run produced no cards"
+        coupon_path = coupon.build(db)
+        assert coupon_path, "coupon.build produced no output"
+        conn = sqlite3.connect(db)
+        preds_n = conn.execute("SELECT COUNT(*) FROM predictions").fetchone()[0]
+        conn.close()
+        assert preds_n == 3 * 8, f"expected 24 prediction rows, got {preds_n}"
+
+        print(f"\nSelf-test PASSED: {n} matches, {teams_n} teams, {odds_n} odds rows, "
+              f"{preds_n} prediction rows")
+        for p in (report, cards, coupon_path):
+            print(f"\n=== {p} ===\n" + open(p).read())
     finally:
         config.RAW_DIR, config.DB_PATH = real_raw, real_db
 

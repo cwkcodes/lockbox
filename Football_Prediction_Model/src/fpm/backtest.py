@@ -126,6 +126,21 @@ def calibration_table(probs: np.ndarray, results: pd.Series, mask: np.ndarray, b
                                   actual_rate=("actual", "mean")).reset_index()
 
 
+DOUBLE_CHANCE = {"1X": (0, 1), "X2": (1, 2), "12": (0, 2)}
+
+
+def double_chance_metrics(probs: np.ndarray, results: pd.Series, mask: np.ndarray) -> dict[str, float]:
+    """Binary Brier score per double-chance selection, probabilities derived from 1X2."""
+    m = mask & ~np.isnan(probs).any(axis=1)
+    y = results[m].map({o: k for k, o in enumerate(OUTCOMES)}).to_numpy()
+    out = {}
+    for name, (i, j) in DOUBLE_CHANCE.items():
+        p = probs[m][:, i] + probs[m][:, j]
+        hit = ((y == i) | (y == j)).astype(float)
+        out[name] = float(((p - hit) ** 2).mean())
+    return out
+
+
 def value_simulation(df: pd.DataFrame, model_p: np.ndarray, market_p: np.ndarray,
                      mask: np.ndarray) -> dict:
     """Flat 1-unit paper stake on any outcome where model - market >= EDGE_THRESHOLD,
@@ -175,6 +190,12 @@ def run(db_path=config.DB_PATH, warmup_seasons: int = 3) -> str:
     for name, p in (("market (margin-removed)", mkt), ("Dixon-Coles", dc), ("Elo + logistic", el)):
         s = metrics(p, df["result"], common)
         lines.append(f"| {name} | {s['n']} | {s['log_loss']:.4f} | {s['brier']:.4f} | {s['accuracy']:.3f} |")
+
+    lines += ["", "## Double chance (derived from 1X2) — binary Brier score", "",
+              "| model | 1X | X2 | 12 |", "|---|---|---|---|"]
+    for name, p in (("market (margin-removed)", mkt), ("Dixon-Coles", dc)):
+        s = double_chance_metrics(p, df["result"], common)
+        lines.append(f"| {name} | {s['1X']:.4f} | {s['X2']:.4f} | {s['12']:.4f} |")
 
     lines += ["", "## Dixon-Coles calibration (P(home win) deciles)", "",
               "| bin | n | mean predicted | actual rate |", "|---|---|---|---|"]

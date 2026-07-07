@@ -24,7 +24,13 @@ python -m fpm selftest    # end-to-end check on synthetic data (no network neede
 python -m fpm ingest      # download EPL season CSVs from football-data.co.uk
 python -m fpm load        # normalise into data/football.sqlite
 python -m fpm backtest    # chronological backtest -> reports/backtest_report.md
+
+python -m fpm fixtures upcoming.csv   # add scheduled fixtures + current 1X2 odds (CSV: Date,HomeTeam,AwayTeam,B365H,B365D,B365A)
+python -m fpm predict     # prediction cards (1X2, double chance, O/U 2.5, BTTS) -> reports/predictions.md
+python -m fpm coupon      # conservative coupon screen -> reports/coupon.md
 ```
+
+`predict` and `coupon` are gated: recommendations stay **watch only / paper only** until you pass `--gate-passed`, which should only happen after a real-data backtest report shows calibration and positive value performance on unseen seasons.
 
 `ingest` needs open internet access to `www.football-data.co.uk` — sandboxed environments with restricted network policies can run only `selftest`. The self-test validates the code path, not betting edge: its "value" numbers come from synthetic data and mean nothing about real markets.
 
