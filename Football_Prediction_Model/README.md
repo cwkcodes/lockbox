@@ -11,6 +11,22 @@ A data-driven workflow for predicting football match outcomes, likely scorers an
 | [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) | Phase 1 audit of free/freemium data sources: what each provides, cost, legality/practicality of automated access, and what role it plays in the model |
 | [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md) | The full 9-phase build plan: collection, schema, cleaning, feature engineering, model design (Elo / Poisson / Dixon–Coles / gradient boosting / ensemble + scorer model), back-testing gates, prediction workflow and coupon rules |
 | [`schema/schema.sql`](schema/schema.sql) | Database DDL (SQLite dialect): matches, teams, players, per-match stats, odds, weather, injuries, news, predictions, betting_results |
+| [`src/fpm/`](src/fpm/) | v0.1 pipeline: ingest (football-data.co.uk CSVs), SQLite loader, Elo + Dixon–Coles + market baselines, chronological backtest with calibration and flat-stake value simulation |
+
+## Running v0.1
+
+Scope (chosen 2026-07-07): **English Premier League, seasons 2014-15 → present, 1X2 + double chance markets.**
+
+```bash
+pip install -r requirements.txt
+cd src
+python -m fpm selftest    # end-to-end check on synthetic data (no network needed)
+python -m fpm ingest      # download EPL season CSVs from football-data.co.uk
+python -m fpm load        # normalise into data/football.sqlite
+python -m fpm backtest    # chronological backtest -> reports/backtest_report.md
+```
+
+`ingest` needs open internet access to `www.football-data.co.uk` — sandboxed environments with restricted network policies can run only `selftest`. The self-test validates the code path, not betting edge: its "value" numbers come from synthetic data and mean nothing about real markets.
 
 ## Roadmap
 
