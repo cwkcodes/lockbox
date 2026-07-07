@@ -7,10 +7,11 @@ teams with no prior rows) stays NaN — the GBM handles NaN natively, nothing is
 imputed.
 
 Feature set per match: home-minus-away differences of rolling means (points,
-goals for/against, shots, shots on target, corners, all for and against) over
-the last 5 and 10 matches, venue-specific (home-at-home vs away-at-away)
-points and goal difference over the last 5, rest days each side, and the
-pre-match Elo difference.
+goals for/against, shots, shots on target, corners, xG for/against and
+finishing luck = goals minus xG, all where available) over the last 5 and 10
+matches, venue-specific (home-at-home vs away-at-away) points and goal
+difference over the last 5, rest days each side, and the pre-match Elo
+difference.
 """
 from __future__ import annotations
 
@@ -21,7 +22,7 @@ from . import elo
 
 WINDOWS = (5, 10)
 VENUE_WINDOW = 5
-FORM_COLS = ("points", "gf", "ga", "sf", "sa", "stf", "sta", "cf", "ca")
+FORM_COLS = ("points", "gf", "ga", "sf", "sa", "stf", "sta", "cf", "ca", "xf", "xa", "luck")
 
 
 def team_log(df: pd.DataFrame) -> pd.DataFrame:
@@ -37,9 +38,11 @@ def team_log(df: pd.DataFrame) -> pd.DataFrame:
             "sf": df[f"{us}_shots"], "sa": df[f"{them}_shots"],
             "stf": df[f"{us}_sot"], "sta": df[f"{them}_sot"],
             "cf": df[f"{us}_corners"], "ca": df[f"{them}_corners"],
+            "xf": df[f"{us}_xg"], "xa": df[f"{them}_xg"],
         }))
     log = pd.concat(sides, ignore_index=True).sort_values(["date", "match_id"], kind="stable")
     log["points"] = np.where(log["gf"] > log["ga"], 3.0, np.where(log["gf"] == log["ga"], 1.0, 0.0))
+    log["luck"] = log["gf"] - log["xf"]  # positive = scoring above chance quality
     return log.reset_index(drop=True)
 
 

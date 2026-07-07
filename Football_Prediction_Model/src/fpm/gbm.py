@@ -20,7 +20,10 @@ MIN_TRAIN_ROWS = 500
 def gbm_probs(df: pd.DataFrame, test_mask: np.ndarray) -> np.ndarray:
     from sklearn.ensemble import HistGradientBoostingClassifier
 
-    x = features.build(df).to_numpy(dtype=float)
+    feats = features.build(df)
+    # All-NaN or constant columns (e.g. xG when no Understat data is loaded)
+    # crash HistGradientBoosting's binning; they carry nothing anyway.
+    x = feats.loc[:, feats.nunique(dropna=True) > 1].to_numpy(dtype=float)
     y = df["result"].map({o: k for k, o in enumerate(OUTCOMES)}).to_numpy()
     season = df["season"].to_numpy()
     out = np.full((len(df), 3), np.nan)

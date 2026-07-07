@@ -11,7 +11,7 @@ A data-driven workflow for predicting football match outcomes, likely scorers an
 | [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) | Phase 1 audit of free/freemium data sources: what each provides, cost, legality/practicality of automated access, and what role it plays in the model |
 | [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md) | The full 9-phase build plan: collection, schema, cleaning, feature engineering, model design (Elo / Poisson / Dixon–Coles / gradient boosting / ensemble + scorer model), back-testing gates, prediction workflow and coupon rules |
 | [`schema/schema.sql`](schema/schema.sql) | Database DDL (SQLite dialect): matches, teams, players, per-match stats, odds, weather, injuries, news, predictions, betting_results |
-| [`src/fpm/`](src/fpm/) | v0.1 pipeline: ingest (football-data.co.uk CSVs), SQLite loader, Elo + Dixon–Coles + market baselines and their stacked ensemble, chronological backtest with calibration, flat-stake value simulation, closing-line value (CLV) and an explicit promotion-gate verdict |
+| [`src/fpm/`](src/fpm/) | Pipeline: ingest (football-data.co.uk CSVs + Understat team xG), SQLite loader, Elo + Dixon–Coles + market baselines, rolling-form/xG GBM and their stacked ensemble, chronological backtest with calibration, flat-stake value simulation, closing-line value (CLV) and an explicit promotion-gate verdict |
 
 ## Running v0.1
 
@@ -32,7 +32,7 @@ python -m fpm coupon      # conservative coupon screen -> reports/coupon.md
 
 `predict` and `coupon` are gated: recommendations stay **watch only / paper only** until you pass `--gate-passed`, which should only happen after a real-data backtest report shows calibration and positive value performance on unseen seasons.
 
-`ingest` needs open internet access to `www.football-data.co.uk` — sandboxed environments with restricted network policies can run only `selftest`. The self-test validates the code path, not betting edge: its "value" numbers come from synthetic data and mean nothing about real markets.
+`ingest` needs open internet access to `www.football-data.co.uk` and `understat.com` (one request per season each, cached in `data/raw/`, never committed — see the legality notes in `docs/DATA_SOURCES.md`) — sandboxed environments with restricted network policies can run only `selftest`. The pipeline degrades gracefully without Understat: xG features stay NaN and the GBM trains on the rest. The self-test validates the code path, not betting edge: its "value" numbers come from synthetic data and mean nothing about real markets.
 
 ## Roadmap
 

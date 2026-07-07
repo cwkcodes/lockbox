@@ -44,6 +44,7 @@ def load_matches(db_path=config.DB_PATH) -> pd.DataFrame:
                m.ft_home, m.ft_away, m.result,
                hs.shots AS home_shots, hs.shots_on_target AS home_sot, hs.corners AS home_corners,
                aws.shots AS away_shots, aws.shots_on_target AS away_sot, aws.corners AS away_corners,
+               hs.xg AS home_xg, aws.xg AS away_xg,
                oc.h AS close_h, oc.d AS close_d, oc.a AS close_a,
                op.h AS pre_h,   op.d AS pre_d,   op.a AS pre_a
         FROM matches m

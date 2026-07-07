@@ -10,11 +10,13 @@ def main():
     cmd = sys.argv[1] if len(sys.argv) > 1 else "help"
     gate = "--gate-passed" in sys.argv
     if cmd == "ingest":
-        from . import ingest
+        from . import ingest, understat
         print(f"Seasons on disk: {', '.join(ingest.download_all())}")
+        print(f"Understat xG seasons on disk: {', '.join(map(str, understat.download_all()))}")
     elif cmd == "load":
-        from . import load
+        from . import load, understat
         print(f"Total matches loaded: {load.load_all()}")
+        print(f"Matches with Understat xG: {understat.load_xg()}")
     elif cmd == "backtest":
         from . import backtest
         print(f"Report written to {backtest.run()}")

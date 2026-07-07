@@ -45,7 +45,9 @@ def parse_dates(series: pd.Series) -> pd.Series:
 def init_db(db_path=config.DB_PATH) -> sqlite3.Connection:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path)
-    conn.executescript(SCHEMA_PATH.read_text())
+    if not conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='matches'").fetchone():
+        conn.executescript(SCHEMA_PATH.read_text())
     conn.execute(
         "INSERT OR IGNORE INTO competitions (competition_id, name, country, tier, is_cup) "
         "VALUES (?, ?, ?, 1, 0)",
