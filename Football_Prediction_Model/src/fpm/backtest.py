@@ -11,7 +11,9 @@ Protocol (no random splits, no leakage):
   before that season only.
 - The market baseline uses closing odds where present, else pre-match odds,
   margin-removed proportionally.
-- The ensemble stacks {market, Dixon-Coles, Elo} log-probabilities with a
+- The GBM trains on leak-free rolling-form features (features.py), refitted
+  before each test season on strictly earlier matches.
+- The ensemble stacks {market, Dixon-Coles, Elo, GBM} log-probabilities with a
   multinomial logistic fitted, per test season, on earlier test seasons only.
 
 Outputs per model: log loss, Brier score, accuracy, calibration table; plus a
@@ -26,7 +28,7 @@ import sqlite3
 import numpy as np
 import pandas as pd
 
-from . import config, dixon_coles, elo, ensemble
+from . import config, dixon_coles, elo, ensemble, gbm
 from .market import implied_probs
 
 OUTCOMES = ("H", "D", "A")
@@ -40,9 +42,13 @@ def load_matches(db_path=config.DB_PATH) -> pd.DataFrame:
         """
         SELECT m.match_id, m.season, m.date_utc AS date, m.home_team_id, m.away_team_id,
                m.ft_home, m.ft_away, m.result,
+               hs.shots AS home_shots, hs.shots_on_target AS home_sot, hs.corners AS home_corners,
+               aws.shots AS away_shots, aws.shots_on_target AS away_sot, aws.corners AS away_corners,
                oc.h AS close_h, oc.d AS close_d, oc.a AS close_a,
                op.h AS pre_h,   op.d AS pre_d,   op.a AS pre_a
         FROM matches m
+        LEFT JOIN team_match_stats hs  ON hs.match_id = m.match_id AND hs.is_home = 1
+        LEFT JOIN team_match_stats aws ON aws.match_id = m.match_id AND aws.is_home = 0
         LEFT JOIN (
             SELECT match_id,
                    MAX(CASE selection WHEN 'H' THEN decimal_odds END) h,
@@ -230,13 +236,15 @@ def run(db_path=config.DB_PATH, warmup_seasons: int = 3) -> str:
     mkt = market_probs(df)
     dc = dc_probs(df, test_mask)
     el = elo_probs(df, test_mask)
+    gb = gbm.gbm_probs(df, test_mask)
     # Two stacks: `ens` sees the closing-preferred market feature and is only
     # compared against the closing line (log loss / calibration); `ens_pre`
     # sees pre-match odds only, so it can honestly flag bets before the close.
-    ens = ensemble.stack_probs(df, [mkt, dc, el], test_mask)
-    ens_pre = ensemble.stack_probs(df, [market_probs(df, prefer_closing=False), dc, el], test_mask)
+    ens = ensemble.stack_probs(df, [mkt, dc, el, gb], test_mask)
+    ens_pre = ensemble.stack_probs(df, [market_probs(df, prefer_closing=False), dc, el, gb], test_mask)
 
-    common = test_mask & ~np.isnan(mkt).any(axis=1) & ~np.isnan(dc).any(axis=1) & ~np.isnan(el).any(axis=1)
+    common = (test_mask & ~np.isnan(mkt).any(axis=1) & ~np.isnan(dc).any(axis=1)
+              & ~np.isnan(el).any(axis=1) & ~np.isnan(gb).any(axis=1))
     ens_mask = common & ~np.isnan(ens).any(axis=1)
     ens_pre_mask = common & ~np.isnan(ens_pre).any(axis=1)
     lines = [
@@ -247,7 +255,8 @@ def run(db_path=config.DB_PATH, warmup_seasons: int = 3) -> str:
         "| model | n | log loss | Brier | accuracy |",
         "|---|---|---|---|---|",
     ]
-    for name, p in (("market (margin-removed)", mkt), ("Dixon-Coles", dc), ("Elo + logistic", el)):
+    for name, p in (("market (margin-removed)", mkt), ("Dixon-Coles", dc),
+                    ("Elo + logistic", el), ("GBM (rolling-form features)", gb)):
         s = metrics(p, df["result"], common)
         lines.append(f"| {name} | {s['n']} | {s['log_loss']:.4f} | {s['brier']:.4f} | {s['accuracy']:.3f} |")
 
@@ -257,13 +266,13 @@ def run(db_path=config.DB_PATH, warmup_seasons: int = 3) -> str:
         s = double_chance_metrics(p, df["result"], common)
         lines.append(f"| {name} | {s['1X']:.4f} | {s['X2']:.4f} | {s['12']:.4f} |")
 
-    lines += ["", "## Ensemble (Phase 6.3: logistic stacking of market + Dixon-Coles + Elo)", "",
+    lines += ["", "## Ensemble (Phase 6.3: logistic stacking of market + Dixon-Coles + Elo + GBM)", "",
               f"Stacker fitted per season on earlier test seasons only; "
               f"scored matches: {int(ens_mask.sum())} (earliest test season unscored — no training data).", ""]
     if ens_mask.any():
         lines += ["| model | n | log loss | Brier | accuracy |", "|---|---|---|---|---|"]
         for name, p in (("market (margin-removed)", mkt), ("Dixon-Coles", dc),
-                        ("Elo + logistic", el), ("ensemble", ens)):
+                        ("Elo + logistic", el), ("GBM (rolling-form features)", gb), ("ensemble", ens)):
             s = metrics(p, df["result"], ens_mask)
             lines.append(f"| {name} | {s['n']} | {s['log_loss']:.4f} | {s['brier']:.4f} | {s['accuracy']:.3f} |")
 
@@ -314,7 +323,7 @@ def run(db_path=config.DB_PATH, warmup_seasons: int = 3) -> str:
         clv_txt = (f"mean CLV {sim_pre['clv_mean']:+.4f} over {sim_pre.get('clv_n', 0)} bets"
                    if "clv_mean" in sim_pre else "no flagged pre-match bets with closing odds")
         lines += [
-            "Candidate model: ensemble (market + Dixon-Coles + Elo stack).",
+            "Candidate model: ensemble (market + Dixon-Coles + Elo + GBM stack).",
             "",
             f"- (a) calibrated: weighted decile calibration error {ece:.4f} "
             f"(threshold 0.025) — {'PASS' if pass_a else 'FAIL'}",
