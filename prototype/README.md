@@ -27,9 +27,9 @@ python3 build.py <data_dir> [out_path]
 
 | Spec feature | Prototype implementation |
 |---|---|
-| Layer system (01-product §2.3) | 42 choropleth layers, quintile classification (log-transformed where flagged), 5-step sequential ramps, multiply-blend overlay |
-| Point/event layers (03-architecture §5) | USGS earthquakes M6+ (per-year, magnitude-sized), Smithsonian Holocene volcanoes (static), UNESCO World Heritage sites via Wikidata (cumulative by inscription year) |
-| Multi-source provenance (02-data) | Per-dataset source and licence (World Bank, OWID/V-Dem, OWID/WHR, USGS, Smithsonian GVP, Wikidata) surfaced in legend, detail panel, and about dialogs |
+| Layer system (01-product §2.3) | 58 choropleth layers, quintile classification (log-transformed where flagged), 5-step sequential ramps, multiply-blend overlay |
+| Point/event layers (03-architecture §5) | USGS earthquakes M6+ (per-year, magnitude-sized), Smithsonian Holocene volcanoes, UNESCO World Heritage sites via Wikidata (cumulative by inscription year), major airports (OurAirports), power plants ≥ 1 GW coloured by fuel and sized by capacity (WRI), cities over 1M sized by population (Natural Earth) |
+| Multi-source provenance (02-data) | Per-dataset source and licence (World Bank, OWID-processed FAO/WHO/IEA/UNDP/PWT/V-Dem/WHR, USGS, Smithsonian GVP, Wikidata, OurAirports, WRI, Natural Earth) surfaced in legend, detail panel, and about dialogs |
 | Timeline (§2.4) | 2000–2023 scrubber with playback; choropleth reclassifies per year |
 | URL state (§2.8) | Layer, overlay, year, viewport, and selected country encoded in the URL hash |
 | Detail panel (§2.5) | Value, world rank, sparkline, 26-indicator profile, provenance |

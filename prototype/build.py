@@ -150,6 +150,68 @@ DATASETS = [
      "src": {"name": "V-Dem via Our World in Data", "licence": "CC BY 4.0",
              "url": "https://ourworldindata.org/grapher/electoral-democracy-index"},
      "desc": "V-Dem electoral democracy index: free and fair elections, suffrage, and freedoms of expression and association. Expert-coded, 0–1."},
+    {"id": "women-parliament", "code": "SG.GEN.PARL.ZS", "title": "Women in parliament", "cat": "Politics",
+     "unit": "% of seats", "fmt": "pct", "ramp": "purple", "log": False,
+     "desc": "Share of seats held by women in national parliaments (single or lower chamber)."},
+    {"id": "literacy", "code": "SE.ADT.LITR.ZS", "title": "Adult literacy", "cat": "Education & Science",
+     "unit": "% of people 15+", "fmt": "pct", "ramp": "teal", "log": False,
+     "desc": "Share of adults who can read and write. Census/survey-based — sparse for high-income countries, which rarely measure it."},
+    {"id": "extreme-poverty", "code": "SI.POV.DDAY", "title": "Extreme poverty", "cat": "Economics",
+     "unit": "% below $2.15/day (2017 PPP)", "fmt": "pct", "ramp": "orange", "log": False,
+     "desc": "Share of the population living below the international extreme poverty line."},
+    {"id": "electricity-use", "code": "EG.USE.ELEC.KH.PC", "title": "Electricity use per capita", "cat": "Energy",
+     "unit": "kWh per person per year", "fmt": "int", "ramp": "blue", "log": True,
+     "desc": "Electric power consumption per capita. IEA-sourced series; ends mid-2010s for many countries."},
+    {"id": "patents", "code": "IP.PAT.RESD", "title": "Patent applications", "cat": "Education & Science",
+     "unit": "resident applications per year", "fmt": "int", "ramp": "purple", "log": True,
+     "desc": "Patent applications filed by residents with the national patent office (WIPO)."},
+    {"id": "hightech-exports", "code": "TX.VAL.TECH.MF.ZS", "title": "High-tech exports", "cat": "Economics",
+     "unit": "% of manufactured exports", "fmt": "pct", "ramp": "blue", "log": False,
+     "desc": "High-technology products as a share of manufactured exports."},
+    {"id": "tax-revenue", "code": "GC.TAX.TOTL.GD.ZS", "title": "Tax revenue", "cat": "Economics",
+     "unit": "% of GDP", "fmt": "num1", "ramp": "green", "log": False,
+     "desc": "Central government tax revenue as a share of GDP."},
+    {"id": "age-dependency", "code": "SP.POP.DPND", "title": "Age dependency ratio", "cat": "Population",
+     "unit": "dependents per 100 working-age", "fmt": "num1", "ramp": "orange", "log": False,
+     "desc": "People younger than 15 or older than 64 relative to the working-age population."},
+    {"id": "exports", "code": "NE.EXP.GNFS.ZS", "title": "Exports", "cat": "Economics",
+     "unit": "% of GDP", "fmt": "pct", "ramp": "green", "log": False,
+     "desc": "Exports of goods and services as a share of GDP."},
+    {"id": "schooling", "loader": "owid", "file": "owid_average-years-of-schooling.csv", "title": "Years of schooling", "cat": "Education & Science",
+     "unit": "average years, adults 25+", "fmt": "num1", "ramp": "teal", "log": False,
+     "src": {"name": "UNDP HDR via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/average-years-of-schooling"},
+     "desc": "Average years of formal education completed by adults aged 25 and over."},
+    {"id": "working-hours", "loader": "owid", "file": "owid_annual-working-hours-per-worker.csv", "title": "Annual working hours", "cat": "Economics",
+     "unit": "hours per worker per year", "fmt": "int", "ramp": "orange", "log": False,
+     "src": {"name": "Penn World Table via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/annual-working-hours-per-worker"},
+     "desc": "Average annual hours actually worked per employed person."},
+    {"id": "calories", "loader": "owid", "file": "owid_daily-per-capita-caloric-supply.csv", "title": "Daily calorie supply", "cat": "Lifestyle",
+     "unit": "kcal per person per day", "fmt": "int", "ramp": "green", "log": False,
+     "src": {"name": "FAO via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/daily-per-capita-caloric-supply"},
+     "desc": "Food supply available for consumption, after exports and waste at the retail level."},
+    {"id": "ev-share", "loader": "owid", "file": "owid_electric-car-sales-share.csv", "title": "Electric car sales share", "cat": "Energy",
+     "unit": "% of new cars sold", "fmt": "pct", "ramp": "teal", "log": False,
+     "src": {"name": "IEA Global EV Outlook via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/electric-car-sales-share"},
+     "desc": "Battery-electric and plug-in hybrid cars as a share of new car sales. Series begins 2011, major markets only."},
+    {"id": "beer", "loader": "owid", "file": "owid_beer-consumption-per-person.csv", "title": "Beer consumption", "cat": "Lifestyle",
+     "unit": "L pure alcohol per person 15+ (beer)", "fmt": "num1", "ramp": "orange", "log": False,
+     "src": {"name": "WHO GHO via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/beer-consumption-per-person"},
+     "desc": "Recorded beer consumption, expressed as litres of pure alcohol per adult per year."},
+    {"id": "wine", "loader": "owid", "file": "owid_wine-consumption-per-capita.csv", "title": "Wine consumption", "cat": "Lifestyle",
+     "unit": "L pure alcohol per person 15+ (wine)", "fmt": "num2", "ramp": "purple", "log": False,
+     "src": {"name": "WHO GHO via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/wine-consumption-per-capita"},
+     "desc": "Recorded wine consumption, expressed as litres of pure alcohol per adult per year."},
+    {"id": "meat", "loader": "owid", "file": "owid_meat-supply-per-person.csv", "title": "Meat supply", "cat": "Lifestyle",
+     "unit": "kg per person per year", "fmt": "num1", "ramp": "orange", "log": False,
+     "src": {"name": "FAO via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/meat-supply-per-person"},
+     "desc": "Meat available for consumption per person, carcass-weight equivalent."},
 ]
 
 POINT_LAYERS = [
@@ -168,6 +230,24 @@ POINT_LAYERS = [
      "src": {"name": "Wikidata", "licence": "CC0",
              "url": "https://www.wikidata.org"},
      "desc": "World Heritage sites with coordinates from Wikidata. The timeline shows sites inscribed up to the selected year; sites without a recorded inscription year are always shown."},
+    {"id": "airports", "title": "Major airports", "cat": "Lifestyle", "mode": "static",
+     "unit": "airport", "color": "#3572B0", "shape": "circle",
+     "src": {"name": "OurAirports", "licence": "Public domain",
+             "url": "https://ourairports.com/data/"},
+     "desc": "Large airports with scheduled commercial service. Static layer."},
+    {"id": "power-plants", "title": "Power plants ≥ 1 GW", "cat": "Energy", "mode": "static",
+     "unit": "gigawatts", "color": "#E88B3A", "shape": "circle",
+     "cats": [{"label": "Coal", "color": "#8A6B4D"}, {"label": "Gas", "color": "#E88B3A"},
+              {"label": "Hydro", "color": "#3572B0"}, {"label": "Nuclear", "color": "#9C7AC0"},
+              {"label": "Oil", "color": "#5C6B77"}, {"label": "Other", "color": "#57B0A8"}],
+     "src": {"name": "WRI Global Power Plant Database", "licence": "CC BY 4.0",
+             "url": "https://datasets.wri.org/dataset/globalpowerplantdatabase"},
+     "desc": "Power stations of one gigawatt or more, coloured by primary fuel and sized by capacity. Snapshot database (2021) — recent plants are missing."},
+    {"id": "cities", "title": "Cities over 1 million", "cat": "Population", "mode": "static",
+     "unit": "people (urban agglomeration)", "color": "#7450A0", "shape": "circle",
+     "src": {"name": "Natural Earth populated places", "licence": "Public domain",
+             "url": "https://www.naturalearthdata.com"},
+     "desc": "Urban agglomerations of at least one million people, sized by population."},
 ]
 
 
@@ -315,9 +395,48 @@ def main():
         pts.append([x, y, yr, name])
     point_data["unesco-sites"] = pts
 
+    import csv as csvmod
+    # airports: [x, y, name]
+    pts = []
+    with open(data_dir / "airports.csv", newline="", encoding="utf-8") as fh:
+        for r in csvmod.DictReader(fh):
+            if r["type"] != "large_airport" or r["scheduled_service"] != "yes":
+                continue
+            x, y = project(float(r["longitude_deg"]), float(r["latitude_deg"]))
+            name = r["name"]
+            if r.get("municipality") and r["municipality"].lower() not in name.lower():
+                name += f" ({r['municipality']})"
+            pts.append([x, y, name])
+    point_data["airports"] = pts
+
+    # power plants >= 1 GW: [x, y, fuel_cat_index, capacity_gw, name]
+    fuel_cat = {"Coal": 0, "Gas": 1, "Hydro": 2, "Nuclear": 3, "Oil": 4}
+    pts = []
+    with open(data_dir / "powerplants.csv", newline="", encoding="utf-8") as fh:
+        for r in csvmod.DictReader(fh):
+            cap = float(r["capacity_mw"] or 0)
+            if cap < 1000:
+                continue
+            x, y = project(float(r["longitude"]), float(r["latitude"]))
+            pts.append([x, y, fuel_cat.get(r["primary_fuel"], 5), round(cap / 1000, 1), r["name"]])
+    point_data["power-plants"] = pts
+
+    # cities >= 1M: [x, y, population_millions, name]
+    c = json.loads((data_dir / "cities.geojson").read_text())
+    pts = []
+    for f in c["features"]:
+        pop = f["properties"].get("pop_max") or 0
+        if pop < 1_000_000:
+            continue
+        lon, lat = f["geometry"]["coordinates"][:2]
+        x, y = project(lon, lat)
+        pts.append([x, y, round(pop / 1e6, 1), f["properties"].get("name") or ""])
+    point_data["cities"] = pts
+
     meta_keys = ("id", "title", "cat", "unit", "fmt", "ramp", "log", "desc")
     meta = [{**{k: ds[k] for k in meta_keys}, **({"src": ds["src"]} if "src" in ds else {})} for ds in DATASETS]
     pmeta = [{**{k: pl[k] for k in ("id", "title", "cat", "unit", "mode", "color", "shape", "desc", "src")},
+              **({"cats": pl["cats"]} if "cats" in pl else {}),
               "count": len(point_data[pl["id"]])} for pl in POINT_LAYERS]
     payload = {
         "H": H, "years": YEARS, "names": names, "paths": paths,

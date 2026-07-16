@@ -502,7 +502,17 @@ const ptEls={};   // layer id -> [[el, x, y, yearOrZero], …]
 function ptTip(pl,p){
   if(pl.id==="earthquakes") return `M ${p[3].toFixed(1)} earthquake · ${p[2]}`;
   if(pl.id==="volcanoes") return `${p[2]} (${p[3]||"—"}) · last eruption: ${p[4]==null?"unknown":p[4]<0?Math.abs(p[4])+" BCE":p[4]}`;
+  if(pl.id==="airports") return p[2];
+  if(pl.id==="power-plants") return `${p[4]} · ${pl.cats[p[2]].label} · ${p[3]} GW`;
+  if(pl.id==="cities") return `${p[3]} · ${p[2]}M people`;
   return `${p[3]}${p[2]?` · inscribed ${p[2]}`:""}`;
+}
+function ptR(pl,p){
+  if(pl.id==="earthquakes") return Math.max(1.6,(p[3]-5)*2.4);
+  if(pl.id==="power-plants") return 1.6+Math.sqrt(p[3])*1.5;
+  if(pl.id==="cities") return 1.6+Math.sqrt(p[2])*1.1;
+  if(pl.id==="airports") return 1.9;
+  return 2.4;
 }
 function buildPts(id){
   if(ptEls[id]) return;
@@ -515,10 +525,10 @@ function buildPts(id){
       el.setAttribute("d","M0,-4.4L3.8,3.2L-3.8,3.2Z");
     } else {
       el=document.createElementNS(NS,"circle");
-      el.setAttribute("r", pl.id==="earthquakes" ? Math.max(1.6,(p[3]-5)*2.4).toFixed(1) : 2.4);
+      el.setAttribute("r", ptR(pl,p).toFixed(1));
     }
-    el.setAttribute("class","pt"+(pl.id==="earthquakes"?" dim":""));
-    el.setAttribute("fill",pl.color);
+    el.setAttribute("class","pt"+(pl.id==="earthquakes"||pl.id==="power-plants"||pl.id==="cities"?" dim":""));
+    el.setAttribute("fill", pl.cats ? pl.cats[p[2]].color : pl.color);
     el.dataset.tip=ptTip(pl,p);
     el.style.display="none";
     gPts.appendChild(el);
@@ -599,6 +609,8 @@ function paintLegend(ds,ramp,dso,rampO){
     const pl=plById[id];
     const ctx=pl.mode==="year"?`in ${S.year}`:pl.mode==="cumul"?`by ${S.year}`:"all time";
     ptl+=`<div class="ptline"><span class="pdot" style="background:${pl.color}"></span>${pl.title} · ${ctx}</div>`;
+    if(pl.cats) ptl+=`<div class="ptline" style="border:0;margin-top:3px;padding-top:0;flex-wrap:wrap;font-size:10px">${
+      pl.cats.map(c=>`<span style="display:inline-flex;align-items:center;gap:3px"><span class="pdot" style="width:7px;height:7px;background:${c.color}"></span>${c.label}</span>`).join("")}</div>`;
   }
   const src=ds.src||D.source;
   el.innerHTML=`<div class="lt"><button id="abinfo" style="text-align:left" title="About this layer">${ds.title} ⓘ</button><span class="yr">${S.year}</span></div>
