@@ -98,6 +98,76 @@ DATASETS = [
     {"id": "agricultural-land", "code": "AG.LND.AGRI.ZS", "title": "Agricultural land", "cat": "Environment",
      "unit": "% of land area", "fmt": "pct", "ramp": "green", "log": False,
      "desc": "Share of land area that is arable, under permanent crops, or permanent pasture."},
+    {"id": "gini", "code": "SI.POV.GINI", "title": "Income inequality (Gini)", "cat": "Economics",
+     "unit": "Gini index (0 = equal)", "fmt": "num1", "ramp": "purple", "log": False,
+     "desc": "Gini index of income distribution. Survey-based; sparse in some years — scrub the timeline."},
+    {"id": "homicide-rate", "code": "VC.IHR.PSRC.P5", "title": "Homicide rate", "cat": "Lifestyle",
+     "unit": "per 100,000 people", "fmt": "num1", "ramp": "orange", "log": True,
+     "desc": "Intentional homicides per 100,000 population (UNODC)."},
+    {"id": "smoking", "code": "SH.PRV.SMOK", "title": "Smoking prevalence", "cat": "Health",
+     "unit": "% of adults 15+", "fmt": "pct", "ramp": "blue", "log": False,
+     "desc": "Share of adults who currently use any tobacco product, both sexes."},
+    {"id": "alcohol", "code": "SH.ALC.PCAP.LI", "title": "Alcohol consumption", "cat": "Lifestyle",
+     "unit": "litres pure alcohol per person 15+", "fmt": "num1", "ramp": "orange", "log": False,
+     "desc": "Total (recorded plus estimated unrecorded) alcohol consumption per capita, age 15+."},
+    {"id": "physicians", "code": "SH.MED.PHYS.ZS", "title": "Physicians density", "cat": "Health",
+     "unit": "per 1,000 people", "fmt": "num2", "ramp": "teal", "log": False,
+     "desc": "Medical doctors per 1,000 population, including generalists and specialists."},
+    {"id": "air-passengers", "code": "IS.AIR.PSGR", "title": "Air passengers", "cat": "Lifestyle",
+     "unit": "passengers carried per year", "fmt": "int", "ramp": "blue", "log": True,
+     "desc": "Domestic and international passengers of air carriers registered in the country."},
+    {"id": "gdp-growth", "code": "NY.GDP.MKTP.KD.ZG", "title": "GDP growth", "cat": "Economics",
+     "unit": "% annual (real)", "fmt": "num1", "ramp": "green", "log": False,
+     "desc": "Annual growth rate of real GDP. Negative values are recessions."},
+    {"id": "fdi-inflows", "code": "BX.KLT.DINV.WD.GD.ZS", "title": "FDI inflows", "cat": "Economics",
+     "unit": "% of GDP", "fmt": "num1", "ramp": "blue", "log": False,
+     "desc": "Net inflows of foreign direct investment as a share of GDP."},
+    {"id": "remittances", "code": "BX.TRF.PWKR.DT.GD.ZS", "title": "Remittances received", "cat": "Economics",
+     "unit": "% of GDP", "fmt": "num1", "ramp": "purple", "log": False,
+     "desc": "Personal remittances received from abroad as a share of GDP."},
+    {"id": "population-growth", "code": "SP.POP.GROW", "title": "Population growth", "cat": "Population",
+     "unit": "% annual", "fmt": "num2", "ramp": "orange", "log": False,
+     "desc": "Annual population growth rate. Negative values indicate shrinking populations."},
+    {"id": "co2-total", "code": "EN.GHG.CO2.MT.CE.AR5", "title": "CO₂ emissions (total)", "cat": "Environment",
+     "unit": "Mt CO₂e per year", "fmt": "num1", "ramp": "orange", "log": True,
+     "desc": "Total national carbon dioxide emissions, excluding LULUCF (AR5)."},
+    {"id": "secondary-enrollment", "code": "SE.SEC.ENRR", "title": "Secondary school enrolment", "cat": "Education & Science",
+     "unit": "% gross", "fmt": "pct", "ramp": "teal", "log": False,
+     "desc": "Secondary enrolment as a share of the official secondary-age population; can exceed 100%."},
+    {"id": "sanitation", "code": "SH.STA.BASS.ZS", "title": "Basic sanitation access", "cat": "Health",
+     "unit": "% of population", "fmt": "pct", "ramp": "green", "log": False,
+     "desc": "Share of the population using at least basic sanitation services."},
+    {"id": "armed-forces", "code": "MS.MIL.TOTL.TF.ZS", "title": "Armed forces personnel", "cat": "Politics",
+     "unit": "% of labour force", "fmt": "num2", "ramp": "orange", "log": False,
+     "desc": "Active-duty military and paramilitary personnel as a share of the labour force."},
+    {"id": "happiness", "loader": "owid", "file": "owid_happiness.csv", "title": "Life satisfaction", "cat": "Lifestyle",
+     "unit": "Cantril ladder (0–10)", "fmt": "num2", "ramp": "teal", "log": False,
+     "src": {"name": "World Happiness Report via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/happiness-cantril-ladder"},
+     "desc": "Self-reported life satisfaction: national average answer to the Cantril ladder question (0 = worst possible life, 10 = best). Survey series begins 2011."},
+    {"id": "democracy-index", "loader": "owid", "file": "owid_democracy.csv", "title": "Electoral democracy index", "cat": "Politics",
+     "unit": "V-Dem index (0–1)", "fmt": "num2", "ramp": "blue", "log": False,
+     "src": {"name": "V-Dem via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/electoral-democracy-index"},
+     "desc": "V-Dem electoral democracy index: free and fair elections, suffrage, and freedoms of expression and association. Expert-coded, 0–1."},
+]
+
+POINT_LAYERS = [
+    {"id": "earthquakes", "title": "Earthquakes M6+", "cat": "Geography", "mode": "year",
+     "unit": "moment magnitude", "color": "#E88B3A", "shape": "circle",
+     "src": {"name": "USGS Earthquake Catalog", "licence": "Public domain",
+             "url": "https://earthquake.usgs.gov/fdsnws/event/1/"},
+     "desc": "All magnitude ≥ 6.0 earthquakes, 2000–2023. The timeline shows one year at a time; symbol size scales with magnitude."},
+    {"id": "volcanoes", "title": "Volcanoes (Holocene)", "cat": "Geography", "mode": "static",
+     "unit": "volcano", "color": "#D64550", "shape": "triangle",
+     "src": {"name": "Smithsonian Global Volcanism Program", "licence": "Free with attribution",
+             "url": "https://volcano.si.edu"},
+     "desc": "Volcanoes with confirmed or suspected Holocene eruptions. Static layer — not affected by the timeline."},
+    {"id": "unesco-sites", "title": "UNESCO World Heritage sites", "cat": "Entertainment & Culture", "mode": "cumul",
+     "unit": "site", "color": "#2B8A86", "shape": "circle",
+     "src": {"name": "Wikidata", "licence": "CC0",
+             "url": "https://www.wikidata.org"},
+     "desc": "World Heritage sites with coordinates from Wikidata. The timeline shows sites inscribed up to the selected year; sites without a recorded inscription year are always shown."},
 ]
 
 
@@ -172,23 +242,87 @@ def main():
     iso_set = set(paths)
     values = {}
     for ds in DATASETS:
-        raw = json.loads((data_dir / f"wb_{ds['code']}.json").read_text())
-        rows = raw[1] or []
         per = {}
-        for r in rows:
-            iso, v, yr = r.get("countryiso3code"), r.get("value"), r.get("date")
-            if v is None or iso not in iso_set:
-                continue
-            per.setdefault(iso, [None] * len(YEARS))
-            yi = int(yr) - YEARS[0]
-            if 0 <= yi < len(YEARS):
-                per[iso][yi] = sig(v)
+        if ds.get("loader") == "owid":
+            import csv
+            with open(data_dir / ds["file"], newline="") as fh:
+                for r in csv.reader(fh):
+                    if not r or r[0] == "Entity":
+                        continue
+                    iso, yr, v = r[1], r[2], r[3]
+                    if not v or iso not in iso_set:
+                        continue
+                    yi = int(yr) - YEARS[0]
+                    if 0 <= yi < len(YEARS):
+                        per.setdefault(iso, [None] * len(YEARS))[yi] = sig(float(v))
+        else:
+            raw = json.loads((data_dir / f"wb_{ds['code']}.json").read_text())
+            for r in raw[1] or []:
+                iso, v, yr = r.get("countryiso3code"), r.get("value"), r.get("date")
+                if v is None or iso not in iso_set:
+                    continue
+                yi = int(yr) - YEARS[0]
+                if 0 <= yi < len(YEARS):
+                    per.setdefault(iso, [None] * len(YEARS))[yi] = sig(v)
         values[ds["id"]] = per
 
-    meta = [{k: ds[k] for k in ("id", "title", "cat", "unit", "fmt", "ramp", "log", "desc")} for ds in DATASETS]
+    def project(lon, lat):
+        return tx(*equal_earth(lon, lat))
+
+    point_data = {}
+    # earthquakes: [x, y, year, magnitude]
+    from datetime import datetime, timezone
+    q = json.loads((data_dir / "usgs_quakes.json").read_text())
+    pts = []
+    for f in q["features"]:
+        lon, lat = f["geometry"]["coordinates"][:2]
+        yr = datetime.fromtimestamp(f["properties"]["time"] / 1000, tz=timezone.utc).year
+        if YEARS[0] <= yr <= YEARS[-1]:
+            x, y = project(lon, lat)
+            pts.append([x, y, yr, round(f["properties"]["mag"], 1)])
+    point_data["earthquakes"] = pts
+
+    # volcanoes: [x, y, name, country, last_eruption_year|null]
+    v = json.loads((data_dir / "volcanoes.json").read_text())
+    pts = []
+    for f in v["features"]:
+        lon, lat = f["geometry"]["coordinates"][:2]
+        p = f["properties"]
+        x, y = project(lon, lat)
+        pts.append([x, y, p["Volcano_Name"], p.get("Country") or "", p.get("Last_Eruption_Year")])
+    point_data["volcanoes"] = pts
+
+    # unesco: [x, y, inscription_year|0, name]  (dedupe by wikidata item)
+    import re
+    u = json.loads((data_dir / "unesco_wd.json").read_text())
+    seen, pts = {}, []
+    for r in u["results"]["bindings"]:
+        item = r["item"]["value"]
+        if item in seen:
+            continue
+        seen[item] = True
+        m = re.match(r"Point\(([-\d.eE]+) ([-\d.eE]+)\)", r["coord"]["value"])
+        if not m:
+            continue
+        lon, lat = float(m.group(1)), float(m.group(2))
+        if not (-180 <= lon <= 180 and -90 <= lat <= 90):
+            continue
+        name = r.get("itemLabel", {}).get("value", "")
+        if not name or re.fullmatch(r"Q\d+", name):
+            continue
+        yr = int(r["year"]["value"]) if "year" in r else 0
+        x, y = project(lon, lat)
+        pts.append([x, y, yr, name])
+    point_data["unesco-sites"] = pts
+
+    meta_keys = ("id", "title", "cat", "unit", "fmt", "ramp", "log", "desc")
+    meta = [{**{k: ds[k] for k in meta_keys}, **({"src": ds["src"]} if "src" in ds else {})} for ds in DATASETS]
+    pmeta = [{**{k: pl[k] for k in ("id", "title", "cat", "unit", "mode", "color", "shape", "desc", "src")},
+              "count": len(point_data[pl["id"]])} for pl in POINT_LAYERS]
     payload = {
         "H": H, "years": YEARS, "names": names, "paths": paths,
         "datasets": meta, "values": values,
+        "pointLayers": pmeta, "points": point_data,
         "source": {"name": "World Bank Open Data", "licence": "CC BY 4.0",
                    "url": "https://data.worldbank.org", "retrieved": "2026-07-16"},
     }

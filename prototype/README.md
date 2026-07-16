@@ -14,7 +14,11 @@ A single-file interactive atlas implementing the core loops of the [StatMaps spe
 # 1. Fetch source data into a directory:
 #    countries.geo.json  (https://github.com/johan/world.geo.json)
 #    wb_<CODE>.json      (https://api.worldbank.org/v2/country/all/indicator/<CODE>?format=json&per_page=20000&date=2000:2023)
-#    for every code listed in DATASETS inside build.py
+#    for every code listed in DATASETS inside build.py, plus:
+#    owid_happiness.csv / owid_democracy.csv  (https://ourworldindata.org/grapher/<slug>.csv)
+#    usgs_quakes.json    (USGS FDSN event API, minmagnitude=6, 2000-2023)
+#    volcanoes.json      (Smithsonian GVP WFS, Holocene volcano list)
+#    unesco_wd.json      (Wikidata SPARQL: items with P757 + P625 + P1435=Q9259)
 # 2. Build:
 python3 build.py <data_dir> [out_path]
 ```
@@ -23,7 +27,9 @@ python3 build.py <data_dir> [out_path]
 
 | Spec feature | Prototype implementation |
 |---|---|
-| Layer system (01-product §2.3) | 26 layers, quintile classification (log-transformed where flagged), 5-step sequential ramps, multiply-blend overlay |
+| Layer system (01-product §2.3) | 42 choropleth layers, quintile classification (log-transformed where flagged), 5-step sequential ramps, multiply-blend overlay |
+| Point/event layers (03-architecture §5) | USGS earthquakes M6+ (per-year, magnitude-sized), Smithsonian Holocene volcanoes (static), UNESCO World Heritage sites via Wikidata (cumulative by inscription year) |
+| Multi-source provenance (02-data) | Per-dataset source and licence (World Bank, OWID/V-Dem, OWID/WHR, USGS, Smithsonian GVP, Wikidata) surfaced in legend, detail panel, and about dialogs |
 | Timeline (§2.4) | 2000–2023 scrubber with playback; choropleth reclassifies per year |
 | URL state (§2.8) | Layer, overlay, year, viewport, and selected country encoded in the URL hash |
 | Detail panel (§2.5) | Value, world rank, sparkline, 26-indicator profile, provenance |

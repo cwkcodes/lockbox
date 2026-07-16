@@ -46,6 +46,13 @@ button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outli
 #map path.sel{stroke:var(--accent); stroke-width:2}
 #ovl path{pointer-events:none; stroke:none}
 #ovl{mix-blend-mode:multiply}
+#pts .pt{stroke:var(--panel); stroke-width:.5; cursor:pointer}
+#pts .pt.dim{opacity:.55}
+.ptrow .dot{width:11px; height:11px; border-radius:50%; flex:none}
+.ptrow .dot.tri{border-radius:2px; clip-path:polygon(50% 0, 100% 100%, 0 100%)}
+#llist .sect2{font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); padding:12px 12px 4px}
+#legend .ptline{display:flex; align-items:center; gap:7px; margin-top:8px; padding-top:7px; border-top:1px dashed var(--line); font-size:11.5px; color:var(--ink2)}
+#legend .ptline .pdot{width:9px; height:9px; border-radius:50%; flex:none}
 .reduce *{transition:none !important}
 
 /* ---------- top bar ---------- */
@@ -296,7 +303,7 @@ button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outli
 }
 </style>
 
-<div id="stage"><svg id="map" aria-label="World map"><g id="world"><g id="base"></g><g id="ovl"></g></g></svg></div>
+<div id="stage"><svg id="map" aria-label="World map"><g id="world"><g id="base"></g><g id="ovl"></g><g id="pts"></g></g></svg></div>
 
 <header id="topbar">
   <div id="brand"><b>Stat<em>Maps</em></b><span>Atlas Prototype</span></div>
@@ -398,7 +405,7 @@ const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ---------- state ---------- */
 const S = { layer:"gdp-per-capita", ovl:null, year:YEARS[YEARS.length-1],
-            view:{x:0,y:0,w:W}, sel:null, playing:false, cat:"All" };
+            view:{x:0,y:0,w:W}, sel:null, playing:false, cat:"All", pts:new Set() };
 
 /* parse hash state (#l=..&o=..&y=..&v=x,y,w&c=ISO) */
 try{
@@ -409,6 +416,7 @@ try{
   if(h.get("v")){ const [x,yy,w]=h.get("v").split(",").map(Number);
     if([x,yy,w].every(Number.isFinite)&&w>10) S.view={x,y:yy,w}; }
   if(h.get("c") && D.paths[h.get("c")]) S.sel=h.get("c");
+  if(h.get("p")) h.get("p").split(",").forEach(id=>{ if(D.points&&D.points[id]) S.pts.add(id); });
 }catch(e){}
 
 let hashT=null;
@@ -419,6 +427,7 @@ function syncHash(){
     p.set("l",S.layer); if(S.ovl)p.set("o",S.ovl); p.set("y",S.year);
     const v=S.view; p.set("v",[v.x.toFixed(1),v.y.toFixed(1),v.w.toFixed(1)].join(","));
     if(S.sel)p.set("c",S.sel);
+    if(S.pts.size)p.set("p",[...S.pts].join(","));
     history.replaceState(null,"","#"+p.toString());
   },300);
 }
@@ -475,6 +484,7 @@ for(const iso of ISOS){
 function applyView(){
   const v=S.view, h=v.w*H/W;
   svg.setAttribute("viewBox",`${v.x} ${v.y} ${v.w} ${h}`);
+  schedulePtScale();
   syncHash();
 }
 function clampView(){
@@ -483,6 +493,66 @@ function clampView(){
   const h=v.w*H/W;
   v.x=Math.max(-v.w*.35,Math.min(W-v.w*.65,v.x));
   v.y=Math.max(-h*.35,Math.min(H-h*.65,v.y));
+}
+
+/* ---------- point layers ---------- */
+const gPts=$("pts");
+const plById={}; (D.pointLayers||[]).forEach(p=>plById[p.id]=p);
+const ptEls={};   // layer id -> [[el, x, y, yearOrZero], …]
+function ptTip(pl,p){
+  if(pl.id==="earthquakes") return `M ${p[3].toFixed(1)} earthquake · ${p[2]}`;
+  if(pl.id==="volcanoes") return `${p[2]} (${p[3]||"—"}) · last eruption: ${p[4]==null?"unknown":p[4]<0?Math.abs(p[4])+" BCE":p[4]}`;
+  return `${p[3]}${p[2]?` · inscribed ${p[2]}`:""}`;
+}
+function buildPts(id){
+  if(ptEls[id]) return;
+  const pl=plById[id], arr=[];
+  const NS="http://www.w3.org/2000/svg";
+  for(const p of D.points[id]){
+    let el;
+    if(pl.shape==="triangle"){
+      el=document.createElementNS(NS,"path");
+      el.setAttribute("d","M0,-4.4L3.8,3.2L-3.8,3.2Z");
+    } else {
+      el=document.createElementNS(NS,"circle");
+      el.setAttribute("r", pl.id==="earthquakes" ? Math.max(1.6,(p[3]-5)*2.4).toFixed(1) : 2.4);
+    }
+    el.setAttribute("class","pt"+(pl.id==="earthquakes"?" dim":""));
+    el.setAttribute("fill",pl.color);
+    el.dataset.tip=ptTip(pl,p);
+    el.style.display="none";
+    gPts.appendChild(el);
+    arr.push([el,p[0],p[1], pl.mode==="year"?p[2] : pl.mode==="cumul"?p[2] : 0]);
+  }
+  ptEls[id]=arr;
+  updatePtScale();
+}
+function updatePtScale(){
+  const k=Math.max(.1,Math.min(1.4,S.view.w/W));
+  for(const id in ptEls){
+    if(!S.pts.has(id)) continue;
+    for(const r of ptEls[id]) r[0].setAttribute("transform",`translate(${r[1]} ${r[2]}) scale(${k})`);
+  }
+}
+let ptScaleT=null;
+function schedulePtScale(){ clearTimeout(ptScaleT); ptScaleT=setTimeout(updatePtScale,120); }
+function paintPts(){
+  for(const id in plById){
+    const on=S.pts.has(id);
+    if(on) buildPts(id);
+    if(!ptEls[id]) continue;
+    const pl=plById[id];
+    for(const r of ptEls[id]){
+      let show=on;
+      if(show&&pl.mode==="year") show=r[3]===S.year;
+      else if(show&&pl.mode==="cumul") show=(r[3]===0||r[3]<=S.year);
+      r[0].style.display=show?"":"none";
+    }
+  }
+}
+function togglePt(id){
+  if(S.pts.has(id)) S.pts.delete(id); else { S.pts.add(id); buildPts(id); }
+  paintPts(); paint(); renderList($("search").value);
 }
 
 /* ---------- painting ---------- */
@@ -504,6 +574,7 @@ function paint(){
       ovlPaths[iso].style.display="";
     } else ovlPaths[iso].style.display="none";
   }
+  paintPts();
   paintLegend(ds,ramp,dso,rampO);
   $("yearval").textContent=S.year;
   if(S.sel) fillDetail();
@@ -523,21 +594,36 @@ function paintLegend(ds,ramp,dso,rampO){
     ov=`<div class="ovline">${legendBar(rampO)}<span class="tt">× ${dso.title}</span>
         <button class="x" id="ovoff" aria-label="Remove overlay" title="Remove overlay">✕</button></div>`;
   }
+  let ptl="";
+  for(const id of S.pts){
+    const pl=plById[id];
+    const ctx=pl.mode==="year"?`in ${S.year}`:pl.mode==="cumul"?`by ${S.year}`:"all time";
+    ptl+=`<div class="ptline"><span class="pdot" style="background:${pl.color}"></span>${pl.title} · ${ctx}</div>`;
+  }
+  const src=ds.src||D.source;
   el.innerHTML=`<div class="lt"><button id="abinfo" style="text-align:left" title="About this layer">${ds.title} ⓘ</button><span class="yr">${S.year}</span></div>
     <div class="lu">${ds.unit} · quintiles${ds.log?" (log)":""}${dso?" · overlay: multiply":""}</div>
-    ${legendBar(ramp)}${lbl}${ov}
-    <div class="src">Data: <a href="${D.source.url}" target="_blank" rel="noopener">${D.source.name}</a> · ${D.source.licence} · Boundaries © Natural Earth / OSM contributors</div>`;
+    ${legendBar(ramp)}${lbl}${ov}${ptl}
+    <div class="src">Data: <a href="${src.url}" target="_blank" rel="noopener">${src.name}</a> · ${src.licence} · Boundaries © Natural Earth / OSM contributors</div>`;
   $("abinfo").onclick=()=>openAbout(ds);
   const off=$("ovoff"); if(off) off.onclick=()=>{S.ovl=null; paint(); renderList();};
 }
 
 /* ---------- about ---------- */
 function openAbout(ds){
+  const src=ds.src||D.source;
   $("ab-t").textContent=ds.title; $("ab-u").textContent=ds.unit+" · "+ds.cat;
   $("ab-d").textContent=ds.desc;
-  $("ab-m").innerHTML=`Source: ${D.source.name} · Licence: ${D.source.licence}<br>
+  $("ab-m").innerHTML=`Source: ${src.name} · Licence: ${src.licence}<br>
     Coverage: ${Object.keys(D.values[ds.id]).length} countries · ${YEARS[0]}–${YEARS[YEARS.length-1]} · retrieved ${D.source.retrieved}<br>
     Classification: quintile${ds.log?", log-transformed":""} · 5 classes`;
+  $("about").classList.add("open");
+}
+function openAboutPt(pl){
+  $("ab-t").textContent=pl.title; $("ab-u").textContent=pl.cat+" · point layer";
+  $("ab-d").textContent=pl.desc;
+  $("ab-m").innerHTML=`Source: ${pl.src.name} · Licence: ${pl.src.licence}<br>
+    ${pl.count.toLocaleString()} features · retrieved ${D.source.retrieved}`;
   $("about").classList.add("open");
 }
 $("ab-ok").onclick=()=>$("about").classList.remove("open");
@@ -563,7 +649,17 @@ function renderList(filter){
         <span class="ovbtn${d.id===S.ovl?" act":""}" data-ov="${d.id}" role="button" tabindex="0" title="Toggle as overlay">${d.id===S.ovl?"overlay ✕":"+ overlay"}</span>
       </span></button>`;
   }).join("");
-  $("llist").querySelectorAll(".lrow").forEach(b=>{
+  const pls=(D.pointLayers||[]).filter(p=>(S.cat==="All"||p.cat===S.cat)&&(!q||(p.title+" "+p.cat).toLowerCase().includes(q)));
+  if(pls.length){
+    $("llist").innerHTML+='<div class="sect2">Events &amp; places</div>'+pls.map(pl=>`
+      <button class="lrow ptrow" data-pt="${pl.id}">
+        <span class="dot${pl.shape==="triangle"?" tri":""}" style="background:${pl.color}"></span>
+        <span><span class="tt">${pl.title}</span><br><span class="su">${pl.count.toLocaleString()} features · ${pl.src.name}</span></span>
+        <span class="tags"><span class="pill${S.pts.has(pl.id)?" act":""}">${S.pts.has(pl.id)?"on":"off"}</span>
+          <span class="ovbtn" data-ab="${pl.id}" role="button" tabindex="0" title="About this layer">ⓘ</span></span>
+      </button>`).join("");
+  }
+  $("llist").querySelectorAll(".lrow:not(.ptrow)").forEach(b=>{
     b.onclick=e=>{
       const ov=e.target.closest("[data-ov]");
       if(ov){ const id=ov.dataset.ov;
@@ -572,6 +668,13 @@ function renderList(filter){
         S.layer=b.dataset.id; if(S.ovl===S.layer)S.ovl=null;
       }
       paint(); renderList(filter);
+    };
+  });
+  $("llist").querySelectorAll(".ptrow").forEach(b=>{
+    b.onclick=e=>{
+      const ab=e.target.closest("[data-ab]");
+      if(ab){ openAboutPt(plById[ab.dataset.ab]); return; }
+      togglePt(b.dataset.pt);
     };
   });
 }
@@ -585,15 +688,18 @@ function doSearch(q){
   q=q.trim().toLowerCase();
   if(!q){ resEl.classList.remove("open"); return; }
   const ls=D.datasets.filter(d=>(d.title+" "+d.cat+" "+d.unit).toLowerCase().includes(q)).slice(0,6);
+  const pl=(D.pointLayers||[]).filter(p=>(p.title+" "+p.cat).toLowerCase().includes(q)).slice(0,3);
   const ps=placeIdx.filter(p=>p.n.toLowerCase().includes(q)).slice(0,5);
-  if(!ls.length&&!ps.length){ resEl.innerHTML='<div class="grp">No results — try “gdp”, “forest”, “japan”…</div>'; resEl.classList.add("open"); return; }
+  if(!ls.length&&!ps.length&&!pl.length){ resEl.innerHTML='<div class="grp">No results — try “gdp”, “earthquakes”, “japan”…</div>'; resEl.classList.add("open"); return; }
   let h="";
-  if(ls.length) h+='<div class="grp">Layers</div>'+ls.map(d=>
-    `<button class="row" data-l="${d.id}"><span class="dot" style="background:${RAMPS[d.ramp][3]}"></span>${d.title}<span class="cat">${d.cat}</span></button>`).join("");
+  if(ls.length||pl.length) h+='<div class="grp">Layers</div>'
+    +ls.map(d=>`<button class="row" data-l="${d.id}"><span class="dot" style="background:${RAMPS[d.ramp][3]}"></span>${d.title}<span class="cat">${d.cat}</span></button>`).join("")
+    +pl.map(p=>`<button class="row" data-pl="${p.id}"><span class="dot" style="background:${p.color};border-radius:50%"></span>${p.title}<span class="cat">${S.pts.has(p.id)?"on · tap to hide":"point layer"}</span></button>`).join("");
   if(ps.length) h+='<div class="grp">Places</div>'+ps.map(p=>
     `<button class="row" data-p="${p.iso}"><span class="dot" style="background:var(--muted);border-radius:50%"></span>${p.n}<span class="cat">country</span></button>`).join("");
   resEl.innerHTML=h; resEl.classList.add("open");
   resEl.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{ S.layer=b.dataset.l; if(S.ovl===S.layer)S.ovl=null; paint(); renderList(); closeSearch(); });
+  resEl.querySelectorAll("[data-pl]").forEach(b=>b.onclick=()=>{ togglePt(b.dataset.pl); toast(S.pts.has(b.dataset.pl)?`${plById[b.dataset.pl].title} shown`:`${plById[b.dataset.pl].title} hidden`); closeSearch(); });
   resEl.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ selectCountry(b.dataset.p,true); closeSearch(); });
 }
 function closeSearch(){ resEl.classList.remove("open"); searchEl.blur(); }
@@ -635,7 +741,8 @@ function fillDetail(){
     return `<button data-id="${d.id}" title="Switch map to ${d.title}"><span class="k">${d.title}</span><span class="v">${fmt(pv,d.fmt)}</span></button>`;
   }).join("");
   $("prof").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.layer=b.dataset.id; if(S.ovl===S.layer)S.ovl=null; paint(); renderList();});
-  $("cprov").textContent=`Source: ${D.source.name} (${D.source.licence}) · retrieved ${D.source.retrieved}. Values are quintile-classed against all countries for ${S.year}.`;
+  const srcp=ds.src||D.source;
+  $("cprov").textContent=`Source: ${srcp.name} (${srcp.licence}) · retrieved ${D.source.retrieved}. Values are quintile-classed against all countries for ${S.year}.`;
 }
 function drawSpark(iso,ds){
   const s=D.values[ds.id][iso]||[], el=$("spark");
@@ -659,6 +766,13 @@ $("detailclose").onclick=()=>{ $("detail").classList.remove("open");
 const tip=$("tip");
 svg.addEventListener("pointermove",e=>{
   if(e.pointerType!=="mouse") return;
+  const ptTipTxt=e.target.dataset&&e.target.dataset.tip;
+  if(ptTipTxt){
+    tip.innerHTML=`<b>${ptTipTxt}</b>`; tip.style.display="block";
+    tip.style.left=Math.min(e.clientX+14,innerWidth-250)+"px";
+    tip.style.top=Math.min(e.clientY+14,innerHeight-70)+"px";
+    return;
+  }
   const iso=e.target.dataset&&e.target.dataset.iso;
   if(!iso){ tip.style.display="none"; return; }
   const ds=dsById[S.layer], v=val(S.layer,iso,S.year);
@@ -701,8 +815,10 @@ svg.addEventListener("pointermove",e=>{
 function endPtr(e){ pointers.delete(e.pointerId); if(pointers.size<2)pinch0=null; }
 svg.addEventListener("pointerup",e=>{
   endPtr(e);
-  if(!moved){ const iso=e.target.dataset&&e.target.dataset.iso;
-    if(iso) selectCountry(iso,false);
+  if(!moved){
+    const t=e.target.dataset||{};
+    if(t.tip) toast(t.tip);
+    else if(t.iso) selectCountry(t.iso,false);
     else { $("detail").classList.remove("open"); $("drawer").classList.remove("open"); } }
 });
 svg.addEventListener("pointercancel",endPtr);
