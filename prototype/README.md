@@ -27,7 +27,8 @@ python3 build.py <data_dir> [out_path]
 
 | Spec feature | Prototype implementation |
 |---|---|
-| Layer system (01-product §2.3) | 81 choropleth layers over 1990–2025 (null-trimmed series encoding), quintile classification (log-transformed where flagged), 5-step sequential ramps, multiply-blend overlay, auto-snap to the latest year with data on layer switch |
+| Layer system (01-product §2.3) | 160 choropleth layers over 1990–2025 (null-trimmed series encoding), quintile classification (log-transformed where flagged), 5-step sequential ramps, multiply-blend overlay, auto-snap to the latest year with data on layer switch |
+| Declarative bulk ingestion (02-data §4) | `BULK_CODES`: ~80 WDI indicators ingested with metadata derived automatically — title/unit parsed from the API, category from the code prefix, number format and log scale from the data's own distribution, description from the indicator source note; sparse series auto-skipped |
 | Point/event layers (03-architecture §5) | USGS earthquakes M6+ (per-year, magnitude-sized), Smithsonian Holocene volcanoes, UNESCO World Heritage sites via Wikidata (cumulative by inscription year), major airports (OurAirports), power plants ≥ 1 GW coloured by fuel and sized by capacity (WRI), cities over 1M sized by population (Natural Earth), and Wikidata history/science packs: battles, shipwrecks, castles, observatories, spaceports |
 | Multi-source provenance (02-data) | Per-dataset source and licence (World Bank, OWID-processed FAO/WHO/IEA/UNDP/PWT/V-Dem/WHR, USGS, Smithsonian GVP, Wikidata, OurAirports, WRI, Natural Earth) surfaced in legend, detail panel, and about dialogs |
 | Timeline (§2.4) | 1990–2025 scrubber with playback; choropleth reclassifies per year |

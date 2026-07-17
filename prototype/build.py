@@ -297,6 +297,110 @@ DATASETS = [
      "desc": "The Economist's light-hearted purchasing-power gauge: the local price of a Big Mac converted to US dollars. Surveyed once or twice a year; ~55 countries."},
 ]
 
+# Bulk-ingested WDI indicators: metadata (title, unit, category, format, log
+# scale, description) is derived automatically from the API response and the
+# data's own distribution. Sparse or missing series are skipped at build time.
+BULK_CODES = [
+    # population & society
+    "SP.DYN.CDRT.IN", "SP.DYN.IMRT.IN", "SP.POP.0014.TO.ZS", "SP.POP.TOTL.FE.ZS",
+    "SP.RUR.TOTL.ZS", "SP.ADO.TFRT", "SM.POP.NETM", "SP.DYN.LE00.FE.IN",
+    "SP.DYN.LE00.MA.IN", "SP.URB.GROW",
+    # health
+    "SH.MED.BEDS.ZS", "SH.DYN.AIDS.ZS", "SH.TBS.INCD", "SH.STA.MMRT",
+    "SH.DYN.NMRT", "SH.STA.DIAB.ZS", "SH.IMM.IDPT", "SH.XPD.OOPC.CH.ZS",
+    "SH.MED.NUMW.P3", "SH.STA.TRAF.P5", "SH.H2O.SMDW.ZS", "SN.ITK.DEFC.ZS",
+    "SH.STA.STNT.ZS",
+    # education
+    "SE.PRM.ENRR", "SE.PRE.ENRR", "SE.PRM.CMPT.ZS", "SE.TER.CUAT.BA.ZS",
+    "SE.PRM.ENRL.TC.ZS", "SE.COM.DURS",
+    # economy
+    "NY.GDP.MKTP.CD", "NY.GNP.PCAP.CD", "NY.GDP.PCAP.PP.CD", "NE.CON.GOVT.ZS",
+    "NE.GDI.TOTL.ZS", "NV.AGR.TOTL.ZS", "NV.IND.TOTL.ZS", "NV.SRV.TOTL.ZS",
+    "FR.INR.RINR", "FR.INR.LEND", "CM.MKT.LCAP.GD.ZS", "GC.DOD.TOTL.GD.ZS",
+    "GC.XPN.TOTL.GD.ZS", "SL.TLF.TOTL.IN", "SL.TLF.CACT.ZS", "SL.UEM.1524.ZS",
+    "SL.EMP.SELF.ZS", "SL.AGR.EMPL.ZS", "SL.IND.EMPL.ZS", "SL.SRV.EMPL.ZS",
+    "BN.CAB.XOKA.GD.ZS", "DT.DOD.DECT.GN.ZS", "DT.TDS.DECT.EX.ZS",
+    "IC.REG.DURS", "IC.TAX.TOTL.CP.ZS", "LP.LPI.OVRL.XQ",
+    "TX.VAL.MRCH.CD.WT", "TM.VAL.MRCH.CD.WT", "NE.RSB.GNFS.ZS",
+    "FI.RES.TOTL.CD", "FB.ATM.TOTL.P5", "FS.AST.PRVT.GD.ZS", "BX.GSR.ROYL.CD",
+    "SI.POV.NAHC",
+    # energy & environment
+    "EG.USE.PCAP.KG.OE", "EG.ELC.LOSS.ZS", "EG.EGY.PRIM.PP.KD",
+    "EN.GHG.CH4.MT.CE.AR5", "ER.LND.PTLD.ZS", "ER.PTD.TOTL.ZS",
+    "ER.FSH.PROD.MT", "ER.H2O.INTR.PC", "AG.CON.FERT.ZS", "AG.YLD.CREL.KG",
+    "AG.PRD.LVSK.XD",
+    # infrastructure, tech, tourism
+    "IS.RRS.TOTL.KM", "IS.AIR.DPRT", "IS.SHP.GOOD.TU", "IT.MLT.MAIN.P2",
+    "ST.INT.XPND.CD", "ST.INT.RCPT.CD",
+    # politics, conflict, gender
+    "VC.BTL.DETH", "MS.MIL.MPRT.KD", "SG.LAW.INDX",
+]
+
+PREFIX_CAT = {
+    "SP": "Population", "SM": "Population",
+    "SH": "Health", "SN": "Health",
+    "SE": "Education & Science", "GB": "Education & Science", "IP": "Education & Science",
+    "EG": "Energy",
+    "EN": "Environment", "ER": "Environment", "AG": "Environment",
+    "IT": "Lifestyle", "IS": "Lifestyle", "ST": "Lifestyle",
+    "MS": "Politics", "VC": "Politics", "SG": "Politics", "IQ": "Politics",
+}
+RAMP_CYCLE = ["blue", "teal", "green", "orange", "purple"]
+
+
+def build_bulk_datasets(data_dir, iso_set):
+    """Derive dataset metadata for BULK_CODES from the API payloads themselves."""
+    import statistics
+    out = []
+    existing = {ds.get("code") for ds in DATASETS}
+    for i, code in enumerate(BULK_CODES):
+        if code in existing:
+            continue
+        f = data_dir / f"wb_{code}.json"
+        if not f.exists():
+            continue
+        try:
+            raw = json.loads(f.read_text())
+            rows = [r for r in (raw[1] or [])
+                    if r.get("value") is not None and r.get("countryiso3code") in iso_set]
+        except Exception:
+            continue
+        if len(rows) < 700:            # too sparse to be a credible layer
+            continue
+        name = rows[0]["indicator"]["value"]
+        if "(" in name and name.endswith(")"):
+            title, unit = name.rsplit("(", 1)
+            title, unit = title.strip().rstrip(","), unit[:-1]
+        else:
+            title, unit = name, ""
+        vals = [r["value"] for r in rows]
+        med = statistics.median(abs(v) for v in vals)
+        if "%" in unit:
+            fmt = "pct"
+        elif "US$" in unit or "USD" in unit:
+            fmt = "usd"
+        else:
+            fmt = "int" if med >= 1000 else "num1" if med >= 10 else "num2"
+        pos = sorted(v for v in vals if v > 0)
+        log = (len(pos) == len(vals) and len(pos) > 20
+               and pos[int(len(pos) * .95)] / max(1e-9, pos[int(len(pos) * .05)]) > 50)
+        desc = name + "."
+        mf = data_dir / f"wbmeta_{code}.json"
+        if mf.exists():
+            try:
+                m = json.loads(mf.read_text())[1][0]
+                note = (m.get("sourceNote") or "").strip()
+                if note:
+                    desc = note[:240] + ("…" if len(note) > 240 else "")
+            except Exception:
+                pass
+        out.append({"id": code.lower().replace(".", "-"), "code": code,
+                    "title": title, "cat": PREFIX_CAT.get(code[:2], "Economics"),
+                    "unit": unit or "value", "fmt": fmt,
+                    "ramp": RAMP_CYCLE[i % len(RAMP_CYCLE)], "log": log, "desc": desc})
+    return out
+
+
 POINT_LAYERS = [
     {"id": "earthquakes", "title": "Earthquakes M6+", "cat": "Geography", "mode": "year",
      "unit": "moment magnitude", "color": "#E88B3A", "shape": "circle",
@@ -432,8 +536,10 @@ def main():
             return None
         return [idx[0]] + arr[idx[0]:idx[-1] + 1]
 
+    all_datasets = DATASETS + build_bulk_datasets(data_dir, iso_set)
+
     values = {}
-    for ds in DATASETS:
+    for ds in all_datasets:
         per = {}
         if ds.get("loader") == "owid":
             import csv
@@ -570,7 +676,9 @@ def main():
     point_data["cities"] = pts
 
     meta_keys = ("id", "title", "cat", "unit", "fmt", "ramp", "log", "desc")
-    meta = [{**{k: ds[k] for k in meta_keys}, **({"src": ds["src"]} if "src" in ds else {})} for ds in DATASETS]
+    meta = [{**{k: ds[k] for k in meta_keys}, **({"src": ds["src"]} if "src" in ds else {})}
+            for ds in all_datasets if values.get(ds["id"])]
+    values = {k: v for k, v in values.items() if v}
     pmeta = [{**{k: pl[k] for k in ("id", "title", "cat", "unit", "mode", "color", "shape", "desc", "src")},
               **({"cats": pl["cats"]} if "cats" in pl else {}),
               "count": len(point_data[pl["id"]])} for pl in POINT_LAYERS]
