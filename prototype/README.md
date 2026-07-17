@@ -37,6 +37,8 @@ python3 build.py <data_dir> [out_path]
 | Correlation Mode (06-ai §4) | Client-side Spearman ρ, BH-FDR correction, partial ρ controlling log GDP per capita, tier labels, scatter view, non-causal language |
 | Discover (10-review §1) | Data-verified fact generator (top-of-world, fastest riser, hidden link) |
 | Heatmaps (03-architecture §5) | Canvas-rendered density heatmaps for any point layer (per-layer toggle; magnitude-weighted for earthquakes; year-aware) |
+| Sub-national layers (spec principle 4) | US states (Census population 2010–2024) and EU NUTS-2 regions (Eurostat GDP per capita, population density) as a second geometry level with auto fly-to, level-aware rankings and tooltips; country-only features (correlation, profiles) are guarded |
+| Live layers (07-performance §6) | Baked 30-day M4.5+ earthquake snapshot in the single file; true live relay implemented in statmaps-app (`/v1/live/earthquakes`, 60 s cache) |
 | Rankings | Side panel: full country leaderboard for the active layer/year with continent chips and free-text country filtering; global ranks preserved under filters |
 | Provenance (README principle 2) | Source, licence, retrieval date, classification method on every layer |
 

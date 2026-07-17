@@ -290,6 +290,26 @@ DATASETS = [
      "src": {"name": "NCD-RisC via Our World in Data", "licence": "CC BY 4.0",
              "url": "https://ourworldindata.org/grapher/average-height-of-men"},
      "desc": "Mean adult height of men by year of birth. The timeline year is the birth cohort; the series ends with the 1996 cohort."},
+    {"id": "plastic-waste", "loader": "owid", "file": "owid_plastic-waste-per-capita.csv", "title": "Plastic waste per person", "cat": "Environment",
+     "unit": "kg per person per day", "fmt": "num2", "ramp": "orange", "log": False,
+     "src": {"name": "Jambeck et al. via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/plastic-waste-per-capita"},
+     "desc": "Plastic waste generated per person per day (coastal populations, 2010 study year)."},
+    {"id": "mismanaged-plastic", "loader": "owid", "file": "owid_mismanaged-plastic-waste-per-capita.csv", "title": "Mismanaged plastic waste", "cat": "Environment",
+     "unit": "kg per person per year", "fmt": "num1", "ramp": "orange", "log": False,
+     "src": {"name": "Meijer et al. via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/mismanaged-plastic-waste-per-capita"},
+     "desc": "Plastic waste that is littered or inadequately disposed of and at risk of entering the ocean."},
+    {"id": "antibiotics-livestock", "loader": "owid", "file": "owid_antibiotic-use-in-livestock.csv", "title": "Antibiotic use in livestock", "cat": "Health",
+     "unit": "mg per PCU", "fmt": "num1", "ramp": "purple", "log": True,
+     "src": {"name": "Mulchandani et al. via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/antibiotic-use-in-livestock"},
+     "desc": "Antimicrobial usage in food animals, milligrams per population-corrected unit — a driver of antibiotic resistance."},
+    {"id": "refugees-origin", "loader": "owid", "file": "owid_refugee-population-by-country-or-territory-of-origin.csv", "title": "Refugees by origin", "cat": "Population",
+     "unit": "people (UNHCR)", "fmt": "int", "ramp": "orange", "log": True,
+     "src": {"name": "UNHCR via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/refugee-population-by-country-or-territory-of-origin"},
+     "desc": "People recognised as refugees, by the country they fled from."},
     {"id": "bigmac", "loader": "bigmac", "file": "bigmac.csv", "title": "Big Mac price", "cat": "Weird & Fun",
      "unit": "US$ at market exchange rates", "fmt": "usd2", "ramp": "orange", "log": False,
      "src": {"name": "The Economist Big Mac Index", "licence": "Open data (GitHub)",
@@ -455,6 +475,44 @@ POINT_LAYERS = [
      "unit": "launch site", "color": "#E86F9E", "shape": "triangle", "wikidata": "wd_spaceports.json",
      "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
      "desc": "Rocket launch sites and cosmodromes."},
+    {"id": "museums", "title": "Museums", "cat": "Entertainment & Culture", "mode": "static",
+     "unit": "museum", "color": "#9C6BB1", "shape": "circle", "wikidata": "wd_museums.json",
+     "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
+     "desc": "Notable museums (six or more Wikipedia language editions)."},
+    {"id": "universities", "title": "Universities", "cat": "Education & Science", "mode": "static",
+     "unit": "university", "color": "#3572B0", "shape": "circle", "wikidata": "wd_universities.json",
+     "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
+     "desc": "Notable universities (ten or more Wikipedia language editions)."},
+    {"id": "lighthouses", "title": "Lighthouses", "cat": "Geography", "mode": "static",
+     "unit": "lighthouse", "color": "#E8B93A", "shape": "circle", "wikidata": "wd_lighthouses.json",
+     "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
+     "desc": "Lighthouses with known coordinates."},
+    {"id": "nuclear-tests", "title": "Nuclear tests", "cat": "History", "mode": "static",
+     "unit": "test", "color": "#D64550", "shape": "triangle", "wikidata": "wd_nucleartests.json",
+     "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
+     "desc": "Nuclear weapons tests with documented locations. Tooltips show the year where recorded."},
+    {"id": "skyscrapers", "title": "Skyscrapers", "cat": "Weird & Fun", "mode": "static",
+     "unit": "building", "color": "#5C6B77", "shape": "circle", "wikidata": "wd_skyscrapers.json",
+     "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
+     "desc": "Notable tall buildings (eight or more Wikipedia language editions)."},
+    {"id": "stadiums", "title": "Stadiums", "cat": "Entertainment & Culture", "mode": "static",
+     "unit": "stadium", "color": "#3F8F42", "shape": "circle", "wikidata": "wd_stadiums.json",
+     "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
+     "desc": "Notable stadiums (four or more Wikipedia language editions)."},
+    {"id": "cathedrals", "title": "Cathedrals", "cat": "History", "mode": "static",
+     "unit": "cathedral", "color": "#8A5BC2", "shape": "circle", "wikidata": "wd_cathedrals.json",
+     "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
+     "desc": "Cathedrals with known coordinates."},
+    {"id": "impact-craters", "title": "Impact craters", "cat": "Geography", "mode": "static",
+     "unit": "crater", "color": "#8A6B4D", "shape": "circle", "wikidata": "wd_craters.json",
+     "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
+     "desc": "Confirmed and suspected meteorite impact structures."},
+    {"id": "recent-quakes", "title": "Recent earthquakes (30 days)", "cat": "Geography", "mode": "static",
+     "unit": "M4.5+ events", "color": "#E88B3A", "shape": "circle",
+     "src": {"name": "USGS real-time feed", "licence": "Public domain",
+             "url": "https://earthquake.usgs.gov/earthquakes/feed/"},
+     "desc": "Magnitude 4.5+ earthquakes from the last 30 days — a snapshot taken when this page was built. "
+             "A true live layer streams from the StatMaps API (see statmaps-app /v1/live/earthquakes)."},
 ]
 
 
@@ -637,6 +695,16 @@ def main():
         if "wikidata" in pl:
             point_data[pl["id"]] = load_wikidata_points(pl["wikidata"])
 
+    # recent earthquakes snapshot: [x, y, 0, label] (generic tooltip shape)
+    rq = json.loads((data_dir / "usgs_recent.json").read_text())
+    pts = []
+    for f in rq["features"]:
+        lon, lat = f["geometry"]["coordinates"][:2]
+        x, y = project(lon, lat)
+        day = datetime.fromtimestamp(f["properties"]["time"] / 1000, tz=timezone.utc).strftime("%Y-%m-%d")
+        pts.append([x, y, 0, f"M {f['properties']['mag']} · {day}"])
+    point_data["recent-quakes"] = pts
+
     import csv as csvmod
     # airports: [x, y, name]
     pts = []
@@ -744,6 +812,12 @@ def main():
         ("cities", "megacities-per-country", "Cities over 1M per country", "Population",
          "cities ≥ 1M people", "Urban agglomerations of one million or more.",
          {"name": "Natural Earth (derived by StatMaps)", "licence": "Public domain", "url": "https://www.naturalearthdata.com"}),
+        ("museums", "museums-per-country", "Museums per country", "Entertainment & Culture",
+         "notable museums", "Notable museums on present-day territory." + WIKI_BIAS, wd_src),
+        ("universities", "universities-per-country", "Universities per country", "Education & Science",
+         "notable universities", "Notable universities on present-day territory." + WIKI_BIAS, wd_src),
+        ("nuclear-tests", "nuclear-tests-per-country", "Nuclear tests per country", "History",
+         "documented tests", "Nuclear weapons tests conducted on present-day territory (not by that country's government — e.g. tests in Kazakhstan were Soviet)." + WIKI_BIAS, wd_src),
     ]
     point_iso_cache = {}
     for pl_id, did, title, cat, unit, desc, src in simple_counts:
@@ -795,6 +869,94 @@ def main():
             per, static=False, ramp="teal",
             src={"name": "Wikidata (derived by StatMaps)", "licence": "CC0", "url": "https://www.wikidata.org"})
 
+    # ---- sub-national level: geometries + datasets -----------------------
+    sub = {}
+
+    def load_sub_geo(fname, code_of, name_of):
+        g = json.loads((data_dir / fname).read_text())
+        p, n = {}, {}
+        for f in g["features"]:
+            code, nm = code_of(f), name_of(f)
+            if not code:
+                continue
+            geom = f["geometry"]
+            polys = geom["coordinates"] if geom["type"] == "MultiPolygon" else [geom["coordinates"]]
+            d = "".join(ring_to_path(ring, tx) for poly in polys for ring in poly)
+            if d:
+                p[code] = d
+                n[code] = nm
+        return {"paths": p, "names": n}
+
+    sub["us-state"] = load_sub_geo("us-states.geojson",
+                                   lambda f: f.get("id"), lambda f: f["properties"]["name"])
+    sub["nuts2"] = load_sub_geo("nuts2.geojson",
+                                lambda f: f["properties"]["NUTS_ID"],
+                                lambda f: f["properties"]["NUTS_NAME"])
+
+    def sub_dataset(ds, per):
+        ds["ctrl"] = ds.get("ctrl", "population")
+        values[ds["id"]] = {c: t for c, arr in per.items() if (t := trim(arr)) is not None}
+        all_datasets.append(ds)
+
+    # US state population (Census Bureau estimates, 2010-2024)
+    import csv as csvmod2
+    per = {}
+    for fname, cols in (("census_state_2020.csv", range(2010, 2021)),
+                        ("census_state_2024.csv", range(2020, 2025))):
+        with open(data_dir / fname, newline="", encoding="latin-1") as fh:
+            for r in csvmod2.DictReader(fh):
+                if r.get("SUMLEV") != "040" or r["STATE"] not in sub["us-state"]["paths"]:
+                    continue
+                arr = per.setdefault(r["STATE"], [None] * len(YEARS))
+                for y in cols:
+                    v = r.get(f"POPESTIMATE{y}")
+                    if v:
+                        arr[y - YEARS[0]] = int(v)
+    sub_dataset({"id": "us-state-population", "title": "US state population", "cat": "Population",
+                 "unit": "people", "fmt": "int", "ramp": "blue", "log": False, "level": "us-state",
+                 "src": {"name": "US Census Bureau population estimates", "licence": "Public domain",
+                         "url": "https://www.census.gov/programs-surveys/popest.html"},
+                 "desc": "Annual resident population estimates by state, 2010–2024."}, per)
+
+    # Eurostat NUTS-2 datasets (JSON-stat 2.0)
+    def eurostat_series(fname):
+        e = json.loads((data_dir / fname).read_text())
+        dims, sizes = e["id"], e["size"]
+        geo_i = dims.index("geo")
+        time_i = dims.index("time")
+        geo_cat = list(e["dimension"]["geo"]["category"]["index"].items())
+        time_cat = {i: int(y) for y, i in e["dimension"]["time"]["category"]["index"].items()}
+        stride = 1
+        strides = [0] * len(sizes)
+        for i in range(len(sizes) - 1, -1, -1):
+            strides[i] = stride
+            stride *= sizes[i]
+        per = {}
+        for geo, gi in geo_cat:
+            if len(geo) != 4 or geo not in sub["nuts2"]["paths"]:
+                continue
+            for ti, year in time_cat.items():
+                if not (YEARS[0] <= year <= YEARS[-1]):
+                    continue
+                v = e["value"].get(str(gi * strides[geo_i] + ti * strides[time_i]))
+                if v is None:
+                    continue
+                per.setdefault(geo, [None] * len(YEARS))[year - YEARS[0]] = sig(v)
+        return per
+
+    sub_dataset({"id": "nuts2-gdp-per-capita", "title": "EU regional GDP per capita", "cat": "Economics",
+                 "unit": "€ per inhabitant", "fmt": "eur", "ramp": "green", "log": True, "level": "nuts2",
+                 "src": {"name": "Eurostat (nama_10r_2gdp)", "licence": "CC BY 4.0",
+                         "url": "https://ec.europa.eu/eurostat/databrowser/product/view/nama_10r_2gdp"},
+                 "desc": "Regional gross domestic product per inhabitant at NUTS-2 level."},
+                eurostat_series("eurostat_gdp.json"))
+    sub_dataset({"id": "nuts2-density", "title": "EU regional population density", "cat": "Population",
+                 "unit": "people per km²", "fmt": "num1", "ramp": "purple", "log": True, "level": "nuts2",
+                 "src": {"name": "Eurostat (demo_r_d3dens)", "licence": "CC BY 4.0",
+                         "url": "https://ec.europa.eu/eurostat/databrowser/product/view/demo_r_d3dens"},
+                 "desc": "Population per square kilometre at NUTS-2 level."},
+                eurostat_series("eurostat_density.json"))
+
     # continent lookup for the rankings filter (Natural Earth admin-0 attributes)
     continents = {}
     ne = json.loads((data_dir / "ne110_admin0.geojson").read_text())
@@ -809,7 +971,7 @@ def main():
         continents[iso] = "Oceania" if iso in ("FJI",) else continents.get(iso, "Asia")
 
     meta_keys = ("id", "title", "cat", "unit", "fmt", "ramp", "log", "desc")
-    opt_keys = ("src", "ctrl", "static")
+    opt_keys = ("src", "ctrl", "static", "level")
     meta = [{**{k: ds[k] for k in meta_keys}, **{k: ds[k] for k in opt_keys if k in ds}}
             for ds in all_datasets if values.get(ds["id"])]
     values = {k: v for k, v in values.items() if v}
@@ -818,7 +980,7 @@ def main():
               "count": len(point_data[pl["id"]])} for pl in POINT_LAYERS]
     payload = {
         "H": H, "years": YEARS, "names": names, "paths": paths,
-        "continents": continents,
+        "sub": sub, "continents": continents,
         "datasets": meta, "values": values,
         "pointLayers": pmeta, "points": point_data,
         "source": {"name": "World Bank Open Data", "licence": "CC BY 4.0",

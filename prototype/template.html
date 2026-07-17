@@ -46,6 +46,8 @@ button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outli
 #map path.sel{stroke:var(--accent); stroke-width:2}
 #ovl path{pointer-events:none; stroke:none}
 #ovl{mix-blend-mode:multiply}
+#subs path{stroke:var(--border-c); stroke-width:.4; vector-effect:non-scaling-stroke; transition:fill .25s}
+#subs path.sel{stroke:var(--accent); stroke-width:1.6}
 #pts .pt{stroke:var(--panel); stroke-width:.5; cursor:pointer}
 #pts .pt.dim{opacity:.55}
 .ptrow .dot{width:11px; height:11px; border-radius:50%; flex:none}
@@ -339,7 +341,7 @@ button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outli
 }
 </style>
 
-<div id="stage"><svg id="map" aria-label="World map"><g id="world"><g id="base"></g><g id="ovl"></g><g id="pts"></g></g></svg></div>
+<div id="stage"><svg id="map" aria-label="World map"><g id="world"><g id="base"></g><g id="ovl"></g><g id="subs"></g><g id="pts"></g></g></svg></div>
 
 <header id="topbar">
   <div id="brand"><b>Stat<em>Maps</em></b><span>Atlas Prototype</span></div>
@@ -511,6 +513,7 @@ function fmt(v,f){
     case "usd": return "$"+(v>=1e5?compact.format(v):full.format(Math.round(v)));
     case "pct": return (v>=100?Math.round(v):v.toFixed(1))+"%";
     case "usd2": return "$"+v.toFixed(2);
+    case "eur": return "€"+(v>=1e5?compact.format(v):full.format(Math.round(v)));
     case "num1": return v.toFixed(1);
     default: return v>=100?full.format(Math.round(v)):v.toFixed(2);
   }
@@ -531,9 +534,17 @@ function fullSeries(dsId,iso){
   for(let i=1;i<s.length;i++) out[s[0]+i-1]=s[i];
   return out;
 }
+function entsOf(dsId){
+  const l=dsById[dsId]&&dsById[dsId].level;
+  return l?Object.keys(D.sub[l].paths):ISOS;
+}
+function nameOfEnt(code,dsId){
+  const l=dsById[dsId]&&dsById[dsId].level;
+  return l?D.sub[l].names[code]:D.names[code];
+}
 function breaksFor(dsId,year){
   const ds=dsById[dsId], vs=[];
-  for(const iso of ISOS){ const v=val(dsId,iso,year); if(v!=null&&(!ds.log||v>0)) vs.push(ds.log?Math.log10(v):v); }
+  for(const iso of entsOf(dsId)){ const v=val(dsId,iso,year); if(v!=null&&(!ds.log||v>0)) vs.push(ds.log?Math.log10(v):v); }
   vs.sort((a,b)=>a-b);
   if(vs.length<5) return null;
   const q=p=>vs[Math.min(vs.length-1,Math.floor(p*vs.length))];
@@ -560,6 +571,23 @@ for(const iso of ISOS){
   D.paths[iso].replace(/[ML]([\d.]+),([\d.]+)/g,(m,a,b)=>{
     a=+a;b=+b; if(a<mx)mx=a; if(a>Mx)Mx=a; if(b<my)my=b; if(b>My)My=b; return "";});
   bbox[iso]=[mx,my,Mx,My];
+}
+/* sub-national geometry groups (US states, EU NUTS-2) */
+const subPaths={}, subBBox={};
+for(const lvl in (D.sub||{})){
+  const g=document.createElementNS("http://www.w3.org/2000/svg","g");
+  g.id="sub-"+lvl; g.style.display="none"; $("subs").appendChild(g);
+  subPaths[lvl]={}; subBBox[lvl]={};
+  for(const code in D.sub[lvl].paths){
+    const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d",D.sub[lvl].paths[code]);
+    p.dataset.sub=code; p.dataset.lvl=lvl;
+    g.appendChild(p); subPaths[lvl][code]=p;
+    let mx=1e9,my=1e9,Mx=-1e9,My=-1e9;
+    D.sub[lvl].paths[code].replace(/[ML]([\d.]+),([\d.]+)/g,(m,a,b)=>{
+      a=+a;b=+b; if(a<mx)mx=a; if(a>Mx)Mx=a; if(b<my)my=b; if(b>My)My=b; return "";});
+    subBBox[lvl][code]=[mx,my,Mx,My];
+  }
 }
 function applyView(){
   const v=S.view, h=v.w*H/W;
@@ -725,21 +753,40 @@ function paint(){
       toast(`${ds.title}: showing ${y2} (latest year with data)`);
     }
   }
+  /* switching to a sub-national layer flies to its extent */
+  if(ds.level && S.layer!==lastPaintedLayer){
+    let mx=1e9,my=1e9,Mx=-1e9,My=-1e9;
+    for(const code in subBBox[ds.level]){
+      const b=subBBox[ds.level][code];
+      if(b[0]<mx)mx=b[0]; if(b[1]<my)my=b[1]; if(b[2]>Mx)Mx=b[2]; if(b[3]>My)My=b[3];
+    }
+    if(ds.level==="nuts2"){ mx=Math.max(mx,380); My=Math.min(My,220); }  /* clip overseas territories */
+    const cw=Math.max((Mx-mx)*1.15,60);
+    flyTo({x:(mx+Mx)/2-cw/2, y:(my+My)/2-cw*H/W/2, w:cw});
+  }
   lastPaintedLayer=S.layer;
   const ramp=RAMPS[ds.ramp];
-  const dso=S.ovl?dsById[S.ovl]:null;
+  const lvl=ds.level||null;
+  const dso=(!lvl&&S.ovl&&!dsById[S.ovl].level)?dsById[S.ovl]:null;
   curBO=dso?breaksFor(S.ovl,S.year):null;
   let rampO=null;
   if(dso){ rampO=RAMPS[dso.ramp===ds.ramp?(ds.ramp==="orange"?"purple":"orange"):dso.ramp]; }
   for(const iso of ISOS){
-    const v=val(S.layer,iso,S.year);
-    const c=curB?classify(v,curB,ds):-1;
+    const c=lvl?-1:(curB?classify(val(S.layer,iso,S.year),curB,ds):-1);
     basePaths[iso].style.fill = c<0?"var(--land)":ramp[c];
     if(dso&&curBO){
       const vo=val(S.ovl,iso,S.year), co=classify(vo,curBO,dso);
       ovlPaths[iso].style.fill = co<0?"transparent":rampO[co];
       ovlPaths[iso].style.display="";
     } else ovlPaths[iso].style.display="none";
+  }
+  for(const l in subPaths){
+    const on=l===lvl;
+    document.getElementById("sub-"+l).style.display=on?"":"none";
+    if(on) for(const code in subPaths[l]){
+      const c=curB?classify(val(S.layer,code,S.year),curB,ds):-1;
+      subPaths[l][code].style.fill=c<0?"var(--land)":ramp[c];
+    }
   }
   paintPts();
   paintLegend(ds,ramp,dso,rampO);
@@ -816,7 +863,8 @@ function renderList(filter){
       <span><span class="tt">${d.title}</span><br><span class="su">${d.cat} · ${d.unit}</span></span>
       <span class="tags">
         ${d.id===S.layer?'<span class="pill act">active</span>':""}
-        <span class="ovbtn${d.id===S.ovl?" act":""}" data-ov="${d.id}" role="button" tabindex="0" title="Toggle as overlay">${d.id===S.ovl?"overlay ✕":"+ overlay"}</span>
+        ${d.level?'<span class="pill">'+(d.level==="us-state"?"US states":"EU regions")+"</span>":
+          `<span class="ovbtn${d.id===S.ovl?" act":""}" data-ov="${d.id}" role="button" tabindex="0" title="Toggle as overlay">${d.id===S.ovl?"overlay ✕":"+ overlay"}</span>`}
       </span></button>`;
   }).join("");
   const pls=(D.pointLayers||[]).filter(p=>(S.cat==="All"||p.cat===S.cat)&&(!q||(p.title+" "+p.cat).toLowerCase().includes(q)));
@@ -909,7 +957,7 @@ function fillDetail(){
   $("cunit").textContent=ds.unit;
   drawSpark(iso,ds);
   $("profhead").textContent=`Profile · ${S.year}`;
-  $("prof").innerHTML=D.datasets.map(d=>{
+  $("prof").innerHTML=D.datasets.filter(d=>!d.level).map(d=>{
     const pv=val(d.id,iso,S.year);
     return `<button data-id="${d.id}" title="Switch map to ${d.title}"><span class="k">${d.title}</span><span class="v">${fmt(pv,d.fmt)}</span></button>`;
   }).join("");
@@ -942,6 +990,16 @@ svg.addEventListener("pointermove",e=>{
   const ptTipTxt=e.target.dataset&&e.target.dataset.tip;
   if(ptTipTxt){
     tip.innerHTML=`<b>${ptTipTxt}</b>`; tip.style.display="block";
+    tip.style.left=Math.min(e.clientX+14,innerWidth-250)+"px";
+    tip.style.top=Math.min(e.clientY+14,innerHeight-70)+"px";
+    return;
+  }
+  const sub=e.target.dataset&&e.target.dataset.sub;
+  if(sub){
+    const ds=dsById[S.layer];
+    if((ds.level||null)!==e.target.dataset.lvl){ tip.style.display="none"; return; }
+    tip.innerHTML=`<b>${D.sub[ds.level].names[sub]}</b><span class="tv">${ds.title}: ${fmt(val(S.layer,sub,S.year),ds.fmt)}</span>`;
+    tip.style.display="block";
     tip.style.left=Math.min(e.clientX+14,innerWidth-250)+"px";
     tip.style.top=Math.min(e.clientY+14,innerHeight-70)+"px";
     return;
@@ -991,7 +1049,15 @@ svg.addEventListener("pointerup",e=>{
   if(!moved){
     const t=e.target.dataset||{};
     if(t.tip) toast(t.tip);
-    else if(t.iso) selectCountry(t.iso,false);
+    else if(t.sub){
+      const ds=dsById[S.layer];
+      if((ds.level||null)===t.lvl){
+        const ents=entsOf(S.layer).map(c=>({c,v:val(S.layer,c,S.year)})).filter(r=>r.v!=null).sort((a,b)=>b.v-a.v);
+        const ri=ents.findIndex(r=>r.c===t.sub), v=val(S.layer,t.sub,S.year);
+        toast(`${D.sub[ds.level].names[t.sub]} — ${ds.title}: ${fmt(v,ds.fmt)}${ri>=0?` (#${ri+1} of ${ents.length})`:""}`);
+      }
+    }
+    else if(t.iso&&!dsById[S.layer].level) selectCountry(t.iso,false);
     else { $("detail").classList.remove("open"); $("drawer").classList.remove("open"); } }
 });
 svg.addEventListener("pointercancel",endPtr);
@@ -1077,7 +1143,7 @@ function correlate(targetId,year){
     (targetId==="gdp-per-capita" ? "population" : "gdp-per-capita");
   const out=[];
   for(const d of D.datasets){
-    if(d.id===targetId) continue;
+    if(d.id===targetId||d.level) continue;
     const xs=[],ys=[],zs=[],isos=[];
     for(const iso of ISOS){
       const a=val(targetId,iso,year), b=val(d.id,iso,year), c=val(ctrlId,iso,year);
@@ -1134,6 +1200,10 @@ function renderCorr(){
   $("corrlist").style.display=""; $("scat").style.display="none";
   const ds=dsById[S.layer];
   $("corrtgt").textContent=ds.title; $("corryr").textContent=S.year;
+  if(ds.level){
+    $("corrlist").innerHTML=`<div class="empty">Correlation Mode runs on country-level layers — switch to a country dataset to scan the catalogue. Sub-national correlation ships with the full app (statmaps-app API).</div>`;
+    return;
+  }
   const {ctrlId,results}=correlate(S.layer,S.year);
   if(!results.length){
     $("corrlist").innerHTML=`<div class="empty">Not enough overlapping data in ${S.year}. Try an earlier year on the timeline — some series end before 2023.</div>`;
@@ -1206,29 +1276,39 @@ let rankCont="All", rankQ="";
 function rankOpenState(){ return $("rank").classList.contains("open"); }
 function rankRefresh(){ if(rankOpenState()) renderRank(); }
 function renderRank(){
-  const ds=dsById[S.layer];
+  const ds=dsById[S.layer], lvl=ds.level||null;
   $("ranktgt").textContent=ds.title; $("rankyr").textContent=S.year;
-  $("rankconts").innerHTML=CONTS.map(c=>
-    `<button class="chip${c===rankCont?" on":""}" data-c="${c}">${c==="North America"?"N. America":c==="South America"?"S. America":c}</button>`).join("");
-  $("rankconts").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{ rankCont=b.dataset.c; renderRank(); });
-  const ranked=ISOS.map(iso=>({iso,v:val(S.layer,iso,S.year)})).filter(r=>r.v!=null)
+  $("rankconts").style.display=lvl?"none":"";
+  if(!lvl){
+    $("rankconts").innerHTML=CONTS.map(c=>
+      `<button class="chip${c===rankCont?" on":""}" data-c="${c}">${c==="North America"?"N. America":c==="South America"?"S. America":c}</button>`).join("");
+    $("rankconts").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{ rankCont=b.dataset.c; renderRank(); });
+  }
+  const ranked=entsOf(S.layer).map(iso=>({iso,v:val(S.layer,iso,S.year)})).filter(r=>r.v!=null)
     .sort((a,b)=>b.v-a.v).map((r,i)=>({...r,rank:i+1}));
   const terms=rankQ.toLowerCase().split(",").map(t=>t.trim()).filter(Boolean);
   let shown=ranked;
-  if(rankCont!=="All") shown=shown.filter(r=>D.continents[r.iso]===rankCont);
-  if(terms.length) shown=shown.filter(r=>terms.some(t=>D.names[r.iso].toLowerCase().includes(t)));
+  if(!lvl&&rankCont!=="All") shown=shown.filter(r=>D.continents[r.iso]===rankCont);
+  if(terms.length) shown=shown.filter(r=>terms.some(t=>nameOfEnt(r.iso,S.layer).toLowerCase().includes(t)));
   const maxAbs=Math.max(1e-12,...ranked.slice(0,1).map(r=>Math.abs(r.v)));
+  const unitWord=lvl==="us-state"?"states":lvl==="nuts2"?"regions":"countries";
   $("ranklist").innerHTML=shown.length?shown.map(r=>`
     <button class="rrow${r.iso===S.sel?" sel":""}" data-iso="${r.iso}">
-      <span class="rn">#${r.rank}</span><span class="nm">${D.names[r.iso]}</span>
+      <span class="rn">#${r.rank}</span><span class="nm">${nameOfEnt(r.iso,S.layer)}</span>
       <span class="vbarw"><span class="vbar" style="width:${Math.max(2,Math.min(100,Math.abs(r.v)/maxAbs*100)).toFixed(1)}%"></span></span>
       <span class="vv">${fmt(r.v,ds.fmt)}</span>
     </button>`).join(""):
-    '<div style="padding:18px;font-size:13px;color:var(--muted)">No countries match this filter for '+S.year+'.</div>';
+    `<div style="padding:18px;font-size:13px;color:var(--muted)">No ${unitWord} match this filter for ${S.year}.</div>`;
   $("ranklist").querySelectorAll(".rrow").forEach(b=>b.onclick=()=>{
-    selectCountry(b.dataset.iso,true,true); renderRank();
+    if(lvl){
+      const bb=subBBox[lvl][b.dataset.iso];
+      if(bb){ const cw=Math.max((bb[2]-bb[0])*3,40);
+        flyTo({x:(bb[0]+bb[2])/2-cw/2, y:(bb[1]+bb[3])/2-cw*H/W/2, w:cw}); }
+      document.querySelectorAll("#subs path.sel").forEach(p=>p.classList.remove("sel"));
+      const sp=subPaths[lvl][b.dataset.iso]; if(sp){ sp.classList.add("sel"); sp.parentNode.appendChild(sp); }
+    } else { selectCountry(b.dataset.iso,true,true); renderRank(); }
   });
-  $("rankfoot").textContent=`${shown.length} of ${ranked.length} countries · ${ds.unit} · rank is global, filters only hide rows · tap a row to locate`;
+  $("rankfoot").textContent=`${shown.length} of ${ranked.length} ${unitWord} · ${ds.unit} · rank is global, filters only hide rows · tap a row to locate`;
 }
 $("rankbtn").onclick=()=>{
   const open=rankOpenState();
@@ -1240,16 +1320,18 @@ $("rankq").addEventListener("input",()=>{ rankQ=$("rankq").value; renderRank(); 
 
 /* ---------- discover ---------- */
 function latestYearWithData(dsId,minN){
+  const ents=entsOf(dsId), need=Math.min(minN||40,Math.max(5,ents.length>>2));
   for(let y=YEARS[YEARS.length-1]; y>=YEARS[0]; y--){
-    let c=0; for(const iso of ISOS){ if(val(dsId,iso,y)!=null&&++c>=(minN||40)) break; }
-    if(c>=(minN||40)) return y;
+    let c=0; for(const iso of ents){ if(val(dsId,iso,y)!=null&&++c>=need) break; }
+    if(c>=need) return y;
   }
   return null;
 }
 let curFact=null;
 function makeFact(){
   const kind=["top","riser","link"][Math.floor(Math.random()*3)];
-  const ds=D.datasets[Math.floor(Math.random()*D.datasets.length)];
+  const pool=D.datasets.filter(d=>!d.level);
+  const ds=pool[Math.floor(Math.random()*pool.length)];
   const y=latestYearWithData(ds.id); if(!y) return makeFact();
   if(kind==="top"){
     let best=null,bv=-Infinity;

@@ -172,6 +172,24 @@ app.get<{
   };
 });
 
+/**
+ * Live layer relay (spec 07-performance §6): the API polls the upstream feed
+ * and serves it with a short cache so thousands of clients produce one
+ * upstream request per minute. Same pattern extends to NASA FIRMS wildfires
+ * and ADS-B flights (those upstreams require API keys).
+ */
+let liveQuakes: { at: number; body: unknown } | null = null;
+app.get("/v1/live/earthquakes", async (_req, reply) => {
+  if (!liveQuakes || Date.now() - liveQuakes.at > 60_000) {
+    const r = await fetch(
+      "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+    );
+    liveQuakes = { at: Date.now(), body: await r.json() };
+  }
+  reply.header("Cache-Control", "public, max-age=60");
+  return liveQuakes.body;
+});
+
 const port = Number(process.env.PORT ?? 8787);
 app.listen({ port, host: "0.0.0.0" }).then(() => {
   console.log(`statmaps api listening on :${port}`);
