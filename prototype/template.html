@@ -517,9 +517,11 @@ function fmt(v,f){
 }
 
 /* ---------- data helpers ---------- */
-/* Series are stored null-trimmed: [startIndex, v0, v1, …] */
+/* Series are stored null-trimmed: [startIndex, v0, v1, …].
+   Datasets flagged static hold one timeless value, valid for any year. */
 function val(dsId,iso,year){
   const s=D.values[dsId][iso]; if(!s) return null;
+  if(dsById[dsId]&&dsById[dsId].static) return s[1];
   const i=year-YEARS[0]-s[0];
   return (i>=0&&i<s.length-1)?s[i+1]:null;
 }
@@ -919,7 +921,7 @@ function drawSpark(iso,ds){
   const s=fullSeries(ds.id,iso)||[], el=$("spark");
   const pts=[]; let mn=Infinity,mx=-Infinity;
   s.forEach((v,i)=>{ if(v!=null){pts.push([i,v]); if(v<mn)mn=v; if(v>mx)mx=v;} });
-  if(pts.length<2){ el.innerHTML='<text x="4" y="40">No time series available.</text>'; return; }
+  if(pts.length<2){ el.innerHTML='<text x="4" y="40">'+(ds.static?'Static layer — one timeless value.':'No time series available.')+'</text>'; return; }
   if(mn===mx){mn-=1;mx+=1;}
   const X=i=>8+i/(YEARS.length-1)*268, Y=v=>10+(1-(v-mn)/(mx-mn))*44;
   const line=pts.map(([i,v],k)=>(k?"L":"M")+X(i).toFixed(1)+","+Y(v).toFixed(1)).join("");
@@ -1071,7 +1073,8 @@ function pval(rho,n){
 
 /* ---------- correlation engine (spec 06-ai §4) ---------- */
 function correlate(targetId,year){
-  const ctrlId = targetId==="gdp-per-capita" ? "population" : "gdp-per-capita";
+  const ctrlId = dsById[targetId].ctrl ||
+    (targetId==="gdp-per-capita" ? "population" : "gdp-per-capita");
   const out=[];
   for(const d of D.datasets){
     if(d.id===targetId) continue;
@@ -1092,13 +1095,13 @@ function correlate(targetId,year){
   out.sort((a,b)=>Math.abs(b.part)-Math.abs(a.part));
   return {ctrlId,results:out};
 }
-function tierOf(r){
-  const a=Math.abs(r.rho);
+function tierOf(r,ctrlName){
+  const a=Math.abs(r.rho), cn=(ctrlName||"GDP").toLowerCase();
   const strength=a>=0.6?"strong":a>=0.35?"moderate":"weak";
   let robust, cls;
   if(r.padj>0.05){ robust="not significant"; cls="warn"; }
-  else if(Math.abs(r.part)<0.15){ robust="explained by development"; cls="warn"; }
-  else { robust="robust to GDP control"; cls="good"; }
+  else if(Math.abs(r.part)<0.15){ robust=`explained by ${cn}`; cls="warn"; }
+  else { robust=`robust to ${cn} control`; cls="good"; }
   return {strength,robust,cls};
 }
 
@@ -1138,9 +1141,9 @@ function renderCorr(){
   }
   const ctrl=dsById[ctrlId];
   $("corrlist").innerHTML=results.slice(0,14).map((r,i)=>{
-    const t=tierOf(r), dir=r.rho>=0?"higher":"lower", sgn=r.rho>=0?"+":"−";
+    const t=tierOf(r,ctrl.title), dir=r.rho>=0?"higher":"lower", sgn=r.rho>=0?"+":"−";
     let sent=`Countries with higher <b>${ds.title.toLowerCase()}</b> tend to have ${dir} <b>${r.d.title.toLowerCase()}</b>. Correlation, not causation.`;
-    if(t.robust==="explained by development") sent+=` The link largely disappears when controlling for ${ctrl.title.toLowerCase()} (partial ρ ${r.part>=0?"+":"−"}${Math.abs(r.part).toFixed(2)}).`;
+    if(t.cls==="warn"&&t.robust!=="not significant") sent+=` The link largely disappears when controlling for ${ctrl.title.toLowerCase()} (partial ρ ${r.part>=0?"+":"−"}${Math.abs(r.part).toFixed(2)}).`;
     if(t.robust==="not significant") sent=`No reliable relationship after correcting for multiple comparisons.`;
     return `<button class="ccard" data-i="${i}">
       <span class="top"><span class="nm">${r.d.title}</span>
@@ -1154,7 +1157,8 @@ function renderCorr(){
   $("corrlist").querySelectorAll(".ccard").forEach(b=>b.onclick=()=>{ scatCand=rs[+b.dataset.i].d.id; renderScatter(scatCand); });
 }
 function renderScatter(candId){
-  const {results}=correlate(S.layer,S.year);
+  const {ctrlId,results}=correlate(S.layer,S.year);
+  const ctrlTitle=dsById[ctrlId].title;
   const r=results.find(x=>x.d.id===candId);
   if(!r){ scatCand=null; renderCorr(); return; }
   const ds=dsById[S.layer], dc=r.d;
@@ -1178,7 +1182,7 @@ function renderScatter(candId){
   const UX=v=>ds.log?Math.pow(10,v):v, UY=v=>dc.log?Math.pow(10,v):v;
   const ticks=(a,b,f,un)=>[0,1,2,3].map(k=>{const t=a+(b-a)*k/3; return {t,lb:fmt(un(t),f)};});
   const xt=ticks(x0+padx,x1-padx,ds.fmt,UX), yt=ticks(y0+pady,y1-pady,dc.fmt,UY);
-  const t=tierOf(r);
+  const t=tierOf(r,ctrlTitle);
   sc.innerHTML=`<div class="shd"><button class="iconbtn" id="scback" aria-label="Back to results">←</button>
       <h3>${dc.title} vs ${ds.title}</h3></div>
     <svg id="scatplot" viewBox="0 0 ${PW} ${PH}" role="img" aria-label="Scatter plot">
@@ -1267,10 +1271,10 @@ function makeFact(){
     return {k:"Fastest riser", t:`<b>${D.names[best]}</b> made the biggest climb in <b>${ds.title.toLowerCase()}</b>: ${fmt(v0b,ds.fmt)} (${y0b}) → ${fmt(v1b,ds.fmt)} (${y1b}), a ${ratio>=2?Math.round(ratio)+"×":"+"+Math.round((ratio-1)*100)+"%"} change.`,
       go:()=>{ S.layer=ds.id; S.year=y1b; ys.value=y1b; paint(); renderList(); selectCountry(best,true); }};
   }
-  const {results}=correlate(ds.id,y);
+  const {ctrlId,results}=correlate(ds.id,y);
   const r=results.find(x=>tierOf(x).cls==="good"&&Math.abs(x.rho)>=0.45);
   if(!r) return makeFact();
-  return {k:"Hidden link", t:`<b>${r.d.title}</b> moves ${r.rho>=0?"with":"against"} <b>${ds.title.toLowerCase()}</b> across ${r.n} countries (ρ ${r.rho>=0?"+":"−"}${Math.abs(r.rho).toFixed(2)}, ${y}) — and it survives the GDP control. Correlation, not causation.`,
+  return {k:"Hidden link", t:`<b>${r.d.title}</b> moves ${r.rho>=0?"with":"against"} <b>${ds.title.toLowerCase()}</b> across ${r.n} countries (ρ ${r.rho>=0?"+":"−"}${Math.abs(r.rho).toFixed(2)}, ${y}) — and it survives the ${dsById[ctrlId].title.toLowerCase()} control. Correlation, not causation.`,
     go:()=>{ S.layer=ds.id; S.ovl=r.d.id; S.year=y; ys.value=y; paint(); renderList(); openCorr(); scatCand=r.d.id; renderScatter(scatCand); }};
 }
 function showFact(){

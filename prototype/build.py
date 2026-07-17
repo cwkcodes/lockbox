@@ -675,6 +675,126 @@ def main():
         pts.append([x, y, round(pop / 1e6, 1), f["properties"].get("name") or ""])
     point_data["cities"] = pts
 
+    # ---- derived per-country statistics from point layers ----------------
+    # Point-in-polygon in projected space (projection is per-point bijective and
+    # source rings never cross the antimeridian, so ray casting is valid here).
+    rings_by_iso = {}
+    for iso, d in paths.items():
+        rings = []
+        for seg in d.split("M"):
+            if not seg:
+                continue
+            pts_r = [tuple(map(float, xy.split(","))) for xy in seg.rstrip("Z").split("L")]
+            if len(pts_r) >= 3:
+                xs_r = [p[0] for p in pts_r]
+                ys_r = [p[1] for p in pts_r]
+                rings.append((min(xs_r), min(ys_r), max(xs_r), max(ys_r), pts_r))
+        rings_by_iso[iso] = rings
+
+    def country_of(x, y):
+        for iso, rings in rings_by_iso.items():
+            inside = False
+            for (x0, y0, x1, y1, ring) in rings:
+                if not (x0 <= x <= x1 and y0 <= y <= y1):
+                    continue
+                j = len(ring) - 1
+                for i in range(len(ring)):
+                    xi, yi = ring[i]
+                    xj, yj = ring[j]
+                    if (yi > y) != (yj > y) and x < (xj - xi) * (y - yi) / (yj - yi) + xi:
+                        inside = not inside
+                    j = i
+            if inside:
+                return iso
+        return None
+
+    WIKI_BIAS = (" Counts reflect Wikidata/Wikipedia documentation coverage, which "
+                 "over-represents Europe and North America — treat cross-country "
+                 "comparisons with care.")
+
+    def derived(did, title, cat, unit, desc, per_iso, static=True, fmt="int", ramp="orange", src=None):
+        ds = {"id": did, "title": title, "cat": cat, "unit": unit, "fmt": fmt,
+              "ramp": ramp, "log": False, "desc": desc, "ctrl": "population"}
+        if static:
+            ds["static"] = True
+            values[did] = {iso: [0, v] for iso, v in per_iso.items()}
+        else:
+            values[did] = {iso: t for iso, arr in per_iso.items() if (t := trim(arr)) is not None}
+        if src:
+            ds["src"] = src
+        all_datasets.append(ds)
+
+    wd_src = {"name": "Wikidata (derived by StatMaps)", "licence": "CC0",
+              "url": "https://www.wikidata.org"}
+    simple_counts = [
+        ("battles", "battles-per-country", "Battles per country", "History",
+         "battles with coordinates", "Notable battles fought on the country's present-day territory." + WIKI_BIAS, wd_src),
+        ("castles", "castles-per-country", "Castles per country", "History",
+         "castles", "Notable castles on present-day territory." + WIKI_BIAS, wd_src),
+        ("observatories", "observatories-per-country", "Observatories per country", "Education & Science",
+         "observatories", "Astronomical observatories per country." + WIKI_BIAS, wd_src),
+        ("spaceports", "spaceports-per-country", "Spaceports per country", "Education & Science",
+         "launch sites", "Rocket launch sites per country." + WIKI_BIAS, wd_src),
+        ("volcanoes", "volcanoes-per-country", "Volcanoes per country", "Geography",
+         "Holocene volcanoes", "Volcanoes with Holocene activity on present-day territory.",
+         {"name": "Smithsonian GVP (derived by StatMaps)", "licence": "Free with attribution", "url": "https://volcano.si.edu"}),
+        ("airports", "airports-per-country", "Major airports per country", "Lifestyle",
+         "large airports", "Large airports with scheduled service.",
+         {"name": "OurAirports (derived by StatMaps)", "licence": "Public domain", "url": "https://ourairports.com/data/"}),
+        ("cities", "megacities-per-country", "Cities over 1M per country", "Population",
+         "cities ≥ 1M people", "Urban agglomerations of one million or more.",
+         {"name": "Natural Earth (derived by StatMaps)", "licence": "Public domain", "url": "https://www.naturalearthdata.com"}),
+    ]
+    point_iso_cache = {}
+    for pl_id, did, title, cat, unit, desc, src in simple_counts:
+        isos = [country_of(p[0], p[1]) for p in point_data[pl_id]]
+        point_iso_cache[pl_id] = isos
+        per = {iso: 0 for iso in iso_set}
+        for iso in isos:
+            if iso:
+                per[iso] += 1
+        derived(did, title, cat, unit, desc, per, src=src)
+
+    # power capacity: sum of GW in >=1GW plants
+    per = {iso: 0.0 for iso in iso_set}
+    for p, iso in zip(point_data["power-plants"], [country_of(p[0], p[1]) for p in point_data["power-plants"]]):
+        if iso:
+            per[iso] = round(per[iso] + p[3], 1)
+    derived("big-power-capacity", "Capacity in ≥1 GW plants", "Energy", "GW (plants ≥ 1 GW)",
+            "Summed nameplate capacity of power stations of at least one gigawatt (2021 snapshot).",
+            per, fmt="num1", ramp="teal",
+            src={"name": "WRI Global Power Plant Database (derived by StatMaps)", "licence": "CC BY 4.0",
+                 "url": "https://datasets.wri.org/dataset/globalpowerplantdatabase"})
+
+    # earthquakes: count per country-year (time series). Offshore quakes are not attributed.
+    per = {}
+    for p, iso in zip(point_data["earthquakes"], [country_of(p[0], p[1]) for p in point_data["earthquakes"]]):
+        if iso:
+            yi = p[2] - YEARS[0]
+            per.setdefault(iso, [0] * len(YEARS))[yi] += 1
+    derived("earthquakes-per-year", "Earthquakes per year (M6+)", "Geography", "quakes on land, M ≥ 6",
+            "Magnitude-6+ earthquakes with epicentres on the country's territory that year. "
+            "Offshore epicentres (the majority of large quakes) are not attributed to any country.",
+            per, static=False,
+            src={"name": "USGS (derived by StatMaps)", "licence": "Public domain",
+                 "url": "https://earthquake.usgs.gov"})
+
+    # UNESCO: cumulative inscribed sites by year (time series)
+    per = {}
+    for p, iso in zip(point_data["unesco-sites"], [country_of(p[0], p[1]) for p in point_data["unesco-sites"]]):
+        if iso:
+            per.setdefault(iso, [0] * len(YEARS))
+            start = 0 if p[2] == 0 else max(0, p[2] - YEARS[0])
+            if p[2] > YEARS[-1]:
+                continue
+            for yi in range(start, len(YEARS)):
+                per[iso][yi] += 1
+    derived("unesco-sites-per-country", "UNESCO sites per country", "Entertainment & Culture",
+            "inscribed sites (cumulative)",
+            "World Heritage sites inscribed up to each year, counted on present-day territory.",
+            per, static=False, ramp="teal",
+            src={"name": "Wikidata (derived by StatMaps)", "licence": "CC0", "url": "https://www.wikidata.org"})
+
     # continent lookup for the rankings filter (Natural Earth admin-0 attributes)
     continents = {}
     ne = json.loads((data_dir / "ne110_admin0.geojson").read_text())
@@ -689,7 +809,8 @@ def main():
         continents[iso] = "Oceania" if iso in ("FJI",) else continents.get(iso, "Asia")
 
     meta_keys = ("id", "title", "cat", "unit", "fmt", "ramp", "log", "desc")
-    meta = [{**{k: ds[k] for k in meta_keys}, **({"src": ds["src"]} if "src" in ds else {})}
+    opt_keys = ("src", "ctrl", "static")
+    meta = [{**{k: ds[k] for k in meta_keys}, **{k: ds[k] for k in opt_keys if k in ds}}
             for ds in all_datasets if values.get(ds["id"])]
     values = {k: v for k, v in values.items() if v}
     pmeta = [{**{k: pl[k] for k in ("id", "title", "cat", "unit", "mode", "color", "shape", "desc", "src")},
