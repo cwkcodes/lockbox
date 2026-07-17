@@ -36,6 +36,8 @@ python3 build.py <data_dir> [out_path]
 | Detail panel (§2.5) | Value, world rank, sparkline, full-catalogue profile, provenance |
 | Correlation Mode (06-ai §4) | Client-side Spearman ρ, BH-FDR correction, partial ρ controlling log GDP per capita, tier labels, scatter view, non-causal language |
 | Discover (10-review §1) | Data-verified fact generator (top-of-world, fastest riser, hidden link) |
+| Heatmaps (03-architecture §5) | Canvas-rendered density heatmaps for any point layer (per-layer toggle; magnitude-weighted for earthquakes; year-aware) |
+| Rankings | Side panel: full country leaderboard for the active layer/year with continent chips and free-text country filtering; global ranks preserved under filters |
 | Provenance (README principle 2) | Source, licence, retrieval date, classification method on every layer |
 
 ## Deliberate deviations

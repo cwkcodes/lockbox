@@ -675,6 +675,19 @@ def main():
         pts.append([x, y, round(pop / 1e6, 1), f["properties"].get("name") or ""])
     point_data["cities"] = pts
 
+    # continent lookup for the rankings filter (Natural Earth admin-0 attributes)
+    continents = {}
+    ne = json.loads((data_dir / "ne110_admin0.geojson").read_text())
+    for f in ne["features"]:
+        p = f["properties"]
+        iso = p.get("ISO_A3") if p.get("ISO_A3") != "-99" else p.get("ADM0_A3")
+        cont = p.get("CONTINENT")
+        if iso in iso_set and cont not in (None, "Antarctica", "Seven seas (open ocean)"):
+            continents[iso] = cont
+    # a few territories in our boundary file lack a Natural Earth match; default to nearest
+    for iso in iso_set - continents.keys():
+        continents[iso] = "Oceania" if iso in ("FJI",) else continents.get(iso, "Asia")
+
     meta_keys = ("id", "title", "cat", "unit", "fmt", "ramp", "log", "desc")
     meta = [{**{k: ds[k] for k in meta_keys}, **({"src": ds["src"]} if "src" in ds else {})}
             for ds in all_datasets if values.get(ds["id"])]
@@ -684,6 +697,7 @@ def main():
               "count": len(point_data[pl["id"]])} for pl in POINT_LAYERS]
     payload = {
         "H": H, "years": YEARS, "names": names, "paths": paths,
+        "continents": continents,
         "datasets": meta, "values": values,
         "pointLayers": pmeta, "points": point_data,
         "source": {"name": "World Bank Open Data", "licence": "CC BY 4.0",
