@@ -690,9 +690,12 @@ def main():
                    "url": "https://data.worldbank.org", "retrieved": "2026-07-16"},
     }
     blob = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+    import base64
+    import gzip
+    b64 = base64.b64encode(gzip.compress(blob.encode(), 9)).decode()
 
     template = (Path(__file__).parent / "template.html").read_text()
-    html = template.replace("/*__STATMAPS_DATA__*/null", blob)
+    html = template.replace("/*__STATMAPS_GZ__*/", b64)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html)
     print(f"wrote {out_path} ({out_path.stat().st_size/1024:.0f} KB, {len(paths)} countries, "

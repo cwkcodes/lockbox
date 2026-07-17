@@ -388,8 +388,25 @@ button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outli
   <div class="meta" id="ab-m"></div><div class="okr"><button class="ok" id="ab-ok">Close</button></div></div></div>
 
 <script>
-const D = /*__STATMAPS_DATA__*/null;
-(function(){
+/* Data is embedded gzip-compressed (base64) and inflated natively at startup —
+   the page ships ~3x smaller than raw JSON. */
+const DZB64 = "/*__STATMAPS_GZ__*/";
+let D = null;
+async function bootStatmaps(){
+  try{
+    const bin = Uint8Array.from(atob(DZB64), c => c.charCodeAt(0));
+    const txt = await new Response(
+      new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+    D = JSON.parse(txt);
+  }catch(e){
+    document.body.innerHTML = '<div style="padding:40px;font-family:system-ui;max-width:32em">'+
+      '<h2>StatMaps needs a newer browser</h2><p>This page inflates its embedded dataset with '+
+      'the DecompressionStream API (Chrome 80+, Safari 16.4+, Firefox 113+). Error: '+e+'</p></div>';
+    return;
+  }
+  statmapsMain();
+}
+function statmapsMain(){
 "use strict";
 const RAMPS = {
   blue:  ["#cfe0f2","#9cc1e4","#649dd1","#3572b0","#174e79"],
@@ -1131,5 +1148,6 @@ function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show");
 if(reduceMotion) document.body.classList.add("reduce");
 renderCats(); renderList(); applyView(); paint();
 if(S.sel){ const iso=S.sel; S.sel=null; selectCountry(iso,false); }
-})();
+}
+bootStatmaps();
 </script>
