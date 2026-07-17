@@ -16,7 +16,7 @@ from pathlib import Path
 A1, A2, A3, A4 = 1.340264, -0.081106, 0.000893, 0.003796
 M = math.sqrt(3) / 2
 
-YEARS = list(range(2000, 2024))
+YEARS = list(range(1990, 2026))
 EXCLUDE = {"ATA", "-99"}
 
 DATASETS = [
@@ -159,9 +159,11 @@ DATASETS = [
     {"id": "extreme-poverty", "code": "SI.POV.DDAY", "title": "Extreme poverty", "cat": "Economics",
      "unit": "% below $2.15/day (2017 PPP)", "fmt": "pct", "ramp": "orange", "log": False,
      "desc": "Share of the population living below the international extreme poverty line."},
-    {"id": "electricity-use", "code": "EG.USE.ELEC.KH.PC", "title": "Electricity use per capita", "cat": "Energy",
+    {"id": "electricity-use", "loader": "owid", "file": "owid_per-capita-electricity-consumption.csv", "title": "Electricity use per capita", "cat": "Energy",
      "unit": "kWh per person per year", "fmt": "int", "ramp": "blue", "log": True,
-     "desc": "Electric power consumption per capita. IEA-sourced series; ends mid-2010s for many countries."},
+     "src": {"name": "Ember / Energy Institute via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/per-capita-electricity-consumption"},
+     "desc": "Total electricity generation adjusted for imports and exports, per person."},
     {"id": "patents", "code": "IP.PAT.RESD", "title": "Patent applications", "cat": "Education & Science",
      "unit": "resident applications per year", "fmt": "int", "ramp": "purple", "log": True,
      "desc": "Patent applications filed by residents with the national patent office (WIPO)."},
@@ -212,6 +214,82 @@ DATASETS = [
      "src": {"name": "FAO via Our World in Data", "licence": "CC BY 4.0",
              "url": "https://ourworldindata.org/grapher/meat-supply-per-person"},
      "desc": "Meat available for consumption per person, carcass-weight equivalent."},
+    {"id": "suicide", "code": "SH.STA.SUIC.P5", "title": "Suicide mortality", "cat": "Health",
+     "unit": "per 100,000 people", "fmt": "num1", "ramp": "purple", "log": False,
+     "desc": "Age-standardised suicide mortality rate (WHO estimates)."},
+    {"id": "bigcity-population", "code": "EN.URB.MCTY.TL.ZS", "title": "Population in cities over 1M", "cat": "Population",
+     "unit": "% of population", "fmt": "pct", "ramp": "blue", "log": False,
+     "desc": "Share of the population living in urban agglomerations of more than one million people."},
+    {"id": "food-production", "code": "AG.PRD.FOOD.XD", "title": "Food production index", "cat": "Environment",
+     "unit": "index (2014–16 = 100)", "fmt": "num1", "ramp": "green", "log": False,
+     "desc": "Volume of food crop production relative to the 2014–2016 base period."},
+    {"id": "arable-land", "code": "AG.LND.ARBL.ZS", "title": "Arable land", "cat": "Environment",
+     "unit": "% of land area", "fmt": "pct", "ramp": "green", "log": False,
+     "desc": "Land under temporary crops, meadows, market gardens, or temporarily fallow."},
+    {"id": "water-stress", "code": "ER.H2O.FWST.ZS", "title": "Water stress", "cat": "Environment",
+     "unit": "% of freshwater resources withdrawn", "fmt": "num1", "ramp": "orange", "log": True,
+     "desc": "Freshwater withdrawal as a share of available freshwater resources (FAO AQUASTAT). Values over 100% indicate unsustainable use."},
+    {"id": "energy-imports", "code": "EG.IMP.CONS.ZS", "title": "Energy imports", "cat": "Energy",
+     "unit": "% of energy use (net)", "fmt": "num1", "ramp": "blue", "log": False,
+     "desc": "Net energy imports as a share of energy use. Negative values are net exporters."},
+    {"id": "broadband", "code": "IT.NET.BBND.P2", "title": "Fixed broadband", "cat": "Lifestyle",
+     "unit": "subscriptions per 100 people", "fmt": "num1", "ramp": "purple", "log": False,
+     "desc": "Fixed broadband subscriptions (cable, DSL, fibre) per 100 people."},
+    {"id": "measles-immunization", "code": "SH.IMM.MEAS", "title": "Measles immunization", "cat": "Health",
+     "unit": "% of children 12–23 months", "fmt": "pct", "ramp": "teal", "log": False,
+     "desc": "Share of children who received at least one dose of measles-containing vaccine."},
+    {"id": "tertiary-enrollment", "code": "SE.TER.ENRR", "title": "Tertiary enrolment", "cat": "Education & Science",
+     "unit": "% gross", "fmt": "pct", "ramp": "purple", "log": False,
+     "desc": "Tertiary enrolment as a share of the five-year age group after secondary school."},
+    {"id": "bank-branches", "code": "FB.CBK.BRCH.P5", "title": "Bank branches", "cat": "Economics",
+     "unit": "per 100,000 adults", "fmt": "num1", "ramp": "green", "log": False,
+     "desc": "Commercial bank branches per 100,000 adults (IMF Financial Access Survey)."},
+    {"id": "business-density", "code": "IC.BUS.NDNS.ZS", "title": "New business density", "cat": "Economics",
+     "unit": "registrations per 1,000 people 15–64", "fmt": "num2", "ramp": "blue", "log": False,
+     "desc": "New limited-liability company registrations per 1,000 working-age people."},
+    {"id": "arms-exports", "code": "MS.MIL.XPRT.KD", "title": "Arms exports", "cat": "Politics",
+     "unit": "SIPRI TIV, US$ millions", "fmt": "int", "ramp": "orange", "log": True,
+     "desc": "Volume of major conventional weapons transfers (SIPRI trend-indicator value)."},
+    {"id": "migrant-stock", "code": "SM.POP.TOTL.ZS", "title": "International migrants", "cat": "Population",
+     "unit": "% of population", "fmt": "pct", "ramp": "purple", "log": False,
+     "desc": "Foreign-born population as a share of total population. Measured roughly every five years."},
+    {"id": "fuel-exports", "code": "TX.VAL.FUEL.ZS.UN", "title": "Fuel exports", "cat": "Energy",
+     "unit": "% of merchandise exports", "fmt": "pct", "ramp": "orange", "log": False,
+     "desc": "Fuels as a share of merchandise exports — a petro-state indicator."},
+    {"id": "top10-income", "code": "SI.DST.10TH.10", "title": "Income share of top 10%", "cat": "Economics",
+     "unit": "% of national income", "fmt": "pct", "ramp": "purple", "log": False,
+     "desc": "Share of income accruing to the highest-earning tenth of the population."},
+    {"id": "pm25", "code": "EN.ATM.PM25.MC.M3", "title": "Air pollution (PM2.5)", "cat": "Environment",
+     "unit": "µg/m³, annual population-weighted mean", "fmt": "num1", "ramp": "orange", "log": True,
+     "desc": "Mean annual exposure to fine particulate matter. WHO guideline is 5 µg/m³."},
+    {"id": "drinking-water", "code": "SH.H2O.BASW.ZS", "title": "Basic drinking water access", "cat": "Health",
+     "unit": "% of population", "fmt": "pct", "ramp": "blue", "log": False,
+     "desc": "Share of the population using at least basic drinking water services."},
+    {"id": "electricity-renewables", "loader": "owid", "file": "owid_share-electricity-renewables.csv", "title": "Renewable electricity", "cat": "Energy",
+     "unit": "% of generation", "fmt": "pct", "ramp": "green", "log": False,
+     "src": {"name": "Ember via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/share-electricity-renewables"},
+     "desc": "Electricity generated from all renewable sources as a share of total generation."},
+    {"id": "electricity-solar", "loader": "owid", "file": "owid_share-electricity-solar.csv", "title": "Solar electricity", "cat": "Energy",
+     "unit": "% of generation", "fmt": "num1", "ramp": "orange", "log": False,
+     "src": {"name": "Ember via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/share-electricity-solar"},
+     "desc": "Electricity generated from solar as a share of total generation."},
+    {"id": "electricity-wind", "loader": "owid", "file": "owid_share-electricity-wind.csv", "title": "Wind electricity", "cat": "Energy",
+     "unit": "% of generation", "fmt": "num1", "ramp": "teal", "log": False,
+     "src": {"name": "Ember via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/share-electricity-wind"},
+     "desc": "Electricity generated from wind as a share of total generation."},
+    {"id": "electricity-nuclear", "loader": "owid", "file": "owid_share-electricity-nuclear.csv", "title": "Nuclear electricity", "cat": "Energy",
+     "unit": "% of generation", "fmt": "num1", "ramp": "purple", "log": False,
+     "src": {"name": "Ember via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/share-electricity-nuclear"},
+     "desc": "Electricity generated from nuclear as a share of total generation."},
+    {"id": "male-height", "loader": "owid", "file": "owid_average-height-of-men.csv", "title": "Male height (birth cohort)", "cat": "Weird & Fun",
+     "unit": "cm, men born that year", "fmt": "num1", "ramp": "blue", "log": False,
+     "src": {"name": "NCD-RisC via Our World in Data", "licence": "CC BY 4.0",
+             "url": "https://ourworldindata.org/grapher/average-height-of-men"},
+     "desc": "Mean adult height of men by year of birth. The timeline year is the birth cohort; the series ends with the 1996 cohort."},
 ]
 
 POINT_LAYERS = [
@@ -320,6 +398,15 @@ def main():
             names[iso] = f["properties"]["name"]
 
     iso_set = set(paths)
+
+    def trim(arr):
+        """Encode a full-length series as [start_index, v0, v1, …] with nulls trimmed
+        from both ends; returns None for all-null series."""
+        idx = [i for i, v in enumerate(arr) if v is not None]
+        if not idx:
+            return None
+        return [idx[0]] + arr[idx[0]:idx[-1] + 1]
+
     values = {}
     for ds in DATASETS:
         per = {}
@@ -344,7 +431,7 @@ def main():
                 yi = int(yr) - YEARS[0]
                 if 0 <= yi < len(YEARS):
                     per.setdefault(iso, [None] * len(YEARS))[yi] = sig(v)
-        values[ds["id"]] = per
+        values[ds["id"]] = {iso: t for iso, arr in per.items() if (t := trim(arr)) is not None}
 
     def project(lon, lat):
         return tx(*equal_earth(lon, lat))

@@ -447,9 +447,17 @@ function fmt(v,f){
 }
 
 /* ---------- data helpers ---------- */
+/* Series are stored null-trimmed: [startIndex, v0, v1, …] */
 function val(dsId,iso,year){
   const s=D.values[dsId][iso]; if(!s) return null;
-  return s[year-YEARS[0]] ?? null;
+  const i=year-YEARS[0]-s[0];
+  return (i>=0&&i<s.length-1)?s[i+1]:null;
+}
+function fullSeries(dsId,iso){
+  const s=D.values[dsId][iso]; if(!s) return null;
+  const out=new Array(YEARS.length).fill(null);
+  for(let i=1;i<s.length;i++) out[s[0]+i-1]=s[i];
+  return out;
 }
 function breaksFor(dsId,year){
   const ds=dsById[dsId], vs=[];
@@ -566,9 +574,18 @@ function togglePt(id){
 }
 
 /* ---------- painting ---------- */
-let curB=null, curBO=null;
+let curB=null, curBO=null, lastPaintedLayer=null;
 function paint(){
   const ds=dsById[S.layer]; curB=breaksFor(S.layer,S.year);
+  /* when switching to a layer with no data at the current year, snap to its latest year */
+  if(!curB && S.layer!==lastPaintedLayer){
+    const y2=latestYearWithData(S.layer);
+    if(y2&&y2!==S.year){
+      S.year=y2; $("yslider").value=y2; curB=breaksFor(S.layer,S.year);
+      toast(`${ds.title}: showing ${y2} (latest year with data)`);
+    }
+  }
+  lastPaintedLayer=S.layer;
   const ramp=RAMPS[ds.ramp];
   const dso=S.ovl?dsById[S.ovl]:null;
   curBO=dso?breaksFor(S.ovl,S.year):null;
@@ -757,7 +774,7 @@ function fillDetail(){
   $("cprov").textContent=`Source: ${srcp.name} (${srcp.licence}) · retrieved ${D.source.retrieved}. Values are quintile-classed against all countries for ${S.year}.`;
 }
 function drawSpark(iso,ds){
-  const s=D.values[ds.id][iso]||[], el=$("spark");
+  const s=fullSeries(ds.id,iso)||[], el=$("spark");
   const pts=[]; let mn=Infinity,mx=-Infinity;
   s.forEach((v,i)=>{ if(v!=null){pts.push([i,v]); if(v<mn)mn=v; if(v>mx)mx=v;} });
   if(pts.length<2){ el.innerHTML='<text x="4" y="40">No time series available.</text>'; return; }
@@ -1059,7 +1076,7 @@ function makeFact(){
   if(kind==="riser"){
     let best=null,ratio=0,v0b=0,v1b=0,y0b=0,y1b=0;
     for(const iso of ISOS){
-      const s=D.values[ds.id][iso]; if(!s) continue;
+      const s=fullSeries(ds.id,iso); if(!s) continue;
       let i0=-1,i1=-1;
       for(let i=0;i<s.length;i++){ if(s[i]!=null){ if(i0<0)i0=i; i1=i; } }
       if(i0<0||i1-i0<10||s[i0]<=0) continue;
