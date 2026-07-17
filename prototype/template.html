@@ -441,6 +441,7 @@ function fmt(v,f){
     case "int": return v>=1e6?compact.format(v):full.format(Math.round(v));
     case "usd": return "$"+(v>=1e5?compact.format(v):full.format(Math.round(v)));
     case "pct": return (v>=100?Math.round(v):v.toFixed(1))+"%";
+    case "usd2": return "$"+v.toFixed(2);
     case "num1": return v.toFixed(1);
     default: return v>=100?full.format(Math.round(v)):v.toFixed(2);
   }
@@ -513,13 +514,16 @@ function ptTip(pl,p){
   if(pl.id==="airports") return p[2];
   if(pl.id==="power-plants") return `${p[4]} · ${pl.cats[p[2]].label} · ${p[3]} GW`;
   if(pl.id==="cities") return `${p[3]} · ${p[2]}M people`;
-  return `${p[3]}${p[2]?` · inscribed ${p[2]}`:""}`;
+  if(pl.id==="unesco-sites") return `${p[3]}${p[2]?` · inscribed ${p[2]}`:""}`;
+  const y=p[2]?` (${p[2]<0?Math.abs(p[2])+" BCE":p[2]})`:"";
+  return `${p[3]}${y}`;
 }
 function ptR(pl,p){
   if(pl.id==="earthquakes") return Math.max(1.6,(p[3]-5)*2.4);
   if(pl.id==="power-plants") return 1.6+Math.sqrt(p[3])*1.5;
   if(pl.id==="cities") return 1.6+Math.sqrt(p[2])*1.1;
   if(pl.id==="airports") return 1.9;
+  if(pl.id==="battles"||pl.id==="castles"||pl.id==="shipwrecks") return 1.8;
   return 2.4;
 }
 function buildPts(id){

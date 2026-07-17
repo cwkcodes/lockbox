@@ -290,6 +290,11 @@ DATASETS = [
      "src": {"name": "NCD-RisC via Our World in Data", "licence": "CC BY 4.0",
              "url": "https://ourworldindata.org/grapher/average-height-of-men"},
      "desc": "Mean adult height of men by year of birth. The timeline year is the birth cohort; the series ends with the 1996 cohort."},
+    {"id": "bigmac", "loader": "bigmac", "file": "bigmac.csv", "title": "Big Mac price", "cat": "Weird & Fun",
+     "unit": "US$ at market exchange rates", "fmt": "usd2", "ramp": "orange", "log": False,
+     "src": {"name": "The Economist Big Mac Index", "licence": "Open data (GitHub)",
+             "url": "https://github.com/TheEconomist/big-mac-data"},
+     "desc": "The Economist's light-hearted purchasing-power gauge: the local price of a Big Mac converted to US dollars. Surveyed once or twice a year; ~55 countries."},
 ]
 
 POINT_LAYERS = [
@@ -326,6 +331,26 @@ POINT_LAYERS = [
      "src": {"name": "Natural Earth populated places", "licence": "Public domain",
              "url": "https://www.naturalearthdata.com"},
      "desc": "Urban agglomerations of at least one million people, sized by population."},
+    {"id": "battles", "title": "Battles", "cat": "History", "mode": "static",
+     "unit": "battle", "color": "#A63D40", "shape": "circle", "wikidata": "wd_battles.json",
+     "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
+     "desc": "Notable battles across all of history (five or more Wikipedia language editions), from antiquity to the present. Static layer — tooltips show the year."},
+    {"id": "shipwrecks", "title": "Shipwrecks", "cat": "History", "mode": "static",
+     "unit": "wreck", "color": "#5B8DB8", "shape": "circle", "wikidata": "wd_shipwrecks.json",
+     "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
+     "desc": "Documented shipwrecks with known coordinates. Static layer — tooltips show the year of loss where recorded."},
+    {"id": "castles", "title": "Castles", "cat": "History", "mode": "static",
+     "unit": "castle", "color": "#8A6B4D", "shape": "circle", "wikidata": "wd_castles.json",
+     "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
+     "desc": "Notable castles (six or more Wikipedia language editions)."},
+    {"id": "observatories", "title": "Observatories", "cat": "Education & Science", "mode": "static",
+     "unit": "observatory", "color": "#E8B93A", "shape": "circle", "wikidata": "wd_observatories.json",
+     "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
+     "desc": "Astronomical observatories worldwide."},
+    {"id": "spaceports", "title": "Spaceports", "cat": "Education & Science", "mode": "static",
+     "unit": "launch site", "color": "#E86F9E", "shape": "triangle", "wikidata": "wd_spaceports.json",
+     "src": {"name": "Wikidata", "licence": "CC0", "url": "https://www.wikidata.org"},
+     "desc": "Rocket launch sites and cosmodromes."},
 ]
 
 
@@ -422,6 +447,20 @@ def main():
                     yi = int(yr) - YEARS[0]
                     if 0 <= yi < len(YEARS):
                         per.setdefault(iso, [None] * len(YEARS))[yi] = sig(float(v))
+        elif ds.get("loader") == "bigmac":
+            import csv
+            from collections import defaultdict
+            acc = defaultdict(list)
+            with open(data_dir / ds["file"], newline="") as fh:
+                for r in csv.DictReader(fh):
+                    iso, price = r["iso_a3"], r["dollar_price"]
+                    if not price or iso not in iso_set:
+                        continue
+                    yr = int(r["date"][:4])
+                    if YEARS[0] <= yr <= YEARS[-1]:
+                        acc[(iso, yr)].append(float(price))
+            for (iso, yr), prices in acc.items():
+                per.setdefault(iso, [None] * len(YEARS))[yr - YEARS[0]] = sig(sum(prices) / len(prices))
         else:
             raw = json.loads((data_dir / f"wb_{ds['code']}.json").read_text())
             for r in raw[1] or []:
@@ -459,28 +498,38 @@ def main():
         pts.append([x, y, p["Volcano_Name"], p.get("Country") or "", p.get("Last_Eruption_Year")])
     point_data["volcanoes"] = pts
 
-    # unesco: [x, y, inscription_year|0, name]  (dedupe by wikidata item)
+    # wikidata point sets: [x, y, year|0, name]  (dedupe by item, drop unlabeled)
     import re
-    u = json.loads((data_dir / "unesco_wd.json").read_text())
-    seen, pts = {}, []
-    for r in u["results"]["bindings"]:
-        item = r["item"]["value"]
-        if item in seen:
-            continue
-        seen[item] = True
-        m = re.match(r"Point\(([-\d.eE]+) ([-\d.eE]+)\)", r["coord"]["value"])
-        if not m:
-            continue
-        lon, lat = float(m.group(1)), float(m.group(2))
-        if not (-180 <= lon <= 180 and -90 <= lat <= 90):
-            continue
-        name = r.get("itemLabel", {}).get("value", "")
-        if not name or re.fullmatch(r"Q\d+", name):
-            continue
-        yr = int(r["year"]["value"]) if "year" in r else 0
-        x, y = project(lon, lat)
-        pts.append([x, y, yr, name])
-    point_data["unesco-sites"] = pts
+
+    def load_wikidata_points(fname):
+        u = json.loads((data_dir / fname).read_text())
+        seen, pts = set(), []
+        for r in u["results"]["bindings"]:
+            item = r["item"]["value"]
+            if item in seen:
+                continue
+            seen.add(item)
+            m = re.match(r"Point\(([-\d.eE]+) ([-\d.eE]+)\)", r["coord"]["value"])
+            if not m:
+                continue
+            lon, lat = float(m.group(1)), float(m.group(2))
+            if not (-180 <= lon <= 180 and -90 <= lat <= 90):
+                continue
+            name = r.get("itemLabel", {}).get("value", "")
+            if not name or re.fullmatch(r"Q\d+", name):
+                continue
+            try:
+                yr = int(r["year"]["value"]) if "year" in r else 0
+            except ValueError:
+                yr = 0
+            x, y = project(lon, lat)
+            pts.append([x, y, yr, name])
+        return pts
+
+    point_data["unesco-sites"] = load_wikidata_points("unesco_wd.json")
+    for pl in POINT_LAYERS:
+        if "wikidata" in pl:
+            point_data[pl["id"]] = load_wikidata_points(pl["wikidata"])
 
     import csv as csvmod
     # airports: [x, y, name]
