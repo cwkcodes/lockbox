@@ -1,0 +1,1398 @@
+<title>StatMaps — Interactive Atlas Prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{
+  --ground:#F4F6F5; --panel:#FFFFFF; --panel2:#EDF1F1;
+  --ink:#182126; --ink2:#54646E; --muted:#8A98A0;
+  --accent:#0E7C86; --accent-ink:#FFFFFF;
+  --line:#DDE4E6; --land:#E2E8E9; --border-c:#FFFFFF;
+  --shadow:0 4px 18px rgba(24,33,38,.12), 0 1px 3px rgba(24,33,38,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ground:#0E1418; --panel:#161E24; --panel2:#1D2830;
+    --ink:#E7EEF1; --ink2:#9FB0B9; --muted:#66757E;
+    --accent:#43BFC9; --accent-ink:#0A2A2E;
+    --line:#243038; --land:#212B32; --border-c:#0E1418;
+    --shadow:0 4px 18px rgba(0,0,0,.5), 0 1px 3px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="light"]{
+  --ground:#F4F6F5; --panel:#FFFFFF; --panel2:#EDF1F1;
+  --ink:#182126; --ink2:#54646E; --muted:#8A98A0;
+  --accent:#0E7C86; --accent-ink:#FFFFFF;
+  --line:#DDE4E6; --land:#E2E8E9; --border-c:#FFFFFF;
+  --shadow:0 4px 18px rgba(24,33,38,.12), 0 1px 3px rgba(24,33,38,.08);
+}
+:root[data-theme="dark"]{
+  --ground:#0E1418; --panel:#161E24; --panel2:#1D2830;
+  --ink:#E7EEF1; --ink2:#9FB0B9; --muted:#66757E;
+  --accent:#43BFC9; --accent-ink:#0A2A2E;
+  --line:#243038; --land:#212B32; --border-c:#0E1418;
+  --shadow:0 4px 18px rgba(0,0,0,.5), 0 1px 3px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box; margin:0}
+html,body{height:100%}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:var(--ground); color:var(--ink); overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+button{font:inherit; color:inherit; background:none; border:0; cursor:pointer}
+button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+#stage{position:fixed; inset:0}
+#map{width:100%; height:100%; display:block; touch-action:none; background:var(--ground)}
+#map path{stroke:var(--border-c); stroke-width:.5; vector-effect:non-scaling-stroke; transition:fill .25s}
+#map path.sel{stroke:var(--accent); stroke-width:2}
+#ovl path{pointer-events:none; stroke:none}
+#ovl{mix-blend-mode:multiply}
+#subs path{stroke:var(--border-c); stroke-width:.4; vector-effect:non-scaling-stroke; transition:fill .25s}
+#subs path.sel{stroke:var(--accent); stroke-width:1.6}
+#pts .pt{stroke:var(--panel); stroke-width:.5; cursor:pointer}
+#pts .pt.dim{opacity:.55}
+.ptrow .dot{width:11px; height:11px; border-radius:50%; flex:none}
+.ptrow .dot.tri{border-radius:2px; clip-path:polygon(50% 0, 100% 100%, 0 100%)}
+#llist .sect2{font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); padding:12px 12px 4px}
+#legend .ptline{display:flex; align-items:center; gap:7px; margin-top:8px; padding-top:7px; border-top:1px dashed var(--line); font-size:11.5px; color:var(--ink2)}
+#legend .ptline .pdot{width:9px; height:9px; border-radius:50%; flex:none}
+.reduce *{transition:none !important}
+
+/* ---------- top bar ---------- */
+#topbar{
+  position:fixed; top:0; left:0; right:0; z-index:30;
+  display:flex; align-items:center; gap:10px;
+  padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
+  pointer-events:none;
+}
+#topbar>*{pointer-events:auto}
+#brand{display:flex; flex-direction:column; line-height:1.05; user-select:none; padding:4px 2px}
+#brand b{font-size:19px; font-weight:650; letter-spacing:.04em}
+#brand b em{font-style:normal; color:var(--accent)}
+#brand span{font-size:9.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin-top:2px}
+#searchwrap{position:relative; flex:1; max-width:430px}
+#search{
+  width:100%; padding:10px 14px 10px 38px; border-radius:22px; border:1px solid var(--line);
+  background:var(--panel); color:var(--ink); font-size:15px; box-shadow:var(--shadow);
+}
+#search::placeholder{color:var(--muted)}
+#searchwrap .sic{position:absolute; left:13px; top:50%; translate:0 -50%; color:var(--muted); pointer-events:none}
+#results{
+  position:absolute; top:calc(100% + 6px); left:0; right:0; background:var(--panel);
+  border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow);
+  max-height:min(52vh,420px); overflow:auto; display:none; z-index:40;
+}
+#results.open{display:block}
+#results .grp{font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); padding:10px 14px 4px}
+#results .row{display:flex; width:100%; text-align:left; gap:10px; align-items:center; padding:9px 14px; font-size:14.5px}
+#results .row:hover,#results .row.hot{background:var(--panel2)}
+#results .row .cat{margin-left:auto; font-size:11px; color:var(--muted); white-space:nowrap}
+#results .dot{width:10px; height:10px; border-radius:3px; flex:none}
+.iconbtn{
+  width:42px; height:42px; border-radius:50%; background:var(--panel); border:1px solid var(--line);
+  box-shadow:var(--shadow); display:flex; align-items:center; justify-content:center; flex:none; color:var(--ink2);
+}
+.iconbtn:hover{color:var(--accent)}
+.iconbtn.on{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
+
+/* ---------- zoom controls ---------- */
+#zoomctl{position:fixed; right:12px; top:50%; translate:0 -50%; z-index:20; display:flex; flex-direction:column; gap:8px}
+
+/* ---------- layer drawer ---------- */
+#drawer{
+  position:fixed; z-index:35; background:var(--panel); box-shadow:var(--shadow);
+  display:flex; flex-direction:column; transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+#drawer .dhead{display:flex; align-items:center; gap:8px; padding:14px 16px 8px}
+#drawer .dhead h2{font-size:15px; font-weight:650; letter-spacing:.02em}
+#drawer .dhead .n{font-size:12px; color:var(--muted)}
+#drawer .close{margin-left:auto}
+#cats{display:flex; gap:6px; padding:4px 16px 10px; overflow-x:auto; scrollbar-width:none}
+#cats::-webkit-scrollbar{display:none}
+#cats .chip{
+  padding:5px 12px; border-radius:15px; border:1px solid var(--line); font-size:12.5px;
+  color:var(--ink2); white-space:nowrap; flex:none;
+}
+#cats .chip.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+#llist{overflow:auto; padding:2px 8px 14px; flex:1}
+.lrow{display:flex; align-items:center; gap:11px; width:100%; text-align:left; padding:10px 10px; border-radius:12px}
+.lrow:hover{background:var(--panel2)}
+.lrow .sw{width:34px; height:22px; border-radius:6px; flex:none; display:flex; overflow:hidden; border:1px solid var(--line)}
+.lrow .sw i{flex:1}
+.lrow .tt{font-size:14.5px; font-weight:550}
+.lrow .su{font-size:11.5px; color:var(--muted); margin-top:1px}
+.lrow .tags{margin-left:auto; display:flex; gap:6px; align-items:center}
+.lrow .pill{font-size:10.5px; padding:3px 8px; border-radius:10px; border:1px solid var(--line); color:var(--muted)}
+.lrow .pill.act{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
+.lrow .ovbtn{font-size:10.5px; padding:3px 8px; border-radius:10px; border:1px dashed var(--line); color:var(--muted)}
+.lrow .ovbtn:hover{color:var(--accent); border-color:var(--accent)}
+.lrow .ovbtn.act{background:var(--ink2); border:1px solid var(--ink2); color:var(--panel)}
+@media (min-width:769px){
+  #drawer{top:74px; left:14px; bottom:120px; width:330px; border-radius:16px; border:1px solid var(--line); transform:translateX(-115%)}
+  #drawer.open{transform:none}
+}
+@media (max-width:768px){
+  #drawer{left:0; right:0; bottom:0; max-height:62vh; border-radius:18px 18px 0 0; border-top:1px solid var(--line); transform:translateY(105%)}
+  #drawer.open{transform:none}
+  #drawer::before{content:""; width:36px; height:4px; border-radius:2px; background:var(--line); margin:8px auto 0}
+}
+
+/* ---------- legend ---------- */
+#legend{
+  position:fixed; left:14px; bottom:calc(96px + env(safe-area-inset-bottom)); z-index:18;
+  background:var(--panel); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow);
+  padding:10px 13px; max-width:min(75vw,290px); font-size:12px;
+}
+#legend .lt{display:flex; align-items:baseline; gap:6px; font-weight:650; font-size:13px}
+#legend .lt .yr{color:var(--accent); font-variant-numeric:tabular-nums}
+#legend .lu{color:var(--muted); font-size:11px; margin:1px 0 7px}
+#legend .bar{display:flex; height:10px; border-radius:5px; overflow:hidden}
+#legend .bar i{flex:1}
+#legend .lbls{display:flex; justify-content:space-between; color:var(--ink2); font-size:10.5px; margin-top:3px; font-variant-numeric:tabular-nums}
+#legend .ovline{display:flex; align-items:center; gap:7px; margin-top:9px; padding-top:8px; border-top:1px dashed var(--line)}
+#legend .ovline .bar{width:70px; flex:none}
+#legend .ovline .tt{font-size:11.5px; color:var(--ink2)}
+#legend .ovline .x{margin-left:auto; color:var(--muted); font-size:14px; line-height:1}
+#legend .src{margin-top:8px; padding-top:7px; border-top:1px solid var(--line); color:var(--muted); font-size:10px; line-height:1.5}
+#legend .src a{color:var(--muted)}
+
+/* ---------- timeline ---------- */
+#timeline{
+  position:fixed; left:50%; translate:-50% 0; bottom:calc(14px + env(safe-area-inset-bottom)); z-index:19;
+  width:min(620px, calc(100vw - 24px));
+  background:var(--panel); border:1px solid var(--line); border-radius:26px; box-shadow:var(--shadow);
+  display:flex; align-items:center; gap:12px; padding:9px 18px 9px 9px;
+}
+#play{width:36px; height:36px; border-radius:50%; background:var(--accent); color:var(--accent-ink); display:flex; align-items:center; justify-content:center; flex:none}
+#yearval{font-weight:700; font-size:16px; font-variant-numeric:tabular-nums; color:var(--accent); width:46px; text-align:right; flex:none}
+#yslider{flex:1; accent-color:var(--accent); height:26px}
+#trange{display:flex; flex-direction:column; font-size:9.5px; color:var(--muted); font-variant-numeric:tabular-nums; line-height:1.3; flex:none}
+
+/* ---------- detail panel ---------- */
+#detail{
+  position:fixed; z-index:32; background:var(--panel); box-shadow:var(--shadow);
+  display:flex; flex-direction:column; transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+@media (min-width:769px){
+  #detail{top:74px; right:14px; bottom:120px; width:330px; border-radius:16px; border:1px solid var(--line); transform:translateX(115%)}
+  #detail.open{transform:none}
+}
+@media (max-width:768px){
+  #detail{left:0; right:0; bottom:0; max-height:58vh; border-radius:18px 18px 0 0; border-top:1px solid var(--line); transform:translateY(105%)}
+  #detail.open{transform:none}
+}
+#detail .dbody{overflow:auto; padding:16px 18px 18px}
+#detail .chead{display:flex; align-items:flex-start; gap:8px}
+#detail h2{font-size:20px; font-weight:700; letter-spacing:.01em; text-wrap:balance}
+#detail .close{margin-left:auto; flex:none}
+#detail .sub{color:var(--muted); font-size:12px; margin-top:2px}
+#detail .big{margin:14px 0 2px; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+#detail .big .v{font-size:30px; font-weight:750; font-variant-numeric:tabular-nums; letter-spacing:-.01em}
+#detail .big .rank{font-size:12px; color:var(--accent); font-weight:600; background:color-mix(in srgb, var(--accent) 12%, transparent); padding:3px 9px; border-radius:11px}
+#detail .unit{color:var(--muted); font-size:12px}
+#spark{margin:12px 0 4px; width:100%; height:auto}
+#spark .ln{fill:none; stroke:var(--accent); stroke-width:2; stroke-linejoin:round; stroke-linecap:round}
+#spark .ar{fill:var(--accent); opacity:.12; stroke:none}
+#spark .dotp{fill:var(--accent)}
+#spark text{font-size:9px; fill:var(--muted); font-variant-numeric:tabular-nums}
+#detail .sect{font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin:16px 0 6px}
+#prof{display:flex; flex-direction:column}
+#prof button{display:flex; justify-content:space-between; gap:10px; padding:7px 2px; font-size:13px; border-bottom:1px solid var(--line); text-align:left}
+#prof button:last-child{border-bottom:0}
+#prof button:hover .k{color:var(--accent)}
+#prof .k{color:var(--ink2)}
+#prof .v{font-variant-numeric:tabular-nums; font-weight:550; white-space:nowrap}
+#detail .prov{margin-top:14px; font-size:10.5px; color:var(--muted); line-height:1.55}
+
+/* ---------- correlation mode ---------- */
+#corr{
+  position:fixed; z-index:33; background:var(--panel); box-shadow:var(--shadow);
+  display:flex; flex-direction:column; transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+@media (min-width:769px){
+  #corr{top:74px; right:14px; bottom:120px; width:360px; border-radius:16px; border:1px solid var(--line); transform:translateX(115%)}
+  #corr.open{transform:none}
+}
+@media (max-width:768px){
+  #corr{left:0; right:0; bottom:0; max-height:72vh; border-radius:18px 18px 0 0; border-top:1px solid var(--line); transform:translateY(105%)}
+  #corr.open{transform:none}
+}
+#corr .chd{display:flex; align-items:flex-start; gap:8px; padding:16px 18px 6px}
+#corr .chd h2{font-size:16px; font-weight:700}
+#corr .chd .tgt{font-size:12px; color:var(--muted); margin-top:2px}
+#corr .chd .tgt b{color:var(--accent); font-weight:600}
+#corr .meth{font-size:10.5px; color:var(--muted); padding:0 18px 8px; line-height:1.5}
+#corr .meth button{color:var(--accent); text-decoration:underline}
+#corr .cbody{overflow:auto; flex:1; padding:2px 12px 14px}
+.ccard{width:100%; text-align:left; border:1px solid var(--line); border-radius:13px; padding:11px 13px; margin:6px 4px; display:block}
+.ccard:hover{border-color:var(--accent)}
+.ccard .top{display:flex; align-items:center; gap:8px}
+.ccard .nm{font-size:14px; font-weight:600; flex:1; min-width:0}
+.ccard .rho{font-size:15px; font-weight:750; font-variant-numeric:tabular-nums; flex:none}
+.ccard .rho.pos{color:var(--accent)}
+.ccard .rho.neg{color:#C2621A}
+:root[data-theme="dark"] .ccard .rho.neg{color:#F5B878}
+.ccard .chips{display:flex; gap:5px; margin-top:6px; flex-wrap:wrap}
+.chipx{font-size:10px; letter-spacing:.03em; padding:2.5px 8px; border-radius:9px; border:1px solid var(--line); color:var(--ink2)}
+.chipx.good{border-color:var(--accent); color:var(--accent)}
+.chipx.warn{border-color:#C2621A; color:#C2621A}
+:root[data-theme="dark"] .chipx.warn{border-color:#F5B878; color:#F5B878}
+.ccard .sent{font-size:12px; color:var(--ink2); line-height:1.5; margin-top:7px}
+.ccard .stats{font-size:10.5px; color:var(--muted); margin-top:5px; font-variant-numeric:tabular-nums}
+#corr .empty{padding:20px 18px; font-size:13px; color:var(--muted); line-height:1.6}
+/* scatter view */
+#scat .shd{display:flex; align-items:center; gap:8px; padding:14px 16px 4px}
+#scat .shd h3{font-size:14px; font-weight:650; flex:1; text-wrap:balance}
+#scatplot{width:100%; height:auto; display:block}
+#scatplot .dot{fill:var(--accent); opacity:.5}
+#scatplot .dot.hl{fill:#C2621A; opacity:1; stroke:var(--panel); stroke-width:1.5}
+#scatplot .fit{stroke:var(--ink2); stroke-width:1.6; stroke-dasharray:5 4; fill:none}
+#scatplot text{font-size:9px; fill:var(--muted); font-variant-numeric:tabular-nums}
+#scatplot .axl{font-size:10px; fill:var(--ink2)}
+#scatplot line.grid{stroke:var(--line); stroke-width:1}
+#scat .sact{display:flex; gap:8px; padding:10px 16px 16px}
+#scat .sact button{flex:1; padding:9px 0; border-radius:12px; font-size:13px; font-weight:600; border:1px solid var(--line); color:var(--ink2)}
+#scat .sact button.pri{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
+#scat .note{font-size:10.5px; color:var(--muted); padding:0 16px 10px; line-height:1.5}
+
+/* ---------- rankings ---------- */
+#rank{
+  position:fixed; z-index:33; background:var(--panel); box-shadow:var(--shadow);
+  display:flex; flex-direction:column; transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+@media (min-width:769px){
+  #rank{top:74px; right:14px; bottom:120px; width:340px; border-radius:16px; border:1px solid var(--line); transform:translateX(115%)}
+  #rank.open{transform:none}
+}
+@media (max-width:768px){
+  #rank{left:0; right:0; bottom:0; max-height:72vh; border-radius:18px 18px 0 0; border-top:1px solid var(--line); transform:translateY(105%)}
+  #rank.open{transform:none}
+}
+#rank .rhd{display:flex; align-items:flex-start; gap:8px; padding:16px 18px 6px}
+#rank .rhd h2{font-size:16px; font-weight:700}
+#rank .rhd .tgt{font-size:12px; color:var(--muted); margin-top:2px}
+#rank .rhd .tgt b{color:var(--accent); font-weight:600}
+#rank .rfilters{padding:0 14px 8px}
+#rank .conts{display:flex; gap:5px; overflow-x:auto; scrollbar-width:none; padding:2px 2px 8px}
+#rank .conts::-webkit-scrollbar{display:none}
+#rank .conts .chip{padding:4px 11px; border-radius:13px; border:1px solid var(--line); font-size:12px; color:var(--ink2); white-space:nowrap; flex:none}
+#rank .conts .chip.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+#rankq{width:100%; padding:8px 12px; border-radius:11px; border:1px solid var(--line); background:var(--panel2); color:var(--ink); font-size:13px}
+#rankq::placeholder{color:var(--muted)}
+#ranklist{overflow:auto; flex:1; padding:2px 10px 14px}
+.rrow{display:flex; align-items:center; gap:9px; width:100%; text-align:left; padding:7px 8px; border-radius:10px; font-size:13.5px}
+.rrow:hover{background:var(--panel2)}
+.rrow.sel{background:color-mix(in srgb, var(--accent) 14%, transparent)}
+.rrow .rn{width:30px; color:var(--muted); font-variant-numeric:tabular-nums; font-size:12px; text-align:right; flex:none}
+.rrow .nm{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.rrow .vbarw{flex:1.1; height:7px; border-radius:4px; background:var(--panel2); overflow:hidden}
+.rrow .vbar{height:100%; background:var(--accent); border-radius:4px}
+.rrow .vv{font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; flex:none; min-width:58px; text-align:right}
+#rank .rfoot{font-size:10.5px; color:var(--muted); padding:6px 18px 12px}
+
+/* ---------- discover ---------- */
+#rankbtn{position:fixed; right:12px; bottom:calc(134px + env(safe-area-inset-bottom)); z-index:21}
+#discbtn{position:fixed; right:12px; bottom:calc(84px + env(safe-area-inset-bottom)); z-index:21}
+#fact{
+  position:fixed; z-index:34; left:50%; translate:-50% 0; bottom:calc(78px + env(safe-area-inset-bottom));
+  width:min(430px, calc(100vw - 20px)); background:var(--panel); border:1px solid var(--line);
+  border-radius:15px; box-shadow:var(--shadow); padding:13px 15px; display:none;
+}
+#fact.open{display:block}
+#fact .fk{font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--accent); margin-bottom:4px}
+#fact .ft{font-size:13.5px; line-height:1.55}
+#fact .fa{display:flex; gap:10px; margin-top:9px}
+#fact .fa button{font-size:12px; font-weight:600; color:var(--accent)}
+#fact .fa .dis{color:var(--muted); margin-left:auto}
+@media (max-width:768px){ #fact{bottom:calc(140px + env(safe-area-inset-bottom))} }
+
+/* ---------- tooltip / toast / about ---------- */
+#tip{
+  position:fixed; z-index:50; pointer-events:none; display:none;
+  background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow);
+  padding:7px 11px; font-size:12.5px; max-width:240px;
+}
+#tip b{display:block; font-size:13px}
+#tip .tv{color:var(--ink2); font-variant-numeric:tabular-nums}
+#toast{
+  position:fixed; left:50%; translate:-50% 0; bottom:calc(84px + env(safe-area-inset-bottom)); z-index:60;
+  background:var(--ink); color:var(--ground); padding:9px 16px; border-radius:20px; font-size:13px;
+  opacity:0; transition:opacity .25s; pointer-events:none;
+}
+#toast.show{opacity:1}
+#about{
+  position:fixed; z-index:55; inset:0; display:none; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.35); padding:20px;
+}
+#about.open{display:flex}
+#about .card{background:var(--panel); border-radius:16px; box-shadow:var(--shadow); max-width:420px; padding:20px 22px; font-size:13.5px; line-height:1.6}
+#about h3{font-size:16px; margin-bottom:6px}
+#about .u{color:var(--muted); font-size:11.5px; margin-bottom:10px}
+#about .meta{margin-top:12px; padding-top:10px; border-top:1px solid var(--line); font-size:11px; color:var(--muted); line-height:1.7}
+#about .okr{margin-top:14px; text-align:right}
+#about .ok{background:var(--accent); color:var(--accent-ink); padding:7px 18px; border-radius:16px; font-weight:600}
+@media (max-width:768px){
+  #brand span{display:none}
+  #brand b{font-size:17px}
+  #legend{bottom:calc(88px + env(safe-area-inset-bottom)); max-width:58vw; padding:8px 11px}
+  #zoomctl{display:none}
+  #themebtn{display:none}
+  .iconbtn{width:38px; height:38px}
+  #topbar{gap:8px}
+}
+</style>
+
+<div id="stage"><svg id="map" aria-label="World map"><g id="world"><g id="base"></g><g id="ovl"></g><g id="subs"></g><g id="pts"></g></g></svg></div>
+
+<header id="topbar">
+  <div id="brand"><b>Stat<em>Maps</em></b><span>Atlas Prototype</span></div>
+  <div id="searchwrap">
+    <svg class="sic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    <input id="search" type="search" placeholder="Search layers or places…" autocomplete="off" aria-label="Search layers or places">
+    <div id="results" role="listbox"></div>
+  </div>
+  <button class="iconbtn" id="layersbtn" title="Layers" aria-label="Open layer catalogue">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13.5 9 5 9-5"/></svg>
+  </button>
+  <button class="iconbtn" id="corrbtn" title="Correlation Mode" aria-label="Open Correlation Mode">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V4"/><path d="M4 20h16"/><circle cx="9" cy="14" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="10" r="1.4" fill="currentColor" stroke="none"/><circle cx="16" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="6" r="1.4" fill="currentColor" stroke="none"/></svg>
+  </button>
+  <button class="iconbtn" id="themebtn" title="Toggle theme" aria-label="Toggle light and dark theme">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 13A8.5 8.5 0 1 1 11 3a7 7 0 0 0 10 10Z"/></svg>
+  </button>
+  <button class="iconbtn" id="sharebtn" title="Copy share link" aria-label="Copy share link">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="12" r="2.6"/><circle cx="17.5" cy="5.5" r="2.6"/><circle cx="17.5" cy="18.5" r="2.6"/><path d="m8.4 10.8 6.8-4M8.4 13.2l6.8 4"/></svg>
+  </button>
+</header>
+
+<div id="zoomctl">
+  <button class="iconbtn" id="zin" aria-label="Zoom in">＋</button>
+  <button class="iconbtn" id="zout" aria-label="Zoom out">－</button>
+  <button class="iconbtn" id="zreset" aria-label="Reset view">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z"/></svg>
+  </button>
+</div>
+
+<aside id="drawer" aria-label="Layer catalogue">
+  <div class="dhead"><h2>Layers</h2><span class="n" id="lcount"></span>
+    <button class="iconbtn close" id="drawerclose" aria-label="Close layers">✕</button></div>
+  <div id="cats"></div>
+  <div id="llist"></div>
+</aside>
+
+<aside id="detail" aria-label="Country detail">
+  <div class="dbody">
+    <div class="chead"><div><h2 id="cname"></h2><div class="sub" id="csub"></div></div>
+      <button class="iconbtn close" id="detailclose" aria-label="Close detail">✕</button></div>
+    <div class="big"><span class="v" id="cval"></span><span class="rank" id="crank"></span></div>
+    <div class="unit" id="cunit"></div>
+    <svg id="spark" viewBox="0 0 290 74" role="img" aria-label="Time series sparkline"></svg>
+    <div class="sect" id="profhead">Country profile</div>
+    <div id="prof"></div>
+    <div class="prov" id="cprov"></div>
+  </div>
+</aside>
+
+<aside id="corr" aria-label="Correlation Mode">
+  <div class="chd"><div><h2>Correlation Mode</h2><div class="tgt">What moves with <b id="corrtgt"></b> · <span id="corryr"></span>?</div></div>
+    <button class="iconbtn close" id="corrclose" aria-label="Close Correlation Mode">✕</button></div>
+  <div class="meth">Spearman rank ρ across countries · Benjamini–Hochberg FDR · partial ρ screens the development confounder. <button id="methbtn">Methodology</button></div>
+  <div class="cbody" id="corrlist"></div>
+  <div class="cbody" id="scat" style="display:none"></div>
+</aside>
+
+<aside id="rank" aria-label="Country rankings">
+  <div class="rhd"><div><h2>Rankings</h2><div class="tgt"><b id="ranktgt"></b> · <span id="rankyr"></span></div></div>
+    <button class="iconbtn close" id="rankclose" aria-label="Close rankings">✕</button></div>
+  <div class="rfilters">
+    <div class="conts" id="rankconts"></div>
+    <input id="rankq" type="search" placeholder="Filter countries… (e.g. japan, brazil)" autocomplete="off" aria-label="Filter countries">
+  </div>
+  <div id="ranklist"></div>
+  <div class="rfoot" id="rankfoot"></div>
+</aside>
+
+<button class="iconbtn" id="rankbtn" title="Country rankings" aria-label="Open country rankings">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4V10H4zM10 20h4V4h-4zM16 20h4v-8h-4z"/></svg>
+</button>
+<button class="iconbtn" id="discbtn" title="Discover something" aria-label="Discover a random insight">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.3L19 10l-5.1 1.7L12 17l-1.9-5.3L5 10l5.1-1.7L12 3Z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></svg>
+</button>
+<div id="fact" role="status">
+  <div class="fk" id="factk">Discover</div>
+  <div class="ft" id="factt"></div>
+  <div class="fa"><button id="factgo">Show me</button><button id="factmore">Another</button><button class="dis" id="factx">Dismiss</button></div>
+</div>
+
+<div id="legend"></div>
+
+<div id="timeline">
+  <button id="play" aria-label="Play timeline">
+    <svg id="playic" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5-13-7.5Z"/></svg>
+  </button>
+  <span id="yearval">2023</span>
+  <input id="yslider" type="range" aria-label="Year">
+  <div id="trange"><span id="tmin"></span><span id="tmax"></span></div>
+</div>
+
+<div id="tip" role="tooltip"></div>
+<div id="toast"></div>
+<div id="about"><div class="card"><h3 id="ab-t"></h3><div class="u" id="ab-u"></div><div id="ab-d"></div>
+  <div class="meta" id="ab-m"></div><div class="okr"><button class="ok" id="ab-ok">Close</button></div></div></div>
+
+<script>
+/* Data is embedded gzip-compressed (base64) and inflated natively at startup —
+   the page ships ~3x smaller than raw JSON. */
+const DZB64 = "/*__STATMAPS_GZ__*/";
+let D = null;
+async function bootStatmaps(){
+  try{
+    const bin = Uint8Array.from(atob(DZB64), c => c.charCodeAt(0));
+    const txt = await new Response(
+      new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+    D = JSON.parse(txt);
+  }catch(e){
+    document.body.innerHTML = '<div style="padding:40px;font-family:system-ui;max-width:32em">'+
+      '<h2>StatMaps needs a newer browser</h2><p>This page inflates its embedded dataset with '+
+      'the DecompressionStream API (Chrome 80+, Safari 16.4+, Firefox 113+). Error: '+e+'</p></div>';
+    return;
+  }
+  statmapsMain();
+}
+function statmapsMain(){
+"use strict";
+const RAMPS = {
+  blue:  ["#cfe0f2","#9cc1e4","#649dd1","#3572b0","#174e79"],
+  teal:  ["#cde9e5","#93d0c9","#57b0a8","#2b8a86","#0f5e5f"],
+  green: ["#d4e8cf","#a4d09b","#6fb267","#3f8f42","#1c622b"],
+  orange:["#fbe0c2","#f5b878","#e88b3a","#c2621a","#8a4110"],
+  purple:["#e0d7ec","#bfa8d8","#9c7ac0","#7450a0","#4b2d73"]
+};
+const W=1000, H=D.H, YEARS=D.years, ISOS=Object.keys(D.paths);
+const $=id=>document.getElementById(id);
+const dsById={}; D.datasets.forEach(d=>dsById[d.id]=d);
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- state ---------- */
+const S = { layer:"gdp-per-capita", ovl:null, year:YEARS[YEARS.length-1],
+            view:{x:0,y:0,w:W}, sel:null, playing:false, cat:"All", pts:new Set(), heat:new Set() };
+
+/* parse hash state (#l=..&o=..&y=..&v=x,y,w&c=ISO) */
+try{
+  const h=new URLSearchParams(location.hash.slice(1));
+  if(h.get("l") && dsById[h.get("l")]) S.layer=h.get("l");
+  if(h.get("o") && dsById[h.get("o")]) S.ovl=h.get("o");
+  const y=parseInt(h.get("y")); if(YEARS.includes(y)) S.year=y;
+  if(h.get("v")){ const [x,yy,w]=h.get("v").split(",").map(Number);
+    if([x,yy,w].every(Number.isFinite)&&w>10) S.view={x,y:yy,w}; }
+  if(h.get("c") && D.paths[h.get("c")]) S.sel=h.get("c");
+  if(h.get("p")) h.get("p").split(",").forEach(id=>{ if(D.points&&D.points[id]) S.pts.add(id); });
+  if(h.get("h")) h.get("h").split(",").forEach(id=>{ if(S.pts.has(id)) S.heat.add(id); });
+}catch(e){}
+
+let hashT=null;
+function syncHash(){
+  clearTimeout(hashT);
+  hashT=setTimeout(()=>{
+    const p=new URLSearchParams();
+    p.set("l",S.layer); if(S.ovl)p.set("o",S.ovl); p.set("y",S.year);
+    const v=S.view; p.set("v",[v.x.toFixed(1),v.y.toFixed(1),v.w.toFixed(1)].join(","));
+    if(S.sel)p.set("c",S.sel);
+    if(S.pts.size)p.set("p",[...S.pts].join(","));
+    if(S.heat.size)p.set("h",[...S.heat].join(","));
+    history.replaceState(null,"","#"+p.toString());
+  },300);
+}
+
+/* ---------- formatting ---------- */
+const compact=new Intl.NumberFormat("en",{notation:"compact",maximumFractionDigits:1});
+const full=new Intl.NumberFormat("en");
+function fmt(v,f){
+  if(v==null) return "—";
+  switch(f){
+    case "int": return v>=1e6?compact.format(v):full.format(Math.round(v));
+    case "usd": return "$"+(v>=1e5?compact.format(v):full.format(Math.round(v)));
+    case "pct": return (v>=100?Math.round(v):v.toFixed(1))+"%";
+    case "usd2": return "$"+v.toFixed(2);
+    case "eur": return "€"+(v>=1e5?compact.format(v):full.format(Math.round(v)));
+    case "num1": return v.toFixed(1);
+    default: return v>=100?full.format(Math.round(v)):v.toFixed(2);
+  }
+}
+
+/* ---------- data helpers ---------- */
+/* Series are stored null-trimmed: [startIndex, v0, v1, …].
+   Datasets flagged static hold one timeless value, valid for any year. */
+function val(dsId,iso,year){
+  const s=D.values[dsId][iso]; if(!s) return null;
+  if(dsById[dsId]&&dsById[dsId].static) return s[1];
+  const i=year-YEARS[0]-s[0];
+  return (i>=0&&i<s.length-1)?s[i+1]:null;
+}
+function fullSeries(dsId,iso){
+  const s=D.values[dsId][iso]; if(!s) return null;
+  const out=new Array(YEARS.length).fill(null);
+  for(let i=1;i<s.length;i++) out[s[0]+i-1]=s[i];
+  return out;
+}
+function entsOf(dsId){
+  const l=dsById[dsId]&&dsById[dsId].level;
+  return l?Object.keys(D.sub[l].paths):ISOS;
+}
+function nameOfEnt(code,dsId){
+  const l=dsById[dsId]&&dsById[dsId].level;
+  return l?D.sub[l].names[code]:D.names[code];
+}
+function breaksFor(dsId,year){
+  const ds=dsById[dsId], vs=[];
+  for(const iso of entsOf(dsId)){ const v=val(dsId,iso,year); if(v!=null&&(!ds.log||v>0)) vs.push(ds.log?Math.log10(v):v); }
+  vs.sort((a,b)=>a-b);
+  if(vs.length<5) return null;
+  const q=p=>vs[Math.min(vs.length-1,Math.floor(p*vs.length))];
+  const br=[q(.2),q(.4),q(.6),q(.8)];
+  return {br, un: x=>ds.log?Math.pow(10,x):x, tr: v=>ds.log?Math.log10(v):v,
+          min:vs[0], max:vs[vs.length-1]};
+}
+function classify(v,B,ds){
+  if(v==null||(ds.log&&v<=0)) return -1;
+  const t=B.tr(v); let c=0;
+  for(const b of B.br){ if(t>b)c++; else break; }
+  return c;
+}
+
+/* ---------- build map ---------- */
+const svg=$("map"), gBase=$("base"), gOvl=$("ovl");
+const basePaths={}, ovlPaths={}, bbox={};
+for(const iso of ISOS){
+  const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+  p.setAttribute("d",D.paths[iso]); p.dataset.iso=iso;
+  gBase.appendChild(p); basePaths[iso]=p;
+  const o=p.cloneNode(); gOvl.appendChild(o); ovlPaths[iso]=o;
+  let mx=1e9,my=1e9,Mx=-1e9,My=-1e9;
+  D.paths[iso].replace(/[ML]([\d.]+),([\d.]+)/g,(m,a,b)=>{
+    a=+a;b=+b; if(a<mx)mx=a; if(a>Mx)Mx=a; if(b<my)my=b; if(b>My)My=b; return "";});
+  bbox[iso]=[mx,my,Mx,My];
+}
+/* sub-national geometry groups (US states, EU NUTS-2) */
+const subPaths={}, subBBox={};
+for(const lvl in (D.sub||{})){
+  const g=document.createElementNS("http://www.w3.org/2000/svg","g");
+  g.id="sub-"+lvl; g.style.display="none"; $("subs").appendChild(g);
+  subPaths[lvl]={}; subBBox[lvl]={};
+  for(const code in D.sub[lvl].paths){
+    const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d",D.sub[lvl].paths[code]);
+    p.dataset.sub=code; p.dataset.lvl=lvl;
+    g.appendChild(p); subPaths[lvl][code]=p;
+    let mx=1e9,my=1e9,Mx=-1e9,My=-1e9;
+    D.sub[lvl].paths[code].replace(/[ML]([\d.]+),([\d.]+)/g,(m,a,b)=>{
+      a=+a;b=+b; if(a<mx)mx=a; if(a>Mx)Mx=a; if(b<my)my=b; if(b>My)My=b; return "";});
+    subBBox[lvl][code]=[mx,my,Mx,My];
+  }
+}
+function applyView(){
+  const v=S.view, h=v.w*H/W;
+  svg.setAttribute("viewBox",`${v.x} ${v.y} ${v.w} ${h}`);
+  schedulePtScale();
+  syncHash();
+}
+function clampView(){
+  const v=S.view;
+  v.w=Math.max(18,Math.min(W*1.15,v.w));
+  const h=v.w*H/W;
+  v.x=Math.max(-v.w*.35,Math.min(W-v.w*.65,v.x));
+  v.y=Math.max(-h*.35,Math.min(H-h*.65,v.y));
+}
+
+/* ---------- point layers ---------- */
+const gPts=$("pts");
+const plById={}; (D.pointLayers||[]).forEach(p=>plById[p.id]=p);
+const ptEls={};   // layer id -> [[el, x, y, yearOrZero], …]
+function ptTip(pl,p){
+  if(pl.id==="earthquakes") return `M ${p[3].toFixed(1)} earthquake · ${p[2]}`;
+  if(pl.id==="volcanoes") return `${p[2]} (${p[3]||"—"}) · last eruption: ${p[4]==null?"unknown":p[4]<0?Math.abs(p[4])+" BCE":p[4]}`;
+  if(pl.id==="airports") return p[2];
+  if(pl.id==="power-plants") return `${p[4]} · ${pl.cats[p[2]].label} · ${p[3]} GW`;
+  if(pl.id==="cities") return `${p[3]} · ${p[2]}M people`;
+  if(pl.id==="unesco-sites") return `${p[3]}${p[2]?` · inscribed ${p[2]}`:""}`;
+  const y=p[2]?` (${p[2]<0?Math.abs(p[2])+" BCE":p[2]})`:"";
+  return `${p[3]}${y}`;
+}
+function ptR(pl,p){
+  if(pl.id==="earthquakes") return Math.max(1.6,(p[3]-5)*2.4);
+  if(pl.id==="power-plants") return 1.6+Math.sqrt(p[3])*1.5;
+  if(pl.id==="cities") return 1.6+Math.sqrt(p[2])*1.1;
+  if(pl.id==="airports") return 1.9;
+  if(pl.id==="battles"||pl.id==="castles"||pl.id==="shipwrecks") return 1.8;
+  return 2.4;
+}
+function buildPts(id){
+  if(ptEls[id]) return;
+  const pl=plById[id], arr=[];
+  const NS="http://www.w3.org/2000/svg";
+  for(const p of D.points[id]){
+    let el;
+    if(pl.shape==="triangle"){
+      el=document.createElementNS(NS,"path");
+      el.setAttribute("d","M0,-4.4L3.8,3.2L-3.8,3.2Z");
+    } else {
+      el=document.createElementNS(NS,"circle");
+      el.setAttribute("r", ptR(pl,p).toFixed(1));
+    }
+    el.setAttribute("class","pt"+(pl.id==="earthquakes"||pl.id==="power-plants"||pl.id==="cities"?" dim":""));
+    el.setAttribute("fill", pl.cats ? pl.cats[p[2]].color : pl.color);
+    el.dataset.tip=ptTip(pl,p);
+    el.style.display="none";
+    gPts.appendChild(el);
+    arr.push([el,p[0],p[1], pl.mode==="year"?p[2] : pl.mode==="cumul"?p[2] : 0]);
+  }
+  ptEls[id]=arr;
+  updatePtScale();
+}
+function updatePtScale(){
+  const k=Math.max(.1,Math.min(1.4,S.view.w/W));
+  for(const id in ptEls){
+    if(!S.pts.has(id)) continue;
+    for(const r of ptEls[id]) r[0].setAttribute("transform",`translate(${r[1]} ${r[2]}) scale(${k})`);
+  }
+}
+let ptScaleT=null;
+function schedulePtScale(){ clearTimeout(ptScaleT); ptScaleT=setTimeout(updatePtScale,120); }
+function paintPts(){
+  for(const id in plById){
+    const on=S.pts.has(id), heat=on&&S.heat.has(id);
+    if(on&&!heat) buildPts(id);
+    if(ptEls[id]){
+      const pl=plById[id];
+      for(const r of ptEls[id]){
+        let show=on&&!heat;
+        if(show&&pl.mode==="year") show=r[3]===S.year;
+        else if(show&&pl.mode==="cumul") show=(r[3]===0||r[3]<=S.year);
+        r[0].style.display=show?"":"none";
+      }
+    }
+    if(heat) renderHeat(id);
+    else if(heatImgs[id]) heatImgs[id].img.style.display="none";
+  }
+}
+function togglePt(id){
+  if(S.pts.has(id)){ S.pts.delete(id); S.heat.delete(id); } else { S.pts.add(id); }
+  paintPts(); paint(); renderList($("search").value);
+}
+function toggleHeat(id){
+  if(S.heat.has(id)) S.heat.delete(id);
+  else { S.heat.add(id); S.pts.add(id); }
+  paintPts(); paint(); renderList($("search").value);
+}
+
+/* ---------- density heatmaps for point layers ---------- */
+const SVGNS="http://www.w3.org/2000/svg";
+const heatImgs={};
+let heatLUT=null;
+function getLUT(){
+  if(heatLUT) return heatLUT;
+  const c=document.createElement("canvas"); c.width=256; c.height=1;
+  const x=c.getContext("2d");
+  const g=x.createLinearGradient(0,0,256,0);
+  g.addColorStop(0,"rgba(255,237,160,0)");
+  g.addColorStop(.25,"rgba(254,217,118,.5)");
+  g.addColorStop(.5,"rgba(254,153,41,.72)");
+  g.addColorStop(.75,"rgba(227,74,51,.85)");
+  g.addColorStop(1,"rgba(177,0,38,.95)");
+  x.fillStyle=g; x.fillRect(0,0,256,1);
+  heatLUT=x.getImageData(0,0,256,1).data;
+  return heatLUT;
+}
+function heatVisible(pl,p){
+  if(pl.mode==="year") return p[2]===S.year;
+  if(pl.mode==="cumul") return p[2]===0||p[2]<=S.year;
+  return true;
+}
+function renderHeat(id){
+  const pl=plById[id], Hc=Math.ceil(H);
+  let o=heatImgs[id];
+  if(!o){
+    const img=document.createElementNS(SVGNS,"image");
+    img.setAttribute("x",0); img.setAttribute("y",0);
+    img.setAttribute("width",W); img.setAttribute("height",Hc);
+    img.setAttribute("preserveAspectRatio","none");
+    img.style.pointerEvents="none";
+    gPts.insertBefore(img,gPts.firstChild);
+    const cvs=document.createElement("canvas"); cvs.width=W; cvs.height=Hc;
+    o=heatImgs[id]={img,cvs};
+  }
+  const ctx=o.cvs.getContext("2d");
+  ctx.clearRect(0,0,W,Hc);
+  for(const p of D.points[id]){
+    if(!heatVisible(pl,p)) continue;
+    const r = id==="earthquakes" ? Math.max(7,(p[3]-5)*9) : 11;
+    const g=ctx.createRadialGradient(p[0],p[1],0,p[0],p[1],r);
+    g.addColorStop(0,"rgba(0,0,0,0.16)"); g.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.arc(p[0],p[1],r,0,6.2832); ctx.fill();
+  }
+  const im=ctx.getImageData(0,0,W,Hc), d=im.data, lut=getLUT();
+  for(let i=0;i<d.length;i+=4){
+    const a=d[i+3];
+    if(a){ const j=(Math.min(255,a*1.6)|0)*4;
+      d[i]=lut[j]; d[i+1]=lut[j+1]; d[i+2]=lut[j+2]; d[i+3]=lut[j+3]; }
+  }
+  ctx.putImageData(im,0,0);
+  o.img.setAttribute("href",o.cvs.toDataURL());
+  o.img.style.display="";
+}
+
+/* ---------- painting ---------- */
+let curB=null, curBO=null, lastPaintedLayer=null;
+function paint(){
+  const ds=dsById[S.layer]; curB=breaksFor(S.layer,S.year);
+  /* when switching to a layer with no data at the current year, snap to its latest year */
+  if(!curB && S.layer!==lastPaintedLayer){
+    const y2=latestYearWithData(S.layer);
+    if(y2&&y2!==S.year){
+      S.year=y2; $("yslider").value=y2; curB=breaksFor(S.layer,S.year);
+      toast(`${ds.title}: showing ${y2} (latest year with data)`);
+    }
+  }
+  /* switching to a sub-national layer flies to its extent */
+  if(ds.level && S.layer!==lastPaintedLayer){
+    let mx=1e9,my=1e9,Mx=-1e9,My=-1e9;
+    for(const code in subBBox[ds.level]){
+      const b=subBBox[ds.level][code];
+      if(b[0]<mx)mx=b[0]; if(b[1]<my)my=b[1]; if(b[2]>Mx)Mx=b[2]; if(b[3]>My)My=b[3];
+    }
+    if(ds.level==="nuts2"){ mx=Math.max(mx,380); My=Math.min(My,220); }  /* clip overseas territories */
+    const cw=Math.max((Mx-mx)*1.15,60);
+    flyTo({x:(mx+Mx)/2-cw/2, y:(my+My)/2-cw*H/W/2, w:cw});
+  }
+  lastPaintedLayer=S.layer;
+  const ramp=RAMPS[ds.ramp];
+  const lvl=ds.level||null;
+  const dso=(!lvl&&S.ovl&&!dsById[S.ovl].level)?dsById[S.ovl]:null;
+  curBO=dso?breaksFor(S.ovl,S.year):null;
+  let rampO=null;
+  if(dso){ rampO=RAMPS[dso.ramp===ds.ramp?(ds.ramp==="orange"?"purple":"orange"):dso.ramp]; }
+  for(const iso of ISOS){
+    const c=lvl?-1:(curB?classify(val(S.layer,iso,S.year),curB,ds):-1);
+    basePaths[iso].style.fill = c<0?"var(--land)":ramp[c];
+    if(dso&&curBO){
+      const vo=val(S.ovl,iso,S.year), co=classify(vo,curBO,dso);
+      ovlPaths[iso].style.fill = co<0?"transparent":rampO[co];
+      ovlPaths[iso].style.display="";
+    } else ovlPaths[iso].style.display="none";
+  }
+  for(const l in subPaths){
+    const on=l===lvl;
+    document.getElementById("sub-"+l).style.display=on?"":"none";
+    if(on) for(const code in subPaths[l]){
+      const c=curB?classify(val(S.layer,code,S.year),curB,ds):-1;
+      subPaths[l][code].style.fill=c<0?"var(--land)":ramp[c];
+    }
+  }
+  paintPts();
+  paintLegend(ds,ramp,dso,rampO);
+  $("yearval").textContent=S.year;
+  if(S.sel) fillDetail();
+  corrRefresh();
+  rankRefresh();
+  syncHash();
+}
+function legendBar(ramp){ return `<div class="bar">${ramp.map(c=>`<i style="background:${c}"></i>`).join("")}</div>`; }
+function paintLegend(ds,ramp,dso,rampO){
+  const el=$("legend");
+  let lbl="";
+  if(curB){
+    const lo=fmt(curB.un(curB.min),ds.fmt), mid=fmt(curB.un(curB.br[1]),ds.fmt), hi=fmt(curB.un(curB.max),ds.fmt);
+    lbl=`<div class="lbls"><span>${lo}</span><span>${mid}</span><span>${hi}</span></div>`;
+  }
+  let ov="";
+  if(dso){
+    ov=`<div class="ovline">${legendBar(rampO)}<span class="tt">× ${dso.title}</span>
+        <button class="x" id="ovoff" aria-label="Remove overlay" title="Remove overlay">✕</button></div>`;
+  }
+  let ptl="";
+  for(const id of S.pts){
+    const pl=plById[id];
+    const ctx=pl.mode==="year"?`in ${S.year}`:pl.mode==="cumul"?`by ${S.year}`:"all time";
+    ptl+=`<div class="ptline"><span class="pdot" style="background:${pl.color}"></span>${pl.title} · ${ctx}${S.heat.has(id)?" · density heatmap":""}</div>`;
+    if(pl.cats) ptl+=`<div class="ptline" style="border:0;margin-top:3px;padding-top:0;flex-wrap:wrap;font-size:10px">${
+      pl.cats.map(c=>`<span style="display:inline-flex;align-items:center;gap:3px"><span class="pdot" style="width:7px;height:7px;background:${c.color}"></span>${c.label}</span>`).join("")}</div>`;
+  }
+  const src=ds.src||D.source;
+  el.innerHTML=`<div class="lt"><button id="abinfo" style="text-align:left" title="About this layer">${ds.title} ⓘ</button><span class="yr">${S.year}</span></div>
+    <div class="lu">${ds.unit} · quintiles${ds.log?" (log)":""}${dso?" · overlay: multiply":""}</div>
+    ${legendBar(ramp)}${lbl}${ov}${ptl}
+    <div class="src">Data: <a href="${src.url}" target="_blank" rel="noopener">${src.name}</a> · ${src.licence} · Boundaries © Natural Earth / OSM contributors</div>`;
+  $("abinfo").onclick=()=>openAbout(ds);
+  const off=$("ovoff"); if(off) off.onclick=()=>{S.ovl=null; paint(); renderList();};
+}
+
+/* ---------- about ---------- */
+function openAbout(ds){
+  const src=ds.src||D.source;
+  $("ab-t").textContent=ds.title; $("ab-u").textContent=ds.unit+" · "+ds.cat;
+  $("ab-d").textContent=ds.desc;
+  $("ab-m").innerHTML=`Source: ${src.name} · Licence: ${src.licence}<br>
+    Coverage: ${Object.keys(D.values[ds.id]).length} countries · ${YEARS[0]}–${YEARS[YEARS.length-1]} · retrieved ${D.source.retrieved}<br>
+    Classification: quintile${ds.log?", log-transformed":""} · 5 classes`;
+  $("about").classList.add("open");
+}
+function openAboutPt(pl){
+  $("ab-t").textContent=pl.title; $("ab-u").textContent=pl.cat+" · point layer";
+  $("ab-d").textContent=pl.desc;
+  $("ab-m").innerHTML=`Source: ${pl.src.name} · Licence: ${pl.src.licence}<br>
+    ${pl.count.toLocaleString()} features · retrieved ${D.source.retrieved}`;
+  $("about").classList.add("open");
+}
+$("ab-ok").onclick=()=>$("about").classList.remove("open");
+$("about").onclick=e=>{ if(e.target.id==="about") $("about").classList.remove("open"); };
+
+/* ---------- layer drawer ---------- */
+const cats=["All",...new Set(D.datasets.map(d=>d.cat))];
+function renderCats(){
+  $("cats").innerHTML=cats.map(c=>`<button class="chip${c===S.cat?" on":""}" data-c="${c}">${c}</button>`).join("");
+  $("cats").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{S.cat=b.dataset.c; renderCats(); renderList();});
+}
+function renderList(filter){
+  const q=(filter||"").toLowerCase();
+  const list=D.datasets.filter(d=>(S.cat==="All"||d.cat===S.cat)&&(!q||(d.title+" "+d.cat).toLowerCase().includes(q)));
+  $("lcount").textContent=list.length+" of "+D.datasets.length;
+  $("llist").innerHTML=list.map(d=>{
+    const r=RAMPS[d.ramp];
+    return `<button class="lrow" data-id="${d.id}">
+      <span class="sw">${r.map(c=>`<i style="background:${c}"></i>`).join("")}</span>
+      <span><span class="tt">${d.title}</span><br><span class="su">${d.cat} · ${d.unit}</span></span>
+      <span class="tags">
+        ${d.id===S.layer?'<span class="pill act">active</span>':""}
+        ${d.level?'<span class="pill">'+(d.level==="us-state"?"US states":"EU regions")+"</span>":
+          `<span class="ovbtn${d.id===S.ovl?" act":""}" data-ov="${d.id}" role="button" tabindex="0" title="Toggle as overlay">${d.id===S.ovl?"overlay ✕":"+ overlay"}</span>`}
+      </span></button>`;
+  }).join("");
+  const pls=(D.pointLayers||[]).filter(p=>(S.cat==="All"||p.cat===S.cat)&&(!q||(p.title+" "+p.cat).toLowerCase().includes(q)));
+  if(pls.length){
+    $("llist").innerHTML+='<div class="sect2">Events &amp; places</div>'+pls.map(pl=>`
+      <button class="lrow ptrow" data-pt="${pl.id}">
+        <span class="dot${pl.shape==="triangle"?" tri":""}" style="background:${pl.color}"></span>
+        <span><span class="tt">${pl.title}</span><br><span class="su">${pl.count.toLocaleString()} features · ${pl.src.name}</span></span>
+        <span class="tags"><span class="pill${S.pts.has(pl.id)?" act":""}">${S.pts.has(pl.id)?"on":"off"}</span>
+          <span class="ovbtn${S.heat.has(pl.id)?" act":""}" data-heat="${pl.id}" role="button" tabindex="0" title="Toggle density heatmap">${S.heat.has(pl.id)?"heat ✕":"heat"}</span>
+          <span class="ovbtn" data-ab="${pl.id}" role="button" tabindex="0" title="About this layer">ⓘ</span></span>
+      </button>`).join("");
+  }
+  $("llist").querySelectorAll(".lrow:not(.ptrow)").forEach(b=>{
+    b.onclick=e=>{
+      const ov=e.target.closest("[data-ov]");
+      if(ov){ const id=ov.dataset.ov;
+        S.ovl = S.ovl===id?null:(id===S.layer?null:id);
+      } else {
+        S.layer=b.dataset.id; if(S.ovl===S.layer)S.ovl=null;
+      }
+      paint(); renderList(filter);
+    };
+  });
+  $("llist").querySelectorAll(".ptrow").forEach(b=>{
+    b.onclick=e=>{
+      const ab=e.target.closest("[data-ab]");
+      if(ab){ openAboutPt(plById[ab.dataset.ab]); return; }
+      const ht=e.target.closest("[data-heat]");
+      if(ht){ toggleHeat(ht.dataset.heat); return; }
+      togglePt(b.dataset.pt);
+    };
+  });
+}
+$("layersbtn").onclick=()=>{ $("drawer").classList.toggle("open"); $("detail").classList.remove("open"); };
+$("drawerclose").onclick=()=>$("drawer").classList.remove("open");
+
+/* ---------- search ---------- */
+const searchEl=$("search"), resEl=$("results");
+const placeIdx=ISOS.map(iso=>({iso,n:D.names[iso]}));
+function doSearch(q){
+  q=q.trim().toLowerCase();
+  if(!q){ resEl.classList.remove("open"); return; }
+  const ls=D.datasets.filter(d=>(d.title+" "+d.cat+" "+d.unit).toLowerCase().includes(q)).slice(0,6);
+  const pl=(D.pointLayers||[]).filter(p=>(p.title+" "+p.cat).toLowerCase().includes(q)).slice(0,3);
+  const ps=placeIdx.filter(p=>p.n.toLowerCase().includes(q)).slice(0,5);
+  if(!ls.length&&!ps.length&&!pl.length){ resEl.innerHTML='<div class="grp">No results — try “gdp”, “earthquakes”, “japan”…</div>'; resEl.classList.add("open"); return; }
+  let h="";
+  if(ls.length||pl.length) h+='<div class="grp">Layers</div>'
+    +ls.map(d=>`<button class="row" data-l="${d.id}"><span class="dot" style="background:${RAMPS[d.ramp][3]}"></span>${d.title}<span class="cat">${d.cat}</span></button>`).join("")
+    +pl.map(p=>`<button class="row" data-pl="${p.id}"><span class="dot" style="background:${p.color};border-radius:50%"></span>${p.title}<span class="cat">${S.pts.has(p.id)?"on · tap to hide":"point layer"}</span></button>`).join("");
+  if(ps.length) h+='<div class="grp">Places</div>'+ps.map(p=>
+    `<button class="row" data-p="${p.iso}"><span class="dot" style="background:var(--muted);border-radius:50%"></span>${p.n}<span class="cat">country</span></button>`).join("");
+  resEl.innerHTML=h; resEl.classList.add("open");
+  resEl.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{ S.layer=b.dataset.l; if(S.ovl===S.layer)S.ovl=null; paint(); renderList(); closeSearch(); });
+  resEl.querySelectorAll("[data-pl]").forEach(b=>b.onclick=()=>{ togglePt(b.dataset.pl); toast(S.pts.has(b.dataset.pl)?`${plById[b.dataset.pl].title} shown`:`${plById[b.dataset.pl].title} hidden`); closeSearch(); });
+  resEl.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ selectCountry(b.dataset.p,true); closeSearch(); });
+}
+function closeSearch(){ resEl.classList.remove("open"); searchEl.blur(); }
+searchEl.addEventListener("input",()=>doSearch(searchEl.value));
+searchEl.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){ const f=resEl.querySelector(".row[data-l],.row[data-p]"); if(f)f.click(); }
+  if(e.key==="Escape") closeSearch();
+});
+document.addEventListener("pointerdown",e=>{ if(!e.target.closest("#searchwrap")) resEl.classList.remove("open"); });
+
+/* ---------- selection & detail ---------- */
+function selectCountry(iso,fly,quiet){
+  if(S.sel&&basePaths[S.sel]) basePaths[S.sel].classList.remove("sel");
+  S.sel=iso;
+  const p=basePaths[iso]; p.classList.add("sel"); gBase.appendChild(p);
+  fillDetail();
+  if(!quiet){ $("detail").classList.add("open"); $("drawer").classList.remove("open"); closeCorr(); $("rank").classList.remove("open"); }
+  if(fly){
+    const [mx,my,Mx,My]=bbox[iso];
+    const cw=Math.max((Mx-mx)*2.6,60);
+    flyTo({x:(mx+Mx)/2-cw/2, y:(my+My)/2-cw*H/W/2, w:cw});
+  }
+  syncHash();
+}
+function fillDetail(){
+  const iso=S.sel, ds=dsById[S.layer];
+  $("cname").textContent=D.names[iso];
+  $("csub").textContent=ds.title+" · "+S.year;
+  const v=val(S.layer,iso,S.year);
+  $("cval").textContent=fmt(v,ds.fmt);
+  const ranked=ISOS.map(i=>({i,v:val(S.layer,i,S.year)})).filter(r=>r.v!=null).sort((a,b)=>b.v-a.v);
+  const ri=ranked.findIndex(r=>r.i===iso);
+  $("crank").textContent=ri>=0?`#${ri+1} of ${ranked.length}`:"no data";
+  $("cunit").textContent=ds.unit;
+  drawSpark(iso,ds);
+  $("profhead").textContent=`Profile · ${S.year}`;
+  $("prof").innerHTML=D.datasets.filter(d=>!d.level).map(d=>{
+    const pv=val(d.id,iso,S.year);
+    return `<button data-id="${d.id}" title="Switch map to ${d.title}"><span class="k">${d.title}</span><span class="v">${fmt(pv,d.fmt)}</span></button>`;
+  }).join("");
+  $("prof").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.layer=b.dataset.id; if(S.ovl===S.layer)S.ovl=null; paint(); renderList();});
+  const srcp=ds.src||D.source;
+  $("cprov").textContent=`Source: ${srcp.name} (${srcp.licence}) · retrieved ${D.source.retrieved}. Values are quintile-classed against all countries for ${S.year}.`;
+}
+function drawSpark(iso,ds){
+  const s=fullSeries(ds.id,iso)||[], el=$("spark");
+  const pts=[]; let mn=Infinity,mx=-Infinity;
+  s.forEach((v,i)=>{ if(v!=null){pts.push([i,v]); if(v<mn)mn=v; if(v>mx)mx=v;} });
+  if(pts.length<2){ el.innerHTML='<text x="4" y="40">'+(ds.static?'Static layer — one timeless value.':'No time series available.')+'</text>'; return; }
+  if(mn===mx){mn-=1;mx+=1;}
+  const X=i=>8+i/(YEARS.length-1)*268, Y=v=>10+(1-(v-mn)/(mx-mn))*44;
+  const line=pts.map(([i,v],k)=>(k?"L":"M")+X(i).toFixed(1)+","+Y(v).toFixed(1)).join("");
+  const area=line+`L${X(pts[pts.length-1][0]).toFixed(1)},58L${X(pts[0][0]).toFixed(1)},58Z`;
+  const yi=S.year-YEARS[0]; const cur=pts.find(p=>p[0]===yi)||pts[pts.length-1];
+  el.innerHTML=`<path class="ar" d="${area}"/><path class="ln" d="${line}"/>
+    <circle class="dotp" cx="${X(cur[0]).toFixed(1)}" cy="${Y(cur[1]).toFixed(1)}" r="3.4"/>
+    <text x="8" y="71">${YEARS[pts[0][0]]}</text><text x="276" y="71" text-anchor="end">${YEARS[pts[pts.length-1][0]]}</text>
+    <text x="276" y="12" text-anchor="end">${fmt(mx,ds.fmt)}</text>`;
+}
+$("detailclose").onclick=()=>{ $("detail").classList.remove("open");
+  if(S.sel&&basePaths[S.sel])basePaths[S.sel].classList.remove("sel"); S.sel=null; syncHash(); };
+
+/* ---------- tooltip ---------- */
+const tip=$("tip");
+svg.addEventListener("pointermove",e=>{
+  if(e.pointerType!=="mouse") return;
+  const ptTipTxt=e.target.dataset&&e.target.dataset.tip;
+  if(ptTipTxt){
+    tip.innerHTML=`<b>${ptTipTxt}</b>`; tip.style.display="block";
+    tip.style.left=Math.min(e.clientX+14,innerWidth-250)+"px";
+    tip.style.top=Math.min(e.clientY+14,innerHeight-70)+"px";
+    return;
+  }
+  const sub=e.target.dataset&&e.target.dataset.sub;
+  if(sub){
+    const ds=dsById[S.layer];
+    if((ds.level||null)!==e.target.dataset.lvl){ tip.style.display="none"; return; }
+    tip.innerHTML=`<b>${D.sub[ds.level].names[sub]}</b><span class="tv">${ds.title}: ${fmt(val(S.layer,sub,S.year),ds.fmt)}</span>`;
+    tip.style.display="block";
+    tip.style.left=Math.min(e.clientX+14,innerWidth-250)+"px";
+    tip.style.top=Math.min(e.clientY+14,innerHeight-70)+"px";
+    return;
+  }
+  const iso=e.target.dataset&&e.target.dataset.iso;
+  if(!iso){ tip.style.display="none"; return; }
+  const ds=dsById[S.layer], v=val(S.layer,iso,S.year);
+  let t=`<b>${D.names[iso]}</b><span class="tv">${ds.title}: ${fmt(v,ds.fmt)}</span>`;
+  if(S.ovl){ const o=dsById[S.ovl]; t+=`<br><span class="tv">${o.title}: ${fmt(val(S.ovl,iso,S.year),o.fmt)}</span>`; }
+  tip.innerHTML=t; tip.style.display="block";
+  const px=Math.min(e.clientX+14,innerWidth-250), py=Math.min(e.clientY+14,innerHeight-70);
+  tip.style.left=px+"px"; tip.style.top=py+"px";
+});
+svg.addEventListener("pointerleave",()=>tip.style.display="none");
+
+/* ---------- pan / zoom ---------- */
+const pointers=new Map(); let moved=false, pinch0=null;
+function svgPt(cx,cy){ const pt=new DOMPoint(cx,cy); return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+svg.addEventListener("pointerdown",e=>{
+  svg.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY}); moved=false;
+  if(pointers.size===2){ const [a,b]=[...pointers.values()]; pinch0={d:Math.hypot(a.x-b.x,a.y-b.y), w:S.view.w}; }
+});
+svg.addEventListener("pointermove",e=>{
+  if(!pointers.has(e.pointerId)) return;
+  const prev=pointers.get(e.pointerId);
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  const scale=S.view.w/svg.getBoundingClientRect().width;
+  if(pointers.size===1){
+    const dx=(e.clientX-prev.x)*scale, dy=(e.clientY-prev.y)*scale;
+    if(Math.abs(e.clientX-prev.x)+Math.abs(e.clientY-prev.y)>1.5) moved=true;
+    S.view.x-=dx; S.view.y-=dy; clampView(); applyView();
+  } else if(pointers.size===2&&pinch0){
+    moved=true;
+    const [a,b]=[...pointers.values()];
+    const d=Math.hypot(a.x-b.x,a.y-b.y);
+    const midS=svgPt((a.x+b.x)/2,(a.y+b.y)/2);
+    const nw=Math.max(18,Math.min(W*1.15,pinch0.w*pinch0.d/Math.max(d,20)));
+    const k=nw/S.view.w;
+    S.view.x=midS.x-(midS.x-S.view.x)*k; S.view.y=midS.y-(midS.y-S.view.y)*k; S.view.w=nw;
+    clampView(); applyView();
+  }
+});
+function endPtr(e){ pointers.delete(e.pointerId); if(pointers.size<2)pinch0=null; }
+svg.addEventListener("pointerup",e=>{
+  endPtr(e);
+  if(!moved){
+    const t=e.target.dataset||{};
+    if(t.tip) toast(t.tip);
+    else if(t.sub){
+      const ds=dsById[S.layer];
+      if((ds.level||null)===t.lvl){
+        const ents=entsOf(S.layer).map(c=>({c,v:val(S.layer,c,S.year)})).filter(r=>r.v!=null).sort((a,b)=>b.v-a.v);
+        const ri=ents.findIndex(r=>r.c===t.sub), v=val(S.layer,t.sub,S.year);
+        toast(`${D.sub[ds.level].names[t.sub]} — ${ds.title}: ${fmt(v,ds.fmt)}${ri>=0?` (#${ri+1} of ${ents.length})`:""}`);
+      }
+    }
+    else if(t.iso&&!dsById[S.layer].level) selectCountry(t.iso,false);
+    else { $("detail").classList.remove("open"); $("drawer").classList.remove("open"); } }
+});
+svg.addEventListener("pointercancel",endPtr);
+svg.addEventListener("wheel",e=>{
+  e.preventDefault();
+  const f=Math.exp(e.deltaY*0.0016), pt=svgPt(e.clientX,e.clientY);
+  const nw=Math.max(18,Math.min(W*1.15,S.view.w*f)), k=nw/S.view.w;
+  S.view.x=pt.x-(pt.x-S.view.x)*k; S.view.y=pt.y-(pt.y-S.view.y)*k; S.view.w=nw;
+  clampView(); applyView();
+},{passive:false});
+function zoomBy(f){
+  const c={x:S.view.x+S.view.w/2, y:S.view.y+S.view.w*H/W/2};
+  S.view.w=Math.max(18,Math.min(W*1.15,S.view.w*f));
+  S.view.x=c.x-S.view.w/2; S.view.y=c.y-S.view.w*H/W/2; clampView(); applyView();
+}
+$("zin").onclick=()=>zoomBy(.62); $("zout").onclick=()=>zoomBy(1.6);
+$("zreset").onclick=()=>flyTo({x:0,y:0,w:W});
+function flyTo(target){
+  clampTarget(target);
+  if(reduceMotion){ S.view=target; applyView(); return; }
+  const s0={...S.view}, t0=performance.now(), dur=650;
+  function step(t){
+    const k=Math.min(1,(t-t0)/dur), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    S.view={x:s0.x+(target.x-s0.x)*e, y:s0.y+(target.y-s0.y)*e, w:s0.w+(target.w-s0.w)*e};
+    applyView(); if(k<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function clampTarget(v){ v.w=Math.max(18,Math.min(W*1.15,v.w));
+  v.x=Math.max(-v.w*.35,Math.min(W-v.w*.65,v.x));
+  v.y=Math.max(-v.w*H/W*.35,Math.min(H-v.w*H/W*.65,v.y)); }
+
+/* ---------- timeline ---------- */
+const ys=$("yslider");
+ys.min=YEARS[0]; ys.max=YEARS[YEARS.length-1]; ys.value=S.year;
+$("tmin").textContent=YEARS[0]; $("tmax").textContent=YEARS[YEARS.length-1];
+ys.addEventListener("input",()=>{ S.year=+ys.value; paint(); });
+let playT=null;
+$("play").onclick=()=>{
+  S.playing=!S.playing;
+  $("playic").innerHTML=S.playing?'<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>':'<path d="M7 4.5v15l13-7.5-13-7.5Z"/>';
+  $("play").setAttribute("aria-label",S.playing?"Pause timeline":"Play timeline");
+  clearInterval(playT);
+  if(S.playing) playT=setInterval(()=>{
+    S.year=S.year>=YEARS[YEARS.length-1]?YEARS[0]:S.year+1;
+    ys.value=S.year; paint();
+  }, reduceMotion?900:450);
+};
+
+/* ---------- statistics ---------- */
+function ranksOf(a){
+  const idx=a.map((v,i)=>[v,i]).sort((x,y)=>x[0]-y[0]);
+  const r=new Array(a.length); let i=0;
+  while(i<idx.length){
+    let j=i; while(j+1<idx.length&&idx[j+1][0]===idx[i][0]) j++;
+    const avg=(i+j)/2+1;
+    for(let k=i;k<=j;k++) r[idx[k][1]]=avg;
+    i=j+1;
+  }
+  return r;
+}
+function pearson(x,y){
+  const n=x.length; let sx=0,sy=0;
+  for(let i=0;i<n;i++){sx+=x[i];sy+=y[i];}
+  const mx=sx/n,my=sy/n; let num=0,dx=0,dy=0;
+  for(let i=0;i<n;i++){const a=x[i]-mx,b=y[i]-my; num+=a*b; dx+=a*a; dy+=b*b;}
+  return dx&&dy?num/Math.sqrt(dx*dy):0;
+}
+function normCdf(z){
+  const t=1/(1+0.2316419*Math.abs(z)), d=0.3989423*Math.exp(-z*z/2);
+  const p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));
+  return z>0?1-p:p;
+}
+function pval(rho,n){
+  if(Math.abs(rho)>=0.9999) return 0;
+  const t=Math.abs(rho)*Math.sqrt((n-2)/(1-rho*rho));
+  return Math.max(1e-12, 2*(1-normCdf(t)));
+}
+
+/* ---------- correlation engine (spec 06-ai §4) ---------- */
+function correlate(targetId,year){
+  const ctrlId = dsById[targetId].ctrl ||
+    (targetId==="gdp-per-capita" ? "population" : "gdp-per-capita");
+  const out=[];
+  for(const d of D.datasets){
+    if(d.id===targetId||d.level) continue;
+    const xs=[],ys=[],zs=[],isos=[];
+    for(const iso of ISOS){
+      const a=val(targetId,iso,year), b=val(d.id,iso,year), c=val(ctrlId,iso,year);
+      if(a!=null&&b!=null&&c!=null&&c>0){ xs.push(a); ys.push(b); zs.push(Math.log10(c)); isos.push(iso); }
+    }
+    if(xs.length<40) continue;
+    const rx=ranksOf(xs),ry=ranksOf(ys),rz=ranksOf(zs);
+    const rho=pearson(rx,ry), rxz=pearson(rx,rz), ryz=pearson(ry,rz);
+    const part=(rho-rxz*ryz)/Math.sqrt(Math.max(1e-9,(1-rxz*rxz)*(1-ryz*ryz)));
+    out.push({d,n:xs.length,rho,part,p:pval(rho,xs.length),isos,xs,ys});
+  }
+  out.sort((a,b)=>a.p-b.p);
+  const m=out.length; let prev=1;
+  for(let i=m-1;i>=0;i--){ prev=Math.min(prev,out[i].p*m/(i+1)); out[i].padj=prev; }
+  out.sort((a,b)=>Math.abs(b.part)-Math.abs(a.part));
+  return {ctrlId,results:out};
+}
+function tierOf(r,ctrlName){
+  const a=Math.abs(r.rho), cn=(ctrlName||"GDP").toLowerCase();
+  const strength=a>=0.6?"strong":a>=0.35?"moderate":"weak";
+  let robust, cls;
+  if(r.padj>0.05){ robust="not significant"; cls="warn"; }
+  else if(Math.abs(r.part)<0.15){ robust=`explained by ${cn}`; cls="warn"; }
+  else { robust=`robust to ${cn} control`; cls="good"; }
+  return {strength,robust,cls};
+}
+
+/* ---------- correlation panel ---------- */
+const corrEl=$("corr");
+let scatCand=null;
+function corrOpen(){ return corrEl.classList.contains("open"); }
+function openCorr(){
+  corrEl.classList.add("open");
+  $("drawer").classList.remove("open"); $("detail").classList.remove("open");
+  $("corrbtn").classList.add("on");
+  scatCand=null; renderCorr();
+}
+function closeCorr(){ corrEl.classList.remove("open"); $("corrbtn").classList.remove("on"); scatCand=null; }
+$("corrbtn").onclick=()=>corrOpen()?closeCorr():openCorr();
+$("corrclose").onclick=closeCorr;
+$("methbtn").onclick=()=>{
+  $("ab-t").textContent="How Correlation Mode works";
+  $("ab-u").textContent="Honest statistics, per the StatMaps spec";
+  $("ab-d").innerHTML="For the target layer, every other dataset with ≥ 40 overlapping countries in the chosen year is scanned. "
+   +"<b>Spearman rank correlation</b> (robust to skew) is computed per pair; p-values are corrected for multiple comparisons with "
+   +"<b>Benjamini–Hochberg FDR</b> — scanning many datasets guarantees spurious hits at raw p&lt;0.05. A <b>partial correlation</b> "
+   +"controlling for log GDP per capita (or log population when GDP is the target) screens the universal development confounder. "
+   +"Countries are the unit of analysis — none of this implies causation, and country-level links may not hold for individuals.";
+  $("ab-m").textContent="ρ: Spearman · p adj: BH-FDR · partial ρ: first-order, rank-based · engine v1 (client-side)";
+  $("about").classList.add("open");
+};
+function corrRefresh(){ if(!corrOpen()) return; scatCand?renderScatter(scatCand):renderCorr(); }
+function renderCorr(){
+  $("corrlist").style.display=""; $("scat").style.display="none";
+  const ds=dsById[S.layer];
+  $("corrtgt").textContent=ds.title; $("corryr").textContent=S.year;
+  if(ds.level){
+    $("corrlist").innerHTML=`<div class="empty">Correlation Mode runs on country-level layers — switch to a country dataset to scan the catalogue. Sub-national correlation ships with the full app (statmaps-app API).</div>`;
+    return;
+  }
+  const {ctrlId,results}=correlate(S.layer,S.year);
+  if(!results.length){
+    $("corrlist").innerHTML=`<div class="empty">Not enough overlapping data in ${S.year}. Try an earlier year on the timeline — some series end before 2023.</div>`;
+    return;
+  }
+  const ctrl=dsById[ctrlId];
+  $("corrlist").innerHTML=results.slice(0,14).map((r,i)=>{
+    const t=tierOf(r,ctrl.title), dir=r.rho>=0?"higher":"lower", sgn=r.rho>=0?"+":"−";
+    let sent=`Countries with higher <b>${ds.title.toLowerCase()}</b> tend to have ${dir} <b>${r.d.title.toLowerCase()}</b>. Correlation, not causation.`;
+    if(t.cls==="warn"&&t.robust!=="not significant") sent+=` The link largely disappears when controlling for ${ctrl.title.toLowerCase()} (partial ρ ${r.part>=0?"+":"−"}${Math.abs(r.part).toFixed(2)}).`;
+    if(t.robust==="not significant") sent=`No reliable relationship after correcting for multiple comparisons.`;
+    return `<button class="ccard" data-i="${i}">
+      <span class="top"><span class="nm">${r.d.title}</span>
+        <span class="rho ${r.rho>=0?"pos":"neg"}">ρ ${sgn}${Math.abs(r.rho).toFixed(2)}</span></span>
+      <span class="chips"><span class="chipx">${t.strength}</span><span class="chipx ${t.cls}">${t.robust}</span></span>
+      <span class="sent">${sent}</span>
+      <span class="stats">n = ${r.n} countries · p adj = ${r.padj<0.001?"<0.001":r.padj.toFixed(3)} · partial ρ = ${r.part>=0?"+":"−"}${Math.abs(r.part).toFixed(2)}</span>
+    </button>`;
+  }).join("");
+  const rs=results;
+  $("corrlist").querySelectorAll(".ccard").forEach(b=>b.onclick=()=>{ scatCand=rs[+b.dataset.i].d.id; renderScatter(scatCand); });
+}
+function renderScatter(candId){
+  const {ctrlId,results}=correlate(S.layer,S.year);
+  const ctrlTitle=dsById[ctrlId].title;
+  const r=results.find(x=>x.d.id===candId);
+  if(!r){ scatCand=null; renderCorr(); return; }
+  const ds=dsById[S.layer], dc=r.d;
+  $("corrlist").style.display="none";
+  const sc=$("scat"); sc.style.display="";
+  const TX=v=>ds.log?Math.log10(v):v, TY=v=>dc.log?Math.log10(v):v;
+  const pts=[];
+  for(let i=0;i<r.n;i++){
+    if((ds.log&&r.xs[i]<=0)||(dc.log&&r.ys[i]<=0)) continue;
+    pts.push([TX(r.xs[i]),TY(r.ys[i]),r.isos[i],r.xs[i],r.ys[i]]);
+  }
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  for(const p of pts){ if(p[0]<x0)x0=p[0]; if(p[0]>x1)x1=p[0]; if(p[1]<y0)y0=p[1]; if(p[1]>y1)y1=p[1]; }
+  const padx=(x1-x0)*.05||1, pady=(y1-y0)*.08||1; x0-=padx;x1+=padx;y0-=pady;y1+=pady;
+  const L=46,Rr=12,T=12,B=34,PW=320,PH=248;
+  const X=v=>L+(v-x0)/(x1-x0)*(PW-L-Rr), Y=v=>T+(1-(v-y0)/(y1-y0))*(PH-T-B);
+  // least squares fit in transformed space
+  const n=pts.length; let sx=0,sy=0,sxx=0,sxy=0;
+  for(const p of pts){ sx+=p[0]; sy+=p[1]; sxx+=p[0]*p[0]; sxy+=p[0]*p[1]; }
+  const slope=(n*sxy-sx*sy)/Math.max(1e-9,n*sxx-sx*sx), icpt=(sy-slope*sx)/n;
+  const UX=v=>ds.log?Math.pow(10,v):v, UY=v=>dc.log?Math.pow(10,v):v;
+  const ticks=(a,b,f,un)=>[0,1,2,3].map(k=>{const t=a+(b-a)*k/3; return {t,lb:fmt(un(t),f)};});
+  const xt=ticks(x0+padx,x1-padx,ds.fmt,UX), yt=ticks(y0+pady,y1-pady,dc.fmt,UY);
+  const t=tierOf(r,ctrlTitle);
+  sc.innerHTML=`<div class="shd"><button class="iconbtn" id="scback" aria-label="Back to results">←</button>
+      <h3>${dc.title} vs ${ds.title}</h3></div>
+    <svg id="scatplot" viewBox="0 0 ${PW} ${PH}" role="img" aria-label="Scatter plot">
+      ${yt.map(k=>`<line class="grid" x1="${L}" x2="${PW-Rr}" y1="${Y(k.t).toFixed(1)}" y2="${Y(k.t).toFixed(1)}"/>
+        <text x="${L-5}" y="${(Y(k.t)+3).toFixed(1)}" text-anchor="end">${k.lb}</text>`).join("")}
+      ${xt.map(k=>`<text x="${X(k.t).toFixed(1)}" y="${PH-20}" text-anchor="middle">${k.lb}</text>`).join("")}
+      <text class="axl" x="${(L+PW-Rr)/2}" y="${PH-6}" text-anchor="middle">${ds.title}${ds.log?" (log)":""} →</text>
+      <line class="fit" x1="${X(x0).toFixed(1)}" y1="${Y(icpt+slope*x0).toFixed(1)}" x2="${X(x1).toFixed(1)}" y2="${Y(icpt+slope*x1).toFixed(1)}"/>
+      ${pts.map(p=>`<circle class="dot${p[2]===S.sel?" hl":""}" cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="3.2"><title>${D.names[p[2]]}: ${fmt(p[3],ds.fmt)} · ${fmt(p[4],dc.fmt)}</title></circle>`).join("")}
+    </svg>
+    <div class="note">ρ ${r.rho>=0?"+":"−"}${Math.abs(r.rho).toFixed(2)} (${t.strength}, ${t.robust}) · n = ${r.n} · ${S.year} · each dot is a country${S.sel?` · <b>${D.names[S.sel]}</b> highlighted`:""}. Correlation, not causation.</div>
+    <div class="sact"><button id="scovl" class="pri">Overlay on map</button><button id="scmap">Map this layer</button></div>`;
+  $("scback").onclick=()=>{ scatCand=null; renderCorr(); };
+  $("scovl").onclick=()=>{ S.ovl=dc.id===S.layer?null:dc.id; paint(); renderList(); toast(`Overlaid ${dc.title} (multiply blend)`); };
+  $("scmap").onclick=()=>{ S.layer=dc.id; if(S.ovl===S.layer)S.ovl=null; scatCand=null; paint(); renderList(); };
+}
+
+/* ---------- rankings ---------- */
+const CONTS=["All","Africa","Asia","Europe","North America","South America","Oceania"];
+let rankCont="All", rankQ="";
+function rankOpenState(){ return $("rank").classList.contains("open"); }
+function rankRefresh(){ if(rankOpenState()) renderRank(); }
+function renderRank(){
+  const ds=dsById[S.layer], lvl=ds.level||null;
+  $("ranktgt").textContent=ds.title; $("rankyr").textContent=S.year;
+  $("rankconts").style.display=lvl?"none":"";
+  if(!lvl){
+    $("rankconts").innerHTML=CONTS.map(c=>
+      `<button class="chip${c===rankCont?" on":""}" data-c="${c}">${c==="North America"?"N. America":c==="South America"?"S. America":c}</button>`).join("");
+    $("rankconts").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{ rankCont=b.dataset.c; renderRank(); });
+  }
+  const ranked=entsOf(S.layer).map(iso=>({iso,v:val(S.layer,iso,S.year)})).filter(r=>r.v!=null)
+    .sort((a,b)=>b.v-a.v).map((r,i)=>({...r,rank:i+1}));
+  const terms=rankQ.toLowerCase().split(",").map(t=>t.trim()).filter(Boolean);
+  let shown=ranked;
+  if(!lvl&&rankCont!=="All") shown=shown.filter(r=>D.continents[r.iso]===rankCont);
+  if(terms.length) shown=shown.filter(r=>terms.some(t=>nameOfEnt(r.iso,S.layer).toLowerCase().includes(t)));
+  const maxAbs=Math.max(1e-12,...ranked.slice(0,1).map(r=>Math.abs(r.v)));
+  const unitWord=lvl==="us-state"?"states":lvl==="nuts2"?"regions":"countries";
+  $("ranklist").innerHTML=shown.length?shown.map(r=>`
+    <button class="rrow${r.iso===S.sel?" sel":""}" data-iso="${r.iso}">
+      <span class="rn">#${r.rank}</span><span class="nm">${nameOfEnt(r.iso,S.layer)}</span>
+      <span class="vbarw"><span class="vbar" style="width:${Math.max(2,Math.min(100,Math.abs(r.v)/maxAbs*100)).toFixed(1)}%"></span></span>
+      <span class="vv">${fmt(r.v,ds.fmt)}</span>
+    </button>`).join(""):
+    `<div style="padding:18px;font-size:13px;color:var(--muted)">No ${unitWord} match this filter for ${S.year}.</div>`;
+  $("ranklist").querySelectorAll(".rrow").forEach(b=>b.onclick=()=>{
+    if(lvl){
+      const bb=subBBox[lvl][b.dataset.iso];
+      if(bb){ const cw=Math.max((bb[2]-bb[0])*3,40);
+        flyTo({x:(bb[0]+bb[2])/2-cw/2, y:(bb[1]+bb[3])/2-cw*H/W/2, w:cw}); }
+      document.querySelectorAll("#subs path.sel").forEach(p=>p.classList.remove("sel"));
+      const sp=subPaths[lvl][b.dataset.iso]; if(sp){ sp.classList.add("sel"); sp.parentNode.appendChild(sp); }
+    } else { selectCountry(b.dataset.iso,true,true); renderRank(); }
+  });
+  $("rankfoot").textContent=`${shown.length} of ${ranked.length} ${unitWord} · ${ds.unit} · rank is global, filters only hide rows · tap a row to locate`;
+}
+$("rankbtn").onclick=()=>{
+  const open=rankOpenState();
+  $("rank").classList.toggle("open",!open);
+  if(!open){ closeCorr(); $("detail").classList.remove("open"); $("drawer").classList.remove("open"); renderRank(); }
+};
+$("rankclose").onclick=()=>$("rank").classList.remove("open");
+$("rankq").addEventListener("input",()=>{ rankQ=$("rankq").value; renderRank(); });
+
+/* ---------- discover ---------- */
+function latestYearWithData(dsId,minN){
+  const ents=entsOf(dsId), need=Math.min(minN||40,Math.max(5,ents.length>>2));
+  for(let y=YEARS[YEARS.length-1]; y>=YEARS[0]; y--){
+    let c=0; for(const iso of ents){ if(val(dsId,iso,y)!=null&&++c>=need) break; }
+    if(c>=need) return y;
+  }
+  return null;
+}
+let curFact=null;
+function makeFact(){
+  const kind=["top","riser","link"][Math.floor(Math.random()*3)];
+  const pool=D.datasets.filter(d=>!d.level);
+  const ds=pool[Math.floor(Math.random()*pool.length)];
+  const y=latestYearWithData(ds.id); if(!y) return makeFact();
+  if(kind==="top"){
+    let best=null,bv=-Infinity;
+    for(const iso of ISOS){ const v=val(ds.id,iso,y); if(v!=null&&v>bv){bv=v;best=iso;} }
+    return {k:"Top of the world", t:`<b>${D.names[best]}</b> tops the map in <b>${ds.title.toLowerCase()}</b>: ${fmt(bv,ds.fmt)} ${ds.unit} (${y}).`,
+      go:()=>{ S.layer=ds.id; S.year=y; ys.value=y; paint(); renderList(); selectCountry(best,true); }};
+  }
+  if(kind==="riser"){
+    let best=null,ratio=0,v0b=0,v1b=0,y0b=0,y1b=0;
+    for(const iso of ISOS){
+      const s=fullSeries(ds.id,iso); if(!s) continue;
+      let i0=-1,i1=-1;
+      for(let i=0;i<s.length;i++){ if(s[i]!=null){ if(i0<0)i0=i; i1=i; } }
+      if(i0<0||i1-i0<10||s[i0]<=0) continue;
+      const rr=s[i1]/s[i0];
+      if(rr>ratio){ ratio=rr; best=iso; v0b=s[i0]; v1b=s[i1]; y0b=YEARS[i0]; y1b=YEARS[i1]; }
+    }
+    if(!best||ratio<1.5) return makeFact();
+    return {k:"Fastest riser", t:`<b>${D.names[best]}</b> made the biggest climb in <b>${ds.title.toLowerCase()}</b>: ${fmt(v0b,ds.fmt)} (${y0b}) → ${fmt(v1b,ds.fmt)} (${y1b}), a ${ratio>=2?Math.round(ratio)+"×":"+"+Math.round((ratio-1)*100)+"%"} change.`,
+      go:()=>{ S.layer=ds.id; S.year=y1b; ys.value=y1b; paint(); renderList(); selectCountry(best,true); }};
+  }
+  const {ctrlId,results}=correlate(ds.id,y);
+  const r=results.find(x=>tierOf(x).cls==="good"&&Math.abs(x.rho)>=0.45);
+  if(!r) return makeFact();
+  return {k:"Hidden link", t:`<b>${r.d.title}</b> moves ${r.rho>=0?"with":"against"} <b>${ds.title.toLowerCase()}</b> across ${r.n} countries (ρ ${r.rho>=0?"+":"−"}${Math.abs(r.rho).toFixed(2)}, ${y}) — and it survives the ${dsById[ctrlId].title.toLowerCase()} control. Correlation, not causation.`,
+    go:()=>{ S.layer=ds.id; S.ovl=r.d.id; S.year=y; ys.value=y; paint(); renderList(); openCorr(); scatCand=r.d.id; renderScatter(scatCand); }};
+}
+function showFact(){
+  curFact=makeFact();
+  $("factk").textContent=curFact.k; $("factt").innerHTML=curFact.t;
+  $("fact").classList.add("open");
+}
+$("discbtn").onclick=showFact;
+$("factmore").onclick=showFact;
+$("factx").onclick=()=>$("fact").classList.remove("open");
+$("factgo").onclick=()=>{ if(curFact){ $("fact").classList.remove("open"); curFact.go(); } };
+
+/* ---------- theme / share ---------- */
+$("themebtn").onclick=()=>{
+  const cur=document.documentElement.dataset.theme ||
+    (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+  document.documentElement.dataset.theme=cur==="dark"?"light":"dark";
+};
+$("sharebtn").onclick=async()=>{
+  syncHash(); clearTimeout(hashT);
+  const p=new URLSearchParams();
+  p.set("l",S.layer); if(S.ovl)p.set("o",S.ovl); p.set("y",S.year);
+  p.set("v",[S.view.x.toFixed(1),S.view.y.toFixed(1),S.view.w.toFixed(1)].join(","));
+  if(S.sel)p.set("c",S.sel);
+  const url=location.origin+location.pathname+"#"+p.toString();
+  try{ await navigator.clipboard.writeText(url); toast("Link copied — this exact view is in the URL"); }
+  catch(e){ history.replaceState(null,"","#"+p.toString()); toast("Link is in the address bar"); }
+};
+let toastT=null;
+function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show");
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2600); }
+
+/* ---------- init ---------- */
+if(reduceMotion) document.body.classList.add("reduce");
+renderCats(); renderList(); applyView(); paint();
+if(S.sel){ const iso=S.sel; S.sel=null; selectCountry(iso,false); }
+}
+bootStatmaps();
+</script>

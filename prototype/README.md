@@ -1,0 +1,47 @@
+# StatMaps Prototype
+
+A single-file interactive atlas implementing the core loops of the [StatMaps specification](../statmaps-spec/README.md): search → layer → choropleth → timeline → share, plus Correlation Mode (spec 06-ai §4) and Discover.
+
+## Contents
+
+- `template.html` — all UI, styles, and logic; data is injected at the `/*__STATMAPS_DATA__*/` marker.
+- `build.py` — fetch-time pipeline: projects country geometry (Equal Earth) to SVG path strings, compacts World Bank indicator series (1990–2025), and writes the self-contained page.
+- `dist/statmaps-prototype.html` — generated output (committed for convenience).
+
+## Build
+
+```bash
+# 1. Fetch source data into a directory:
+#    countries.geo.json  (https://github.com/johan/world.geo.json)
+#    wb_<CODE>.json      (https://api.worldbank.org/v2/country/all/indicator/<CODE>?format=json&per_page=20000&date=1990:2025)
+#    for every code listed in DATASETS inside build.py, plus:
+#    owid_happiness.csv / owid_democracy.csv  (https://ourworldindata.org/grapher/<slug>.csv)
+#    usgs_quakes.json    (USGS FDSN event API, minmagnitude=6, 1990-2025)
+#    volcanoes.json      (Smithsonian GVP WFS, Holocene volcano list)
+#    unesco_wd.json      (Wikidata SPARQL: items with P757 + P625 + P1435=Q9259)
+# 2. Build:
+python3 build.py <data_dir> [out_path]
+```
+
+## What it implements from the spec
+
+| Spec feature | Prototype implementation |
+|---|---|
+| Layer system (01-product §2.3) | 160 choropleth layers over 1990–2025 (null-trimmed series encoding), quintile classification (log-transformed where flagged), 5-step sequential ramps, multiply-blend overlay, auto-snap to the latest year with data on layer switch |
+| Declarative bulk ingestion (02-data §4) | `BULK_CODES`: ~80 WDI indicators ingested with metadata derived automatically — title/unit parsed from the API, category from the code prefix, number format and log scale from the data's own distribution, description from the indicator source note; sparse series auto-skipped |
+| Point/event layers (03-architecture §5) | USGS earthquakes M6+ (per-year, magnitude-sized), Smithsonian Holocene volcanoes, UNESCO World Heritage sites via Wikidata (cumulative by inscription year), major airports (OurAirports), power plants ≥ 1 GW coloured by fuel and sized by capacity (WRI), cities over 1M sized by population (Natural Earth), and Wikidata history/science packs: battles, shipwrecks, castles, observatories, spaceports |
+| Multi-source provenance (02-data) | Per-dataset source and licence (World Bank, OWID-processed FAO/WHO/IEA/UNDP/PWT/V-Dem/WHR, USGS, Smithsonian GVP, Wikidata, OurAirports, WRI, Natural Earth) surfaced in legend, detail panel, and about dialogs |
+| Timeline (§2.4) | 1990–2025 scrubber with playback; choropleth reclassifies per year |
+| URL state (§2.8) | Layer, overlay, year, viewport, and selected country encoded in the URL hash |
+| Detail panel (§2.5) | Value, world rank, sparkline, full-catalogue profile, provenance |
+| Correlation Mode (06-ai §4) | Client-side Spearman ρ, BH-FDR correction, partial ρ controlling log GDP per capita, tier labels, scatter view, non-causal language |
+| Discover (10-review §1) | Data-verified fact generator (top-of-world, fastest riser, hidden link) |
+| Heatmaps (03-architecture §5) | Canvas-rendered density heatmaps for any point layer (per-layer toggle; magnitude-weighted for earthquakes; year-aware) |
+| Sub-national layers (spec principle 4) | US states (Census population 2010–2024) and EU NUTS-2 regions (Eurostat GDP per capita, population density) as a second geometry level with auto fly-to, level-aware rankings and tooltips; country-only features (correlation, profiles) are guarded |
+| Live layers (07-performance §6) | Baked 30-day M4.5+ earthquake snapshot in the single file; true live relay implemented in statmaps-app (`/v1/live/earthquakes`, 60 s cache) |
+| Rankings | Side panel: full country leaderboard for the active layer/year with continent chips and free-text country filtering; global ranks preserved under filters |
+| Provenance (README principle 2) | Source, licence, retrieval date, classification method on every layer |
+
+## Deliberate deviations
+
+Runs without a server or external requests (artifact CSP), so it uses precomputed SVG geometry instead of the MapLibre vector-tile stack — zoom is world-to-country level. Data: World Bank Open Data (CC BY 4.0); boundaries: Natural Earth / OSM-derived (johan/world.geo.json).
