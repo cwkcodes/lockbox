@@ -40,6 +40,16 @@ across energy assets, markets and businesses.
 `modules/D1`.** D1 is self-contained — it assumes no knowledge of any acronym — but the
 glossary is the lookup table for everything the programme uses later.
 
+### Interactive companions
+
+| Page | What it does |
+|---|---|
+| [`programme-map.html`](programme-map.html) | The whole programme visually — energy system diagrams, competency heat map, career scatter, and an interactive GB price chart |
+| [`revenue-stack-explorer.html`](revenue-stack-explorer.html) | **Companion to Module D1.** Build a revenue stack for six real GB contract structures, then watch how much a bank will lend against each. Demonstrates why a *lower-revenue* tolled battery supports more debt than a merchant one |
+
+Both are self-contained HTML — open them locally in a browser, or view the published
+versions linked from the pull request.
+
 **Start here:** read `00-starting-position.md`, then `01-energy-system-map.md`, then
 `03-career-routes.md`. Then begin [`modules/A1-energy-power-and-units.md`](modules/A1-energy-power-and-units.md).
 

@@ -1,0 +1,487 @@
+<title>Revenue Stack Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;600;700&display=swap">
+
+<style>
+:root{
+  --ground:#f6f7f9; --surface:#ffffff; --surface-2:#eef1f5;
+  --ink:#131a21; --ink-2:#3d4854; --muted:#5a6672; --line:#dfe4ea; --line-2:#c8d1db;
+  --c1:#00719a; --c2:#b04a2e; --c3:#6a4c93; --c4:#2f7d52; --c5:#c77b1f;
+  --accent:#00719a; --accent-soft:#e2eef3;
+  --good:#2f7d52; --warn:#c77b1f; --crit:#b03030;
+  --shadow:0 1px 2px rgba(19,26,33,.06),0 8px 24px -12px rgba(19,26,33,.14);
+  --serif:"IBM Plex Serif",Georgia,serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0e1319; --surface:#161d25; --surface-2:#1d262f;
+    --ink:#e4eaf0; --ink-2:#c3ccd6; --muted:#8d9aa8; --line:#26303b; --line-2:#38444f;
+    --c1:#2f9ec4; --c2:#d0704c; --c3:#9179c4; --c4:#3f9a6a; --c5:#c08420;
+    --accent:#2f9ec4; --accent-soft:#15303c;
+    --good:#3f9a6a; --warn:#c08420; --crit:#d05e5e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0e1319; --surface:#161d25; --surface-2:#1d262f;
+  --ink:#e4eaf0; --ink-2:#c3ccd6; --muted:#8d9aa8; --line:#26303b; --line-2:#38444f;
+  --c1:#2f9ec4; --c2:#d0704c; --c3:#9179c4; --c4:#3f9a6a; --c5:#c08420;
+  --accent:#2f9ec4; --accent-soft:#15303c;
+  --good:#3f9a6a; --warn:#c08420; --crit:#d05e5e;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1160px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
+h1,h2,h3{font-family:var(--serif);line-height:1.2;margin:0;text-wrap:balance}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+header{border-bottom:1px solid var(--line);padding:clamp(36px,6vw,64px) 0 clamp(26px,4vw,40px);background:linear-gradient(to bottom,var(--accent-soft),transparent 70%)}
+h1{font-size:clamp(30px,5vw,48px);font-weight:700;letter-spacing:-.02em;margin-top:12px}
+header p.sub{color:var(--ink-2);margin-top:16px;max-width:64ch;font-size:17px}
+
+section{padding:clamp(32px,5vw,56px) 0;border-bottom:1px solid var(--line)}
+h2{font-size:clamp(21px,3vw,29px);font-weight:600;letter-spacing:-.012em}
+.lede{color:var(--ink-2);margin-top:10px;max-width:70ch}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:clamp(16px,2.4vw,26px);box-shadow:var(--shadow);margin-top:24px}
+.caption{font-size:14.5px;color:var(--muted);margin-top:14px;max-width:80ch;line-height:1.6}
+.caption b{color:var(--ink-2);font-weight:600}
+.src{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:12px;line-height:1.55}
+
+.grid{display:grid;gap:22px;grid-template-columns:minmax(250px,300px) 1fr;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+
+/* controls */
+.ctl{margin-bottom:18px}
+.ctl label{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.ctl .val{font-size:13px;color:var(--ink);font-weight:600;text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent);height:22px;cursor:pointer}
+input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.segs{display:flex;flex-wrap:wrap;gap:6px}
+button.seg{font-family:var(--mono);font-size:11.5px;padding:7px 11px;cursor:pointer;background:var(--surface);color:var(--ink-2);border:1px solid var(--line-2);border-radius:3px;transition:all .12s;text-align:left}
+button.seg:hover{border-color:var(--accent);color:var(--ink)}
+button.seg[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+:root[data-theme=dark] button.seg[aria-pressed=true],:root:not([data-theme=light]) button.seg[aria-pressed=true]{color:#08131a}
+button.seg:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5;border-left:2px solid var(--line-2);padding-left:10px}
+
+/* stats */
+.stats{display:grid;gap:1px;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));background:var(--line);border:1px solid var(--line);border-radius:3px;overflow:hidden;margin-top:18px}
+.stat{background:var(--surface);padding:12px 14px}
+.stat .k{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:var(--mono);font-size:19px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stat .s{font-size:11px;color:var(--muted);margin-top:2px}
+
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums;margin-top:16px}
+th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line)}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:500}
+td.n{text-align:right;font-family:var(--mono);font-size:13px}
+tfoot td{font-weight:600;border-top:2px solid var(--line-2);border-bottom:none}
+.swatch{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:8px;vertical-align:-1px}
+.scroll{overflow-x:auto}
+svg{display:block;max-width:100%}
+.axis-t{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
+.bar-t{font-family:var(--mono);font-size:11px;fill:var(--ink);font-weight:600}
+.seg-t{font-family:var(--mono);font-size:10px;fill:#fff;font-weight:600}
+
+.callout{border-left:3px solid var(--warn);background:var(--surface);border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:16px 20px;margin-top:22px;border-radius:0 3px 3px 0}
+.callout .eyebrow{color:var(--warn);display:block;margin-bottom:6px}
+.callout p{font-size:15px;color:var(--ink-2)}
+.callout p+p{margin-top:10px}
+
+dl.terms{margin:18px 0 0;display:grid;gap:0}
+dl.terms div{padding:11px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:minmax(96px,150px) 1fr;gap:16px}
+@media (max-width:640px){dl.terms div{grid-template-columns:1fr;gap:3px}}
+dl.terms dt{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--accent)}
+dl.terms dd{margin:0;font-size:14.5px;color:var(--ink-2)}
+dl.terms dd b{color:var(--ink);font-weight:600}
+
+footer{padding:36px 0 56px;color:var(--muted);font-size:13px}
+footer p+p{margin-top:9px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header>
+  <div class="wrap">
+    <span class="eyebrow">Module D1 · companion tool</span>
+    <h1>Revenue Stack Explorer</h1>
+    <p class="sub">A renewable asset almost never earns "the power price". It earns a stack of separate revenue lines, from separate counterparties, with separate risk. Change the assumptions below and watch what happens — first to revenue, then to how much a bank will lend.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+<section>
+  <h2>1 · Build the stack</h2>
+  <p class="lede">Five real GB structures. Switch between them and watch the composition change — particularly how much of the total is <em>contracted</em>.</p>
+
+  <div class="panel">
+    <div class="grid">
+      <div>
+        <div class="ctl">
+          <label for="tech">Asset and contract structure</label>
+          <div class="segs" id="tech" style="flex-direction:column">
+            <button class="seg" data-t="windRO" aria-pressed="true">Onshore wind · RO / ROCs</button>
+            <button class="seg" data-t="windCfD" aria-pressed="false">Onshore wind · CfD @ £72</button>
+            <button class="seg" data-t="solarCfD" aria-pressed="false">Solar PV · CfD @ £65</button>
+            <button class="seg" data-t="solarMerch" aria-pressed="false">Solar PV · fully merchant</button>
+            <button class="seg" data-t="bessMerch" aria-pressed="false">BESS · merchant</button>
+            <button class="seg" data-t="bessToll" aria-pressed="false">BESS · tolled</button>
+          </div>
+        </div>
+
+        <div class="ctl">
+          <label for="cap">Capacity <span class="val" id="capV">40 MW</span></label>
+          <input type="range" id="cap" min="5" max="150" step="5" value="40">
+        </div>
+
+        <div class="ctl" id="cfBox">
+          <label for="cf">Capacity factor <span class="val" id="cfV">32%</span></label>
+          <input type="range" id="cf" min="8" max="55" step="1" value="32">
+        </div>
+
+        <div class="ctl" id="durBox" hidden>
+          <label for="dur">Battery duration <span class="val" id="durV">2 h</span></label>
+          <input type="range" id="dur" min="1" max="8" step="1" value="2">
+        </div>
+
+        <div class="ctl">
+          <label for="pw">Baseload power price <span class="val" id="pwV">£123/MWh</span></label>
+          <input type="range" id="pw" min="40" max="220" step="1" value="123">
+        </div>
+
+        <p class="note" id="note"></p>
+      </div>
+
+      <div>
+        <div class="scroll">
+          <svg viewBox="0 0 700 200" width="700" height="200" id="stackChart" role="img" aria-label="Stacked bar chart of annual revenue by source"></svg>
+        </div>
+        <div class="scroll"><table id="stackTable"></table></div>
+      </div>
+    </div>
+
+    <p class="caption" id="stackCaption"></p>
+    <p class="src">Capture rates (wind 94.0%, solar 81.9%) measured from Elexon BMRS settlement data, 26 Jul – 25 Aug 2026, 1,441 half-hourly periods — a short and seasonally atypical window, so treat as illustrative rather than annual. ROC buy-out £69.34 for 2026/27 (Ofgem) plus an assumed 10% recycle. CfD strike prices from DESNZ AR7 results (2024 prices). Capacity Market £27.10/kW/yr, T-4 for 2029/30. BESS totals anchored to Modo Energy's £73,145/MW/yr benchmark for 2-hour systems over the twelve months to April 2026. Derating factors and revenue splits are assumptions for teaching, not published values.</p>
+  </div>
+</section>
+
+<section>
+  <h2>2 · What a bank will lend against it</h2>
+  <p class="lede">This is the part that surprises engineers. Revenue is not what determines value — <em>bankable</em> revenue is.</p>
+
+  <div class="panel">
+    <div class="grid">
+      <div>
+        <div class="ctl">
+          <label for="dscr">Target DSCR <span class="val" id="dscrV">1.30×</span></label>
+          <input type="range" id="dscr" min="1.10" max="1.80" step="0.05" value="1.30">
+        </div>
+        <div class="ctl">
+          <label for="rate">Debt interest rate <span class="val" id="rateV">6.0%</span></label>
+          <input type="range" id="rate" min="3" max="10" step="0.25" value="6">
+        </div>
+        <div class="ctl">
+          <label for="tenor">Debt tenor <span class="val" id="tenorV">15 years</span></label>
+          <input type="range" id="tenor" min="5" max="25" step="1" value="15">
+        </div>
+        <div class="ctl">
+          <label for="opex">Operating costs <span class="val" id="opexV">£45k/MW/yr</span></label>
+          <input type="range" id="opex" min="10" max="120" step="5" value="45">
+        </div>
+        <div class="ctl">
+          <label for="hc">Lender's haircut on merchant revenue <span class="val" id="hcV">30%</span></label>
+          <input type="range" id="hc" min="0" max="60" step="5" value="30">
+        </div>
+        <p class="note"><b>DSCR</b> = Debt Service Cover Ratio = cash available ÷ debt repayments. A lender sets a minimum. Volatile revenue means a higher minimum, which means less debt.</p>
+        <p class="note"><b>The haircut is the mechanism people miss.</b> A lender does not size debt on <em>expected</em> revenue — it sizes on a downside case. Contracted income is taken at face value; merchant income is cut before it counts, because nobody will underwrite a price and volume nobody controls. Set it to 0% and the distinction between contract structures largely vanishes, which is exactly why it exists.</p>
+      </div>
+
+      <div>
+        <div class="stats" id="debtStats"></div>
+        <div class="scroll">
+          <svg viewBox="0 0 700 200" width="700" height="200" id="debtChart" role="img" aria-label="Funding split between debt and equity"></svg>
+        </div>
+      </div>
+    </div>
+
+    <p class="caption" id="debtCaption"></p>
+    <p class="src">Maximum debt = (CFADS ÷ target DSCR) × annuity factor, where annuity factor = (1 − (1+r)⁻ⁿ) ÷ r. This is a simplified sculpting calculation: it assumes level cash flow and ignores interest during construction, fees, reserve accounts and tax. A real project finance model handles all four. CFADS here is revenue less operating costs only.</p>
+  </div>
+
+  <div class="callout">
+    <span class="eyebrow">The counter-intuitive bit — sit with this one</span>
+    <p>Switch between <b>BESS · merchant</b> and <b>BESS · tolled</b> at the default settings. The tolled battery earns about <b>£260,000 a year less</b>. It supports roughly <b>£4.6m more debt</b> — £7.9m against £3.3m, more than double.</p>
+    <p>Two things cause it, and both are visible in the controls. The toll is <em>contracted</em>, so it escapes the lender's haircut entirely, while merchant revenue is cut by 30% before it counts. And a contracted asset is allowed a lower DSCR — 1.35× rather than 1.60×. The two effects compound.</p>
+    <p>More debt means a smaller equity cheque for the same physical asset. Since return is measured against equity invested, the <em>lower-revenue</em> structure can produce the <em>higher</em> equity return. That is the moment engineering intuition gives way to financial intuition, and it is the core of infrastructure investing. Nothing about the battery changed — only who carries the risk.</p>
+  </div>
+</section>
+
+<section>
+  <h2>3 · Every term used above</h2>
+  <p class="lede">No acronym goes unexplained. The full list of roughly 350 terms is in the repository glossary.</p>
+
+  <div class="panel">
+    <dl class="terms">
+      <div><dt>RO / ROC</dt><dd><b>Renewables Obligation / Renewables Obligation Certificate.</b> The legacy GB subsidy. Suppliers must present certificates to prove they sourced renewable power, so generators can sell them. Closed to new capacity on 31 March 2017, but existing assets receive support for 20 years from accreditation — so you will meet ROC-backed assets in due diligence throughout the 2030s.</dd></div>
+      <div><dt>Buy-out price</dt><dd>The penalty a supplier pays instead of presenting a ROC. It sets the ceiling on what a ROC is worth. <b>£69.34 for the year to 31 March 2027.</b> The uprating switched from RPI to CPI inflation on 1 April 2026, which permanently reduces the long-run value of every ROC-backed asset in Great Britain.</dd></div>
+      <div><dt>CfD</dt><dd><b>Contract for Difference.</b> The current scheme. If the market price is below the agreed strike price the generator is topped up; <b>if it is above, the generator pays money back</b>. That two-way flow is what makes it a contract for difference rather than a subsidy — the generator has sold its price risk.</dd></div>
+      <div><dt>Strike price</dt><dd>The £/MWh a CfD guarantees. Always ask <b>which year's prices</b> it is quoted in — AR7 used 2024 prices, AR6 used 2012. Comparing the two without adjusting is a common and serious error.</dd></div>
+      <div><dt>Capture price</dt><dd>The <b>volume-weighted</b> average price an asset actually achieved: Σ(price × volume) ÷ Σ(volume). Not the simple average. Wind and solar earn below the average because they generate when everything like them generates, pushing the price down.</dd></div>
+      <div><dt>Cannibalisation</dt><dd>That self-inflicted price depression. It deepens as more of the same technology connects. Solar's measured 81.9% capture rate means <b>applying a flat baseload price to solar volume overstates revenue by about 18%</b> before any other adjustment.</dd></div>
+      <div><dt>REGO</dt><dd><b>Renewable Energy Guarantees of Origin.</b> One certificate per MWh proving the power was renewable, sold separately from the electricity itself. Worth £1–2/MWh in summer 2026, having peaked at £20–25/MWh in 2023. Lenders give it little or no credit precisely because of that volatility.</dd></div>
+      <div><dt>Capacity Market</dt><dd>Pays generators and storage to <b>be available</b> at times of system stress, not to generate. Paid on <b>derated</b> capacity, not nameplate — a 1-hour battery derates heavily because a stress event can outlast it; a 4-hour battery derates far less. Cleared at £27.10/kW/year for 2029/30.</dd></div>
+      <div><dt>BM</dt><dd><b>Balancing Mechanism.</b> The market the system operator uses in the final hour before real time to match supply and demand exactly. Now one of the largest battery revenue lines, because batteries respond in seconds and can both absorb and inject power.</dd></div>
+      <div><dt>Ancillary services</dt><dd>Products bought to keep the grid stable second by second — mainly frequency response. <b>They fell from 87% of the battery revenue stack in 2020–22 to about 33% today</b>, because the requirement is fixed and the fleet grew into it. Any revenue backed by a fixed-volume requirement gets competed away.</dd></div>
+      <div><dt>Tolling agreement</dt><dd>A counterparty pays a fixed fee for the exclusive right to operate the asset and take all its market revenue. The owner gives up upside and receives predictability — which, as section 2 shows, buys cheaper leverage.</dd></div>
+      <div><dt>CFADS</dt><dd><b>Cash Flow Available for Debt Service.</b> Revenue, less operating costs, tax, working capital movements and maintenance capital expenditure. <b>It is not EBITDA</b> — using EBITDA in its place is one of the most common and most costly errors an engineer makes when first building a project model.</dd></div>
+      <div><dt>DSCR</dt><dd><b>Debt Service Cover Ratio</b> = CFADS ÷ debt service. The central covenant of project finance. Roughly 1.20–1.30× for contracted renewables; 1.60× or more for merchant batteries, if financeable at all. The ratio <em>is</em> the price list for risk.</dd></div>
+      <div><dt>Debt sculpting</dt><dd>Deriving the repayment schedule from the cash flow so DSCR stays constant, rather than imposing a flat schedule. Debt service = CFADS ÷ target DSCR, and maximum debt is the present value of that stream.</dd></div>
+      <div><dt>Merchant</dt><dd>Exposed to market prices with no contract. The <b>merchant tail</b> is the part of an asset's life after its subsidy ends — simultaneously the least certain and often the largest component of value, which is why two credible buyers can differ by 30% on price for the same asset.</dd></div>
+      <div><dt>TNUoS</dt><dd><b>Transmission Network Use of System.</b> The charge for using the high-voltage network, and it is <b>locational</b> — a northern Scottish generator pays far more than a southern English one. Averaging £13.03/kW for 2026/27, and charged on <em>capacity</em>, so it does not fall in a low-wind year.</dd></div>
+      <div><dt>P50 / P90</dt><dd>Production levels exceeded 50% and 90% of the time. <b>Lenders size debt on P90, not P50.</b> P90 = P50 × (1 − 1.2816 σ), where σ is the combined uncertainty. Every one percentage point of uncertainty you remove is worth roughly 1.28% of debt capacity — which is how energy yield analysis becomes, directly, a financial input.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<footer>
+  <div style="max-width:74ch">
+    <p><b>Reproducibility.</b> Every figure is either cited above or an explicitly labelled assumption. Capture rates come from live Elexon data and can be regenerated with the Python in <span style="font-family:var(--mono)">curriculum/projects/p1_gb_power_dashboard/</span>. The full teaching module is <span style="font-family:var(--mono)">curriculum/modules/D1-wind-solar-bess-revenue-stack.md</span>.</p>
+    <p>This is a teaching tool, not a valuation model. It uses level cash flows and omits interest during construction, fees, reserve accounts, tax, degradation, curtailment and inflation. Do not use it for a real investment decision.</p>
+  </div>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id)};
+
+  // Colours by revenue line — assigned by entity, never by rank.
+  var COL={wholesale:"var(--c1)",subsidy:"var(--c4)",rego:"var(--c5)",cm:"var(--c3)",bm:"var(--c2)",anc:"var(--c5)",toll:"var(--c4)"};
+
+  var TECH={
+    windRO:{label:"Onshore wind · RO",isBess:false,capture:0.940,cf:32,
+      note:"Receives 0.9 ROCs per MWh at £69.34 buy-out plus an assumed 10% recycle. Note how much of the stack is the certificate, not the power — and that this scheme has a hard end date.",
+      dscr:1.30},
+    windCfD:{label:"Onshore wind · CfD",isBess:false,capture:0.940,cf:32,strike:72,
+      note:"AR7 cleared onshore wind at £72/MWh in 2024 prices, on a 20-year contract. The CfD replaces the market price entirely, so the power price slider barely moves the answer — that is the whole point of a CfD.",
+      dscr:1.25},
+    solarCfD:{label:"Solar PV · CfD",isBess:false,capture:0.819,cf:11,strike:65,
+      note:"AR7 cleared solar at £65/MWh in 2024 prices. Solar's low capacity factor means large capacity produces modest energy — check the MWh figure against the capacity you set.",
+      dscr:1.25},
+    solarMerch:{label:"Solar PV · merchant",isBess:false,capture:0.819,cf:11,
+      note:"No subsidy at all. Revenue is capture price times volume, and solar captured only 81.9% of baseload in the measured window. Move the power price slider and watch revenue move one-for-one — this is unhedged price risk.",
+      dscr:1.50},
+    bessMerch:{label:"BESS · merchant",isBess:true,
+      note:"Anchored to Modo Energy's £73,145/MW/yr benchmark for 2-hour systems. Only the Capacity Market line is contracted — roughly 7% of the total. Everything else swung between £41k and £70k/MW/yr inside one quarter in 2026.",
+      dscr:1.60},
+    bessToll:{label:"BESS · tolled",isBess:true,toll:true,
+      note:"A counterparty pays a fixed fee and takes all market revenue. Lower expected income, near-zero volatility. Now go to section 2 and lower the DSCR to about 1.35× — the debt capacity is the point.",
+      dscr:1.35}
+  };
+
+  var state={t:"windRO",cap:40,cf:32,dur:2,pw:123,dscr:1.30,rate:6,tenor:15,opex:45,haircut:0.30};
+
+  function money(n){
+    if(Math.abs(n)>=1e6) return "£"+(n/1e6).toFixed(2)+"m";
+    if(Math.abs(n)>=1e3) return "£"+(n/1e3).toFixed(0)+"k";
+    return "£"+n.toFixed(0);
+  }
+
+  // ---- revenue model ----
+  function stack(){
+    var t=TECH[state.t], lines=[], mwh=0;
+
+    if(t.isBess){
+      // Duration scaling anchored to the 2h benchmark. Longer duration earns more
+      // in total but less per hour of storage — the curve is concave.
+      var perMW={1:54500,2:73145,3:92000,4:110000,6:150000,8:192000};
+      var keys=[1,2,3,4,6,8], d=state.dur, base;
+      if(perMW[d]!==undefined){ base=perMW[d]; }
+      else { // linear interpolation between the nearest published points
+        var lo=keys.filter(function(k){return k<d}).pop(), hi=keys.filter(function(k){return k>d})[0];
+        base=perMW[lo]+(perMW[hi]-perMW[lo])*(d-lo)/(hi-lo);
+      }
+      // Power price sensitivity: arbitrage scales with price spread, roughly with level
+      var scale=state.pw/123;
+      var derate=Math.min(0.90,0.10+0.14*state.dur);      // assumption: rises with duration
+      var cmRev=state.cap*1000*derate*27.10;
+
+      if(t.toll){
+        // Toll priced at a discount to expected merchant revenue, in exchange for certainty
+        lines.push({k:"Tolling fee (fixed, contracted)",v:base*0.85*state.cap,c:COL.toll,contracted:true});
+      } else {
+        lines.push({k:"Wholesale arbitrage",v:base*0.36*scale*state.cap,c:COL.wholesale,contracted:false});
+        lines.push({k:"Balancing Mechanism (BM)",v:base*0.25*scale*state.cap,c:COL.bm,contracted:false});
+        lines.push({k:"Ancillary services",v:base*0.33*state.cap,c:COL.anc,contracted:false});
+      }
+      lines.push({k:"Capacity Market",v:cmRev,c:COL.cm,contracted:true});
+      return {lines:lines,mwh:null,tech:t};
+    }
+
+    mwh=state.cap*8760*(state.cf/100);
+    var capturePrice=state.pw*t.capture;
+
+    if(t.strike){
+      // CfD: generator effectively receives the strike price for all output
+      lines.push({k:"Wholesale (at capture price)",v:mwh*capturePrice,c:COL.wholesale,contracted:false});
+      lines.push({k:"CfD difference payment",v:mwh*(t.strike-capturePrice),c:COL.subsidy,contracted:true});
+    } else {
+      lines.push({k:"Wholesale (at capture price)",v:mwh*capturePrice,c:COL.wholesale,contracted:false});
+      if(state.t==="windRO"){
+        var rocValue=69.34*1.10;   // buy-out plus assumed 10% recycle
+        lines.push({k:"ROC revenue (0.9 ROCs/MWh)",v:mwh*0.9*rocValue,c:COL.subsidy,contracted:true});
+      }
+      lines.push({k:"REGO certificates",v:mwh*1.50,c:COL.rego,contracted:false});
+    }
+    // Small capacity-market contribution; wind and solar derate very heavily
+    lines.push({k:"Capacity Market",v:state.cap*1000*0.05*27.10,c:COL.cm,contracted:true});
+    return {lines:lines,mwh:mwh,tech:t};
+  }
+
+  // ---- charts ----
+  function drawStack(res){
+    var total=res.lines.reduce(function(a,l){return a+Math.abs(l.v)},0);
+    var W=700,H=200,L=20,R=20,T=30, barH=58, y=T+12;
+    var pw=W-L-R, s="";
+
+    s+='<text class="axis-t" x="'+L+'" y="'+(T-16)+'" style="font-size:12px;fill:var(--ink);font-weight:600">Annual revenue — '+money(total)+'</text>';
+
+    var x=L;
+    res.lines.forEach(function(l){
+      if(l.v<=0) return;
+      var w=(l.v/total)*pw;
+      s+='<rect x="'+x.toFixed(1)+'" y="'+y+'" width="'+Math.max(0,w-2).toFixed(1)+'" height="'+barH+'" fill="'+l.c+'" rx="2"><title>'+l.k+': '+money(l.v)+' ('+(l.v/total*100).toFixed(1)+'%)</title></rect>';
+      if(w>52) s+='<text class="seg-t" x="'+(x+w/2-1).toFixed(1)+'" y="'+(y+barH/2+4)+'" text-anchor="middle">'+(l.v/total*100).toFixed(0)+'%</text>';
+      x+=w;
+    });
+
+    // contracted vs merchant ribbon beneath
+    var contracted=res.lines.reduce(function(a,l){return a+(l.contracted&&l.v>0?l.v:0)},0);
+    var cw=(contracted/total)*pw, y2=y+barH+22;
+    s+='<text class="axis-t" x="'+L+'" y="'+(y2-6)+'">Of which contracted (predictable) vs merchant (market-exposed)</text>';
+    s+='<rect x="'+L+'" y="'+y2+'" width="'+cw.toFixed(1)+'" height="18" fill="var(--good)" rx="2"/>';
+    s+='<rect x="'+(L+cw+2).toFixed(1)+'" y="'+y2+'" width="'+Math.max(0,pw-cw-2).toFixed(1)+'" height="18" fill="var(--crit)" opacity=".55" rx="2"/>';
+    s+='<text class="axis-t" x="'+L+'" y="'+(y2+34)+'" style="fill:var(--good);font-weight:600">'+(contracted/total*100).toFixed(0)+'% contracted</text>';
+    s+='<text class="axis-t" x="'+(W-R)+'" y="'+(y2+34)+'" text-anchor="end" style="fill:var(--crit);font-weight:600">'+((total-contracted)/total*100).toFixed(0)+'% merchant</text>';
+    $("stackChart").innerHTML=s;
+    return {total:total,contracted:contracted};
+  }
+
+  function drawTable(res,sum){
+    var h='<thead><tr><th>Revenue line</th><th style="text-align:right">£ per year</th><th style="text-align:right">Share</th><th>Type</th></tr></thead><tbody>';
+    res.lines.forEach(function(l){
+      h+='<tr><td><span class="swatch" style="background:'+l.c+'"></span>'+l.k+'</td>'+
+         '<td class="n">'+money(l.v)+'</td>'+
+         '<td class="n">'+(l.v/sum.total*100).toFixed(1)+'%</td>'+
+         '<td style="font-size:12.5px;color:'+(l.contracted?'var(--good)':'var(--crit)')+'">'+(l.contracted?'Contracted':'Merchant')+'</td></tr>';
+    });
+    h+='</tbody><tfoot><tr><td>Total</td><td class="n">'+money(sum.total)+'</td><td class="n">100%</td><td></td></tr></tfoot>';
+    $("stackTable").innerHTML=h;
+  }
+
+  function drawDebt(sum){
+    var opexTotal=state.opex*1000*state.cap;
+
+    // A lender does not size debt on EXPECTED revenue. It sizes on a downside case.
+    // Contracted revenue is taken at face value; merchant revenue is haircut, because
+    // nobody will underwrite a price and volume nobody controls. This haircut, not the
+    // headline revenue, is the main reason contracted assets carry more debt.
+    var merchant=sum.total-sum.contracted;
+    var bankable=sum.contracted+merchant*(1-state.haircut);
+    var cfads=bankable-opexTotal;
+    var cfadsExpected=sum.total-opexTotal;
+
+    var r=state.rate/100, n=state.tenor;
+    var af=r===0?n:(1-Math.pow(1+r,-n))/r;
+    var maxDebtService=cfads/state.dscr;
+    var maxDebt=Math.max(0,maxDebtService*af);
+
+    // Illustrative capital cost so a gearing figure can be shown
+    var capexPerMW=TECH[state.t].isBess?520000:1300000;
+    var capex=capexPerMW*state.cap;
+    var debt=Math.min(maxDebt,capex*0.85);
+    var equity=Math.max(0,capex-debt);
+    var gearing=capex>0?debt/capex:0;
+
+    $("debtStats").innerHTML=
+      '<div class="stat"><div class="k">Bankable revenue</div><div class="v">'+money(bankable)+'</div><div class="s">vs '+money(sum.total)+' expected</div></div>'+
+      '<div class="stat"><div class="k">CFADS (downside)</div><div class="v">'+money(cfads)+'</div><div class="s">'+money(cfadsExpected)+' at expected</div></div>'+
+      '<div class="stat"><div class="k">Max debt service</div><div class="v">'+money(maxDebtService)+'</div><div class="s">CFADS ÷ '+state.dscr.toFixed(2)+'×</div></div>'+
+      '<div class="stat"><div class="k">Supportable debt</div><div class="v" style="color:var(--accent)">'+money(maxDebt)+'</div><div class="s">× annuity factor '+af.toFixed(2)+'</div></div>'+
+      '<div class="stat"><div class="k">Gearing</div><div class="v">'+(gearing*100).toFixed(0)+'%</div><div class="s">debt ÷ capital cost</div></div>';
+
+    var W=700,H=200,L=20,R=20,pw=W-L-R,y=52,barH=54;
+    var s='<text class="axis-t" x="'+L+'" y="30" style="font-size:12px;fill:var(--ink);font-weight:600">Funding the '+money(capex)+' capital cost</text>';
+    var dw=gearing*pw;
+    s+='<rect x="'+L+'" y="'+y+'" width="'+Math.max(0,dw-2).toFixed(1)+'" height="'+barH+'" fill="var(--c1)" rx="2"><title>Debt: '+money(debt)+'</title></rect>';
+    s+='<rect x="'+(L+dw).toFixed(1)+'" y="'+y+'" width="'+Math.max(0,pw-dw).toFixed(1)+'" height="'+barH+'" fill="var(--c3)" rx="2"><title>Equity: '+money(equity)+'</title></rect>';
+    if(dw>90) s+='<text class="seg-t" x="'+(L+dw/2).toFixed(1)+'" y="'+(y+barH/2+4)+'" text-anchor="middle">DEBT '+money(debt)+'</text>';
+    if(pw-dw>90) s+='<text class="seg-t" x="'+(L+dw+(pw-dw)/2).toFixed(1)+'" y="'+(y+barH/2+4)+'" text-anchor="middle">EQUITY '+money(equity)+'</text>';
+    s+='<text class="axis-t" x="'+L+'" y="'+(y+barH+26)+'">Cheaper capital — repaid first, lower return required</text>';
+    s+='<text class="axis-t" x="'+(W-R)+'" y="'+(y+barH+26)+'" text-anchor="end">Expensive capital — paid last, bears the risk</text>';
+    s+='<text class="axis-t" x="'+L+'" y="'+(y+barH+48)+'" style="fill:var(--ink-2)">Equity cheque of '+money(equity)+' is what your return is measured against. Shrink it and the return rises.</text>';
+    $("debtChart").innerHTML=s;
+
+    $("debtCaption").innerHTML="<b>Try this.</b> Note the supportable debt now, then raise the target DSCR from 1.30× to 1.60× — the level a lender demands for merchant battery revenue. Debt capacity falls by roughly 19%, and every pound of it must be replaced by equity. Nothing about the asset changed; only the lender's view of how reliable its income is. <b>That is how contract structure, not engineering, determines the return.</b>";
+  }
+
+  function render(){
+    var t=TECH[state.t];
+    $("durBox").hidden=!t.isBess;
+    $("cfBox").hidden=!!t.isBess;
+    $("note").textContent=t.note;
+
+    $("capV").textContent=state.cap+" MW";
+    $("cfV").textContent=state.cf+"%";
+    $("durV").textContent=state.dur+" h";
+    $("pwV").textContent="£"+state.pw+"/MWh";
+    $("dscrV").textContent=state.dscr.toFixed(2)+"×";
+    $("rateV").textContent=state.rate.toFixed(2)+"%";
+    $("tenorV").textContent=state.tenor+" years";
+    $("opexV").textContent="£"+state.opex+"k/MW/yr";
+    $("hcV").textContent=Math.round(state.haircut*100)+"%";
+
+    var res=stack();
+    var sum=drawStack(res);
+    drawTable(res,sum);
+    drawDebt(sum);
+
+    var cap=t.isBess
+      ? "<b>"+t.label+", "+state.cap+" MW / "+state.dur+" h.</b> Total "+money(sum.total)+" a year, of which "+(sum.contracted/sum.total*100).toFixed(0)+"% is contracted. "
+      : "<b>"+t.label+", "+state.cap+" MW at "+state.cf+"% capacity factor</b> — "+Math.round(res.mwh).toLocaleString()+" MWh a year. Total "+money(sum.total)+", of which "+(sum.contracted/sum.total*100).toFixed(0)+"% is contracted. ";
+    cap+="The green/red ribbon is the number that matters to a lender: contracted revenue supports debt, merchant revenue supports only equity.";
+    $("stackCaption").innerHTML=cap;
+  }
+
+  // ---- wiring ----
+  Array.prototype.forEach.call(document.querySelectorAll("[data-t]"),function(b){
+    b.addEventListener("click",function(){
+      Array.prototype.forEach.call(document.querySelectorAll("[data-t]"),function(o){o.setAttribute("aria-pressed","false")});
+      b.setAttribute("aria-pressed","true");
+      state.t=b.getAttribute("data-t");
+      var t=TECH[state.t];
+      if(t.cf){ state.cf=t.cf; $("cf").value=t.cf; }
+      if(t.dscr){ state.dscr=t.dscr; $("dscr").value=t.dscr; }
+      render();
+    });
+  });
+  [["cap","cap",1],["cf","cf",1],["dur","dur",1],["pw","pw",1],
+   ["dscr","dscr",0],["rate","rate",0],["tenor","tenor",1],["opex","opex",1]].forEach(function(p){
+    $(p[0]).addEventListener("input",function(e){
+      state[p[1]]=p[2]?parseInt(e.target.value,10):parseFloat(e.target.value);
+      render();
+    });
+  });
+  $("hc").addEventListener("input",function(e){ state.haircut=parseInt(e.target.value,10)/100; render(); });
+
+  render();
+})();
+</script>
