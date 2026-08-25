@@ -24,9 +24,21 @@ across energy assets, markets and businesses.
 | [`06-wealth-strategy.md`](06-wealth-strategy.md) | Part 8 | Wealth as a system; 5/10/15-year scenarios |
 | [`07-roadmap.md`](07-roadmap.md) | Part 9, Part 12.7 | 30/90-day, 12-month, 3-year and 5-year plans at 5/10/15 hrs per week |
 | [`08-networking-and-positioning.md`](08-networking-and-positioning.md) | Parts 10 & 11 | Who to contact, what to say, how to be perceived differently |
+| [`GLOSSARY.md`](GLOSSARY.md) | — | **Every acronym and financial term, defined from zero.** 14 themed sections, ~350 terms |
 | [`TRACKER.md`](TRACKER.md) | Part 12 | Running record of modules completed, weaknesses, next steps |
 | [`modules/`](modules/) | Part 3 | The taught modules themselves |
 | [`projects/`](projects/) | Part 7 | Working code for the portfolio projects |
+
+### Modules written so far
+
+| Module | Topic | Hours | Status |
+|---|---|---|---|
+| [`A1`](modules/A1-energy-power-and-units.md) | Energy, power, units and the commercial quantities | 8–10 | Written |
+| [`D1`](modules/D1-wind-solar-bess-revenue-stack.md) | **Wind, solar and BESS: where the money comes from** — the full revenue stack, costs, network charges, project finance and valuation, with every acronym explained | 14–18 | Written |
+
+**If you are starting from zero on the commercial side, read `GLOSSARY.md` alongside
+`modules/D1`.** D1 is self-contained — it assumes no knowledge of any acronym — but the
+glossary is the lookup table for everything the programme uses later.
 
 **Start here:** read `00-starting-position.md`, then `01-energy-system-map.md`, then
 `03-career-routes.md`. Then begin [`modules/A1-energy-power-and-units.md`](modules/A1-energy-power-and-units.md).
