@@ -1,0 +1,840 @@
+<title>Engineer to Capital Allocator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+
+<style>
+:root{
+  --ground:#f6f7f9; --surface:#ffffff; --surface-2:#eef1f5;
+  --ink:#131a21; --ink-2:#3d4854; --muted:#5a6672; --line:#dfe4ea; --line-2:#c8d1db;
+  --c1:#00719a; --c2:#b04a2e; --c3:#6a4c93; --c4:#2f7d52; --c5:#c77b1f;
+  --accent:#00719a; --accent-soft:#e2eef3;
+  --good:#2f7d52; --warn:#c77b1f; --crit:#b03030;
+  --shadow:0 1px 2px rgba(19,26,33,.06),0 8px 24px -12px rgba(19,26,33,.14);
+  --serif:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --measure:68ch;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0e1319; --surface:#161d25; --surface-2:#1d262f;
+    --ink:#e4eaf0; --ink-2:#c3ccd6; --muted:#8d9aa8; --line:#26303b; --line-2:#38444f;
+    --c1:#2f9ec4; --c2:#d0704c; --c3:#9179c4; --c4:#3f9a6a; --c5:#c08420;
+    --accent:#2f9ec4; --accent-soft:#15303c;
+    --good:#3f9a6a; --warn:#c08420; --crit:#d05e5e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0e1319; --surface:#161d25; --surface-2:#1d262f;
+  --ink:#e4eaf0; --ink-2:#c3ccd6; --muted:#8d9aa8; --line:#26303b; --line-2:#38444f;
+  --c1:#2f9ec4; --c2:#d0704c; --c3:#9179c4; --c4:#3f9a6a; --c5:#c08420;
+  --accent:#2f9ec4; --accent-soft:#15303c;
+  --good:#3f9a6a; --warn:#c08420; --crit:#d05e5e;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--sans); font-size:16.5px; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:0 clamp(18px,4vw,44px)}
+.col{max-width:var(--measure)}
+h1,h2,h3,h4{font-family:var(--serif); text-wrap:balance; line-height:1.2; margin:0}
+p{margin:0}
+a{color:var(--accent)}
+
+/* ---- eyebrow / labels ---- */
+.eyebrow{
+  font-family:var(--mono); font-size:11.5px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+}
+
+/* ---- hero ---- */
+.hero{
+  border-bottom:1px solid var(--line);
+  padding:clamp(52px,9vw,104px) 0 clamp(40px,6vw,72px);
+  background:
+    linear-gradient(to bottom,var(--accent-soft) 0%,transparent 58%);
+}
+.hero h1{font-size:clamp(38px,6.4vw,68px); font-weight:700; letter-spacing:-.02em; margin:16px 0 0}
+.hero .sub{font-size:clamp(17px,2vw,21px); color:var(--ink-2); margin-top:22px; max-width:60ch}
+.hero .meta{
+  display:flex; flex-wrap:wrap; gap:10px 28px; margin-top:34px;
+  font-family:var(--mono); font-size:12.5px; color:var(--muted);
+}
+.hero .meta b{color:var(--ink); font-weight:600}
+
+/* ---- sections ---- */
+section{padding:clamp(46px,7vw,86px) 0; border-bottom:1px solid var(--line)}
+.shead{display:flex; gap:16px; align-items:baseline; margin-bottom:12px}
+.snum{
+  font-family:var(--mono); font-size:12px; font-weight:600; color:var(--accent);
+  letter-spacing:.08em; padding-top:6px; flex:none;
+}
+h2{font-size:clamp(25px,3.6vw,36px); font-weight:600; letter-spacing:-.015em}
+.lede{color:var(--ink-2); margin-top:14px; font-size:17.5px}
+.body p+p{margin-top:16px}
+.body{margin-top:20px}
+
+/* ---- panel ---- */
+.panel{
+  background:var(--surface); border:1px solid var(--line); border-radius:4px;
+  padding:clamp(18px,2.6vw,30px); margin-top:30px; box-shadow:var(--shadow);
+}
+.panel-head{display:flex; justify-content:space-between; align-items:flex-start; gap:18px; flex-wrap:wrap; margin-bottom:6px}
+.panel h3{font-size:19px; font-weight:600; letter-spacing:-.01em}
+.caption{font-size:14.5px; color:var(--muted); margin-top:14px; max-width:78ch; line-height:1.6}
+.caption b{color:var(--ink-2); font-weight:600}
+.src{font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:12px; line-height:1.55}
+.scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
+
+/* ---- findings ---- */
+.finds{display:grid; gap:16px; margin-top:30px; grid-template-columns:repeat(auto-fit,minmax(255px,1fr))}
+.find{background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:3px; padding:20px 22px}
+.find h4{font-size:16.5px; font-weight:600; margin-bottom:9px}
+.find p{font-size:14.5px; color:var(--ink-2); line-height:1.6}
+
+/* ---- tables ---- */
+table{border-collapse:collapse; width:100%; font-size:14px; font-variant-numeric:tabular-nums}
+th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--line)}
+th{font-family:var(--mono); font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:500; white-space:nowrap}
+td.n{text-align:right; font-family:var(--mono); font-size:13px}
+tbody tr:hover{background:var(--surface-2)}
+
+/* ---- heat map ---- */
+.heat{display:grid; grid-template-columns:repeat(auto-fill,minmax(122px,1fr)); gap:2px; margin-top:20px}
+.cell{
+  position:relative; padding:11px 12px 13px; border-radius:3px; cursor:default;
+  background:var(--surface-2); border:1px solid transparent; transition:transform .12s ease;
+}
+.cell:hover,.cell:focus-visible{transform:translateY(-2px); border-color:var(--line-2); outline:none; z-index:3}
+.cell .cn{font-family:var(--mono); font-size:10px; color:var(--muted)}
+.cell .ct{font-size:12.5px; font-weight:600; line-height:1.28; margin:3px 0 8px; color:var(--ink)}
+.cell .cs{font-family:var(--mono); font-size:11.5px; font-weight:600; letter-spacing:.03em}
+.cell .tip{
+  position:absolute; left:0; bottom:calc(100% + 7px); width:250px; z-index:20;
+  background:var(--ink); color:var(--ground); padding:11px 13px; border-radius:4px;
+  font-size:12.5px; line-height:1.5; opacity:0; pointer-events:none; transition:opacity .12s;
+  box-shadow:0 10px 28px -8px rgba(0,0,0,.45);
+}
+.cell:hover .tip,.cell:focus-visible .tip{opacity:1}
+.legend{display:flex; flex-wrap:wrap; gap:8px 20px; margin-top:18px; align-items:center; font-family:var(--mono); font-size:11.5px; color:var(--muted)}
+.sw{display:inline-block; width:13px; height:13px; border-radius:2px; margin-right:6px; vertical-align:-2px; border:1px solid var(--line-2)}
+
+/* ---- controls ---- */
+.ctrls{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; align-items:center}
+button.seg{
+  font-family:var(--mono); font-size:12px; padding:7px 13px; cursor:pointer;
+  background:var(--surface); color:var(--ink-2); border:1px solid var(--line-2); border-radius:3px;
+  transition:all .12s;
+}
+button.seg:hover{border-color:var(--accent); color:var(--ink)}
+button.seg[aria-pressed="true"]{background:var(--accent); color:#fff; border-color:var(--accent)}
+:root[data-theme="dark"] button.seg[aria-pressed="true"],
+:root:not([data-theme="light"]) button.seg[aria-pressed="true"]{color:#08131a}
+button.seg:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.ctrl-label{font-family:var(--mono); font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin-right:2px}
+
+/* ---- stat row ---- */
+.stats{display:grid; gap:1px; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); background:var(--line); border:1px solid var(--line); border-radius:3px; overflow:hidden; margin-top:20px}
+.stat{background:var(--surface); padding:14px 16px}
+.stat .k{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+.stat .v{font-family:var(--mono); font-size:22px; font-weight:600; margin-top:5px; font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+
+/* ---- svg ---- */
+svg{display:block; max-width:100%}
+.axis-line{stroke:var(--line-2); stroke-width:1}
+.grid-line{stroke:var(--line); stroke-width:1}
+.axis-t{font-family:var(--mono); font-size:10.5px; fill:var(--muted)}
+.axis-title{font-family:var(--mono); font-size:10.5px; fill:var(--muted); letter-spacing:.06em; text-transform:uppercase}
+.node-t{font-family:var(--sans); font-size:11.5px; font-weight:600; fill:#fff}
+.node-s{font-family:var(--mono); font-size:9.5px; fill:rgba(255,255,255,.82)}
+.flow-t{font-family:var(--mono); font-size:10px; fill:var(--muted)}
+.lane-t{font-family:var(--mono); font-size:10px; fill:var(--muted); letter-spacing:.1em; text-transform:uppercase}
+
+/* ---- timeline ---- */
+.tl{margin-top:24px; border-left:2px solid var(--line-2); padding-left:0; list-style:none}
+.tl li{position:relative; padding:0 0 26px 26px}
+.tl li::before{content:""; position:absolute; left:-7px; top:6px; width:12px; height:12px; border-radius:50%; background:var(--accent); border:2px solid var(--ground)}
+.tl li.gate::before{background:var(--warn); width:14px; height:14px; left:-8px}
+.tl .wk{font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent)}
+.tl li.gate .wk{color:var(--warn)}
+.tl h4{font-size:16px; font-weight:600; margin:3px 0 5px}
+.tl p{font-size:14.5px; color:var(--ink-2)}
+
+/* ---- callout ---- */
+.callout{border-left:3px solid var(--warn); background:var(--surface); padding:18px 22px; margin-top:26px; border-radius:0 3px 3px 0; border-top:1px solid var(--line); border-right:1px solid var(--line); border-bottom:1px solid var(--line)}
+.callout .eyebrow{color:var(--warn); margin-bottom:7px; display:block}
+.callout p{font-size:15px; color:var(--ink-2)}
+
+/* ---- tag ---- */
+.tag{font-family:var(--mono); font-size:10px; letter-spacing:.06em; padding:2px 7px; border-radius:2px; background:var(--surface-2); color:var(--muted); border:1px solid var(--line); white-space:nowrap}
+.tag.fact{color:var(--good); border-color:var(--good)}
+.tag.est{color:var(--warn); border-color:var(--warn)}
+
+footer{padding:44px 0 60px; color:var(--muted); font-size:13.5px}
+footer p+p{margin-top:10px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+@media (max-width:640px){
+  body{font-size:16px}
+  .shead{gap:11px}
+  .heat{grid-template-columns:repeat(auto-fill,minmax(105px,1fr))}
+  .cell .tip{width:200px}
+}
+</style>
+
+<div class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Energy · Markets · Finance — programme map</span>
+    <h1>Engineer to Capital Allocator</h1>
+    <p class="sub">A sequenced route from renewable-energy consultancy to allocating capital across energy assets, markets and businesses. Twenty-two module groups, ten portfolio projects, and an honest account of the odds.</p>
+    <div class="meta">
+      <span><b>Start</b> August 2026</span>
+      <span><b>Base</b> Edinburgh, Scotland</span>
+      <span><b>Critical path</b> ~340 hrs</span>
+      <span><b>Full programme</b> ~720 hrs</span>
+      <span><b>Realistic horizon</b> 3–5 years</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ============ 1 ============ -->
+<section>
+  <div class="shead"><span class="snum">01</span><div class="col">
+    <h2>Where you actually stand</h2>
+    <p class="lede">Further along on analysis than you think. Further behind on capital.</p>
+  </div></div>
+
+  <div class="finds">
+    <div class="find">
+      <h4>You already do a junior version of the job</h4>
+      <p>Technical due diligence, P50/P90 yield work, grid screening and NPV analysis are not adjacent to infrastructure investment — they are inputs to it. The gap is that you produce an input to a decision rather than making the decision, and you are paid for hours rather than outcomes.</p>
+    </div>
+    <div class="find">
+      <h4>Your employer is already in the room</h4>
+      <p>Locogen sells technical due diligence to buyers, sellers and lenders, runs lender's technical adviser mandates, and has a dedicated financial-investor client sector. You do not need to leave to get transaction exposure. You need to be staffed on it.</p>
+    </div>
+    <div class="find">
+      <h4>The constraint is fluency, not knowledge</h4>
+      <p>You can calculate an NPV. You cannot yet sculpt debt to a DSCR covenant, defend a capture-rate assumption to a credit committee, or read an SPA for risk transfer. That is 12–24 months of work — and it is not learnable by reading.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section>
+  <div class="shead"><span class="snum">02</span><div class="col">
+    <h2>The energy system, in five layers</h2>
+    <p class="lede">Every physical event has a price consequence, and every price consequence has an investment consequence. Tracing that path in both directions is the skill this programme exists to build.</p>
+  </div></div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>Layer 1 — physical flows and where value concentrates</h3></div>
+    <div class="scroll">
+      <svg viewBox="0 0 1080 340" width="1080" height="340" role="img" aria-label="Energy system flow from primary resources through conversion and transport to final demand, with chokepoints marked">
+        <text class="lane-t" x="8" y="16">Primary</text>
+        <text class="lane-t" x="272" y="16">Conversion</text>
+        <text class="lane-t" x="546" y="16">Transport &amp; storage</text>
+        <text class="lane-t" x="852" y="16">Final demand</text>
+
+        <g id="l1-flows" stroke-linecap="round" fill="none" opacity=".5">
+          <path d="M210 62 C245 62 245 62 268 62" stroke="var(--c2)" stroke-width="2"/>
+          <path d="M210 62 C245 62 245 110 268 110" stroke="var(--c2)" stroke-width="2"/>
+          <path d="M210 110 C245 110 245 158 268 158" stroke="var(--c2)" stroke-width="2"/>
+          <path d="M210 158 C245 158 245 206 268 206" stroke="var(--c4)" stroke-width="2.6"/>
+          <path d="M210 206 C245 206 245 206 268 206" stroke="var(--c4)" stroke-width="2.6"/>
+          <path d="M210 254 C245 254 245 254 268 254" stroke="var(--c5)" stroke-width="2"/>
+          <path d="M484 62 C516 62 516 78 542 78" stroke="var(--c2)" stroke-width="2"/>
+          <path d="M484 110 C516 110 516 78 542 78" stroke="var(--c2)" stroke-width="2"/>
+          <path d="M484 158 C516 158 516 142 542 142" stroke="var(--c2)" stroke-width="2"/>
+          <path d="M484 206 C516 206 516 206 542 206" stroke="var(--c4)" stroke-width="3"/>
+          <path d="M484 254 C516 254 516 270 542 270" stroke="var(--c5)" stroke-width="2"/>
+          <path d="M790 78 C820 78 820 92 848 92" stroke="var(--c2)" stroke-width="2"/>
+          <path d="M790 142 C820 142 820 92 848 92" stroke="var(--c2)" stroke-width="2"/>
+          <path d="M790 206 C820 206 820 156 848 156" stroke="var(--c4)" stroke-width="3"/>
+          <path d="M790 206 C820 206 820 220 848 220" stroke="var(--c4)" stroke-width="3"/>
+          <path d="M790 206 C820 206 820 284 848 284" stroke="var(--c1)" stroke-width="3.4"/>
+          <path d="M790 270 C820 270 820 220 848 220" stroke="var(--c5)" stroke-width="2"/>
+        </g>
+
+        <g>
+          <rect x="8" y="44" width="202" height="36" rx="3" fill="var(--c2)"/><text class="node-t" x="20" y="60">Oil · Gas · Coal</text><text class="node-s" x="20" y="73">hydrocarbon resource</text>
+          <rect x="8" y="92" width="202" height="36" rx="3" fill="var(--c2)"/><text class="node-t" x="20" y="108">Uranium</text><text class="node-s" x="20" y="121">fissile resource</text>
+          <rect x="8" y="140" width="202" height="36" rx="3" fill="var(--c4)"/><text class="node-t" x="20" y="156">Wind · Solar · Hydro</text><text class="node-s" x="20" y="169">flow resource, zero fuel cost</text>
+          <rect x="8" y="188" width="202" height="36" rx="3" fill="var(--c4)"/><text class="node-t" x="20" y="204">Biomass · Geothermal</text><text class="node-s" x="20" y="217">dispatchable renewable</text>
+          <rect x="8" y="236" width="202" height="36" rx="3" fill="var(--c5)"/><text class="node-t" x="20" y="252">Critical minerals</text><text class="node-s" x="20" y="265">Cu · Li · Ni · REE</text>
+
+          <rect x="268" y="44" width="216" height="36" rx="3" fill="var(--c2)"/><text class="node-t" x="280" y="60">Upstream E&amp;P</text><text class="node-s" x="280" y="73">extraction</text>
+          <rect x="268" y="92" width="216" height="36" rx="3" fill="var(--c2)"/><text class="node-t" x="280" y="108">Refineries</text><text class="node-s" x="280" y="121">cracking capacity ◆</text>
+          <rect x="268" y="140" width="216" height="36" rx="3" fill="var(--c2)"/><text class="node-t" x="280" y="156">LNG liquefaction</text><text class="node-s" x="280" y="169">trains ◆</text>
+          <rect x="268" y="188" width="216" height="36" rx="3" fill="var(--c4)"/><text class="node-t" x="280" y="204">Power generation</text><text class="node-s" x="280" y="217">merit order sets price</text>
+          <rect x="268" y="236" width="216" height="36" rx="3" fill="var(--c5)"/><text class="node-t" x="280" y="252">Mines &amp; processing</text><text class="node-s" x="280" y="265">refining ◆</text>
+
+          <rect x="542" y="60" width="248" height="36" rx="3" fill="var(--c2)"/><text class="node-t" x="554" y="76">Tankers · LNG carriers</text><text class="node-s" x="554" y="89">chokepoints ◆</text>
+          <rect x="542" y="124" width="248" height="36" rx="3" fill="var(--c2)"/><text class="node-t" x="554" y="140">Pipelines · gas storage</text><text class="node-s" x="554" y="153">seasonal flexibility</text>
+          <rect x="542" y="188" width="248" height="36" rx="3" fill="var(--c1)"/><text class="node-t" x="554" y="204">Transmission &amp; distribution</text><text class="node-s" x="554" y="217">connection queue ◆ ◆ ◆</text>
+          <rect x="542" y="252" width="248" height="36" rx="3" fill="var(--c3)"/><text class="node-t" x="554" y="268">Batteries · pumped hydro</text><text class="node-s" x="554" y="281">arbitrage &amp; balancing</text>
+
+          <rect x="848" y="74" width="224" height="36" rx="3" fill="var(--c2)"/><text class="node-t" x="860" y="90">Transport</text><text class="node-s" x="860" y="103">liquid fuels · EVs</text>
+          <rect x="848" y="138" width="224" height="36" rx="3" fill="var(--c4)"/><text class="node-t" x="860" y="154">Industry</text><text class="node-s" x="860" y="167">heat · process · feedstock</text>
+          <rect x="848" y="202" width="224" height="36" rx="3" fill="var(--c4)"/><text class="node-t" x="860" y="218">Buildings &amp; heat</text><text class="node-s" x="860" y="231">weather-driven</text>
+          <rect x="848" y="266" width="224" height="36" rx="3" fill="var(--c1)"/><text class="node-t" x="860" y="282">Data centres</text><text class="node-s" x="860" y="295">fastest-growing load ◆</text>
+        </g>
+        <text class="flow-t" x="8" y="326">◆ marks a chokepoint — where capacity is scarce and value concentrates</text>
+      </svg>
+    </div>
+    <p class="caption"><b>What it shows.</b> Energy and materials flowing left to right, losing usable energy at every conversion. <b>What to take from it.</b> The system has few genuine chokepoints, and value concentrates at them rather than at the resource. Wind is free; a grid connection in a constrained region is not. This is the most important commercial idea in energy, and it is why the reformed GB connections queue has made a Gate 2 offer a scarce, tradeable asset.</p>
+    <p class="src">Diagram: original, constructed for this programme. Structure follows the IEA energy-balance convention (primary → transformation → final consumption). Not to scale; thickness indicates relative importance, not measured flow.</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>Layer 3 — the money layer, and why this diagram decides your career</h3></div>
+    <div class="scroll">
+      <svg viewBox="0 0 1080 250" width="1080" height="250" role="img" aria-label="Capital flow from limited partners through funds and project SPVs, showing carried interest to fund managers">
+        <g fill="none" stroke-linecap="round" opacity=".55">
+          <path d="M182 76 C222 76 222 76 258 76" stroke="var(--c1)" stroke-width="3"/>
+          <path d="M416 76 C452 76 452 108 490 108" stroke="var(--c1)" stroke-width="3"/>
+          <path d="M182 172 C222 172 222 140 258 140" stroke="var(--c2)" stroke-width="3"/>
+          <path d="M416 140 C452 140 452 128 490 128" stroke="var(--c2)" stroke-width="3"/>
+          <path d="M700 118 C736 118 736 76 774 76" stroke="var(--c4)" stroke-width="3"/>
+          <path d="M700 128 C736 128 736 172 774 172" stroke="var(--c4)" stroke-width="3"/>
+          <path d="M900 90 C930 90 930 60 962 60" stroke="var(--c5)" stroke-width="3.6"/>
+        </g>
+
+        <rect x="8" y="58" width="174" height="38" rx="3" fill="var(--c1)"/><text class="node-t" x="20" y="75">Pension funds · insurers</text><text class="node-s" x="20" y="88">the real owners of capital</text>
+        <rect x="8" y="154" width="174" height="38" rx="3" fill="var(--c2)"/><text class="node-t" x="20" y="171">Banks · debt funds</text><text class="node-s" x="20" y="184">senior, non-recourse</text>
+
+        <rect x="258" y="58" width="158" height="38" rx="3" fill="var(--c1)"/><text class="node-t" x="270" y="75">Infrastructure fund</text><text class="node-s" x="270" y="88">GP manages LP capital</text>
+        <rect x="258" y="121" width="158" height="38" rx="3" fill="var(--c2)"/><text class="node-t" x="270" y="138">Debt facility</text><text class="node-s" x="270" y="151">sized to DSCR covenant</text>
+
+        <rect x="490" y="88" width="210" height="52" rx="3" fill="var(--c3)"/><text class="node-t" x="502" y="110">Project SPV</text><text class="node-s" x="502" y="124">ring-fenced legal box —</text><text class="node-s" x="502" y="135">failure stops at its walls</text>
+
+        <rect x="774" y="58" width="126" height="38" rx="3" fill="var(--c4)"/><text class="node-t" x="786" y="75">Distributions</text><text class="node-s" x="786" y="88">to equity</text>
+        <rect x="774" y="154" width="126" height="38" rx="3" fill="var(--c4)"/><text class="node-t" x="786" y="171">Debt service</text><text class="node-s" x="786" y="184">first in the waterfall</text>
+
+        <rect x="962" y="34" width="110" height="52" rx="3" fill="var(--c5)"/><text class="node-t" x="974" y="54">Carried</text><text class="node-t" x="974" y="68">interest</text><text class="node-s" x="974" y="80">≈20% of profit</text>
+
+        <text class="flow-t" x="962" y="106">The prize.</text>
+        <text class="flow-t" x="962" y="120">≈20% of gains,</text>
+        <text class="flow-t" x="962" y="134">on capital that</text>
+        <text class="flow-t" x="962" y="148">is not yours.</text>
+        <text class="flow-t" x="8" y="228">Consultancy sells hours at a margin. Fund management owns a share of an outcome, funded by someone else.</text>
+      </svg>
+    </div>
+    <p class="caption"><b>Follow the money to the right-hand edge.</b> Limited partners supply the capital and take roughly 80% of profit above a hurdle. The general partner supplies judgement and takes roughly 20% — on capital that is mostly not theirs. That asymmetry is the entire economic reason to move from consulting into investment, and every career route in this programme is an argument about how to reach the right-hand side, at what risk. <b>Note also where risk stops:</b> the SPV is engineered so that project failure does not reach the sponsor's other assets. That is what non-recourse means, and why project finance is a distinct discipline.</p>
+    <p class="src">Diagram: original. Carry percentages are the conventional 2-and-20 structure; actual terms vary by fund and are negotiated with LPs. Carry vests over years and is worth zero if the fund misses its hurdle — never model it as salary.</p>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section>
+  <div class="shead"><span class="snum">03</span><div class="col">
+    <h2>Competency heat map</h2>
+    <p class="lede">Twenty-five categories, scored 0–5 against the standard each route requires. Hover any cell for the gap and how to close it.</p>
+  </div></div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Current level versus target, by gap size</h3>
+      <span class="tag est">ESTIMATE — inferred, not tested</span>
+    </div>
+    <div class="heat" id="heat"></div>
+    <div class="legend">
+      <span>Gap to target:</span>
+      <span><i class="sw" data-sw="0"></i>none</span>
+      <span><i class="sw" data-sw="1"></i>1</span>
+      <span><i class="sw" data-sw="2"></i>2</span>
+      <span><i class="sw" data-sw="3"></i>3 — priority</span>
+    </div>
+    <p class="caption"><b>The three deepest gaps are project finance, capital allocation and trading.</b> Two of those three sit on the critical path for <em>every</em> route you are likely to take; trading only matters if you choose the trading route. That is why the curriculum sequences project finance sixth of twenty-two and defers trading to week fifty. <b>Read the pale cells as permission:</b> roughly 40% of the surface area of this programme is awareness-level for your purposes, and treating all of it as deep study is the most likely way this fails.</p>
+    <p class="src">Scores estimated from your stated background, not from testing. Numbers shown on every cell so the ranking is never colour-alone. Module A1 ends with a diagnostic that corrects them.</p>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section>
+  <div class="shead"><span class="snum">04</span><div class="col">
+    <h2>Career routes: accessibility against ceiling</h2>
+    <p class="lede">Twenty-nine routes were compared. These fifteen carry the decision. The pattern that should shape your choice is visible immediately.</p>
+  </div></div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Realistic earnings ceiling versus probability of getting in</h3>
+      <span class="tag est">ESTIMATE — my judgement</span>
+    </div>
+    <div class="scroll">
+      <svg viewBox="0 0 1080 470" width="1080" height="470" id="scatter" role="img" aria-label="Scatter plot of career routes: probability of successful entry on the horizontal axis, realistic earnings ceiling on the vertical axis"></svg>
+    </div>
+    <div class="ctrls" style="margin-top:16px;margin-bottom:0">
+      <span class="ctrl-label">Highlight</span>
+      <button class="seg" data-hl="all" aria-pressed="true">All routes</button>
+      <button class="seg" data-hl="rec" aria-pressed="false">Recommended</button>
+      <button class="seg" data-hl="scot" aria-pressed="false">Works from Scotland</button>
+    </div>
+    <p class="caption"><b>The trade-off is the finding.</b> Routes with high ceilings — oil, LNG and gas trading, investment banking — sit far left: the ceiling is real but few people reach it, and lateral entry at 30 without a trading background is rare. Routes that are easy to enter sit low. <b>The valuable region is the upper-middle</b>, where infrastructure investment via technical advisory, developer commercial roles and data-centre energy strategy cluster: acceptable medians <em>and</em> genuine tails. Those three are the recommendation.</p>
+    <p class="src">Ceilings are realistic senior total compensation, not tail outcomes. Probabilities are conditional on pursuing the route seriously for 5–10 years. Both axes are my estimates, triangulated from cited salary sources and role structure — public salary data for these roles conflates job titles badly and is documented in the programme files. Challenge these numbers.</p>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section>
+  <div class="shead"><span class="snum">05</span><div class="col">
+    <h2>The interactive one: GB price shape</h2>
+    <p class="lede">Real Elexon settlement data, pulled 25 August 2026. This chart contains a live commercial finding, and the control below demonstrates it.</p>
+  </div></div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3>GB day-ahead price by hour of day, 26 July – 25 August 2026</h3>
+      <span class="tag fact">FACT — real market data</span>
+    </div>
+
+    <div class="ctrls">
+      <span class="ctrl-label">Peak window</span>
+      <button class="seg" data-peak="classic" aria-pressed="true">Classic 07:00–19:00</button>
+      <button class="seg" data-peak="evening" aria-pressed="false">Evening 16:00–22:00</button>
+      <button class="seg" data-peak="none" aria-pressed="false">None</button>
+    </div>
+
+    <div class="scroll">
+      <svg viewBox="0 0 1080 400" width="1080" height="400" id="shape" role="img" aria-label="Line chart of mean GB day-ahead electricity price by hour of day, showing a midday solar trough and an evening peak"></svg>
+    </div>
+
+    <div class="stats" id="peakstats"></div>
+
+    <p class="caption"><b>What changed, and why it matters.</b> Under the classic 07:00–19:00 peak definition the spread is <em>negative</em> — peak power is cheaper than off-peak. Switch to an evening window and the same data produces a large positive spread. Nothing about the market changed; only the definition did. <b>GB summer solar has carved a midday trough to about £88/MWh while the evening ramp reaches £164/MWh, and the traditional peak window now contains the trough it was designed to exclude.</b> Any PPA still priced on a 07:00–19:00 peak premium is pricing a shape that no longer exists.</p>
+
+    <p class="caption"><b>The commercial consequences.</b> Solar captured 81.9% of baseload over this window and wind 94.0% — cannibalisation, measured rather than assumed. Apply a flat baseload price to solar volume and you overstate revenue by roughly 18% before any curtailment. Meanwhile gas captured 115.5% and nuclear 103.2%: dispatchable plant earns <em>above</em> average precisely because intermittent plant earns below it. And the £88-to-£164 evening ramp, not the £123 average, is what a battery monetises.</p>
+
+    <p class="src">Source: Elexon BMRS dataset MID, provider APXMIDP (N2EX day-ahead index) · Great Britain · 26 Jul – 25 Aug 2026 · 1,441 half-hourly settlement periods · £/MWh · retrieved 25 Aug 2026. Hourly values are means across all days; the −£1.09/MWh headline figure quoted elsewhere in the programme uses a weekday-only peak definition, which is why the figures here differ. 30 days is a short and seasonally atypical window — do not generalise these capture rates to an annual model. Fully reproducible: <span style="color:var(--ink-2)">curriculum/projects/p1_gb_power_dashboard/</span> (Python, no API key required).</p>
+  </div>
+
+  <div class="callout">
+    <span class="eyebrow">Use this</span>
+    <p>This finding is your best networking opening. It is real, it is current, it is measured from primary settlement data, and most people in the industry have not noticed it. It demonstrates commercial judgement rather than asserting it — which is precisely what a cold approach to an investor needs to do.</p>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section>
+  <div class="shead"><span class="snum">06</span><div class="col">
+    <h2>Curriculum dependencies</h2>
+    <p class="lede">Twenty-two module groups. Two chains carry almost all the value.</p>
+  </div></div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>What must be learned before what</h3></div>
+    <div class="scroll">
+      <svg viewBox="0 0 1080 420" width="1080" height="420" role="img" aria-label="Dependency graph of curriculum module groups showing the financial spine and the market spine">
+        <g fill="none" stroke="var(--line-2)" stroke-width="1.5" opacity=".9">
+          <path d="M120 200 L196 96"/><path d="M120 200 L196 200"/><path d="M120 200 L196 304"/>
+          <path d="M292 96 L368 60"/><path d="M292 96 L368 130"/><path d="M292 96 L368 200"/>
+          <path d="M292 304 L368 304"/>
+          <path d="M464 304 L540 304"/>
+          <path d="M636 304 L712 304"/>
+          <path d="M292 200 L368 200"/>
+          <path d="M464 60 L540 130"/><path d="M464 130 L540 130"/><path d="M464 200 L540 130"/>
+          <path d="M636 130 L712 130"/>
+          <path d="M292 96 L368 360"/><path d="M464 360 L540 360"/>
+        </g>
+        <g stroke="var(--accent)" stroke-width="2.6" fill="none">
+          <path d="M120 200 L196 304"/><path d="M292 304 L368 304"/><path d="M464 304 L540 304"/><path d="M636 304 L712 304"/>
+        </g>
+
+        <g>
+          <rect x="24" y="182" width="96" height="36" rx="3" fill="var(--c1)"/><text class="node-t" x="36" y="199">A · Basics</text><text class="node-s" x="36" y="211">20h</text>
+
+          <rect x="196" y="78" width="96" height="36" rx="3" fill="var(--c1)"/><text class="node-t" x="208" y="95">B · Markets</text><text class="node-s" x="208" y="107">60h · deep</text>
+          <rect x="196" y="182" width="96" height="36" rx="3" fill="var(--c2)"/><text class="node-t" x="208" y="199">F · Thermal</text><text class="node-s" x="208" y="211">30h</text>
+          <rect x="196" y="286" width="96" height="36" rx="3" fill="var(--c5)"/><text class="node-t" x="208" y="303">Q · Accounts</text><text class="node-s" x="208" y="315">35h</text>
+
+          <rect x="368" y="42" width="96" height="36" rx="3" fill="var(--c1)"/><text class="node-t" x="380" y="59">C · Grids</text><text class="node-s" x="380" y="71">25h</text>
+          <rect x="368" y="112" width="96" height="36" rx="3" fill="var(--c3)"/><text class="node-t" x="380" y="129">E · Storage</text><text class="node-s" x="380" y="141">40h</text>
+          <rect x="368" y="182" width="96" height="36" rx="3" fill="var(--c2)"/><text class="node-t" x="380" y="199">P · Trading</text><text class="node-s" x="380" y="211">50h</text>
+          <rect x="368" y="286" width="96" height="36" rx="3" fill="var(--c5)"/><text class="node-t" x="380" y="303">R · Proj. fin.</text><text class="node-s" x="380" y="315">80h · deep</text>
+          <rect x="368" y="342" width="96" height="36" rx="3" fill="var(--c2)"/><text class="node-t" x="380" y="359">H · Gas/LNG</text><text class="node-s" x="380" y="371">35h</text>
+
+          <rect x="540" y="112" width="96" height="36" rx="3" fill="var(--c1)"/><text class="node-t" x="552" y="129">N · Data ctr</text><text class="node-s" x="552" y="141">30h</text>
+          <rect x="540" y="286" width="96" height="36" rx="3" fill="var(--c5)"/><text class="node-t" x="552" y="303">S · M&amp;A / PE</text><text class="node-s" x="552" y="315">45h · deep</text>
+          <rect x="540" y="342" width="96" height="36" rx="3" fill="var(--c2)"/><text class="node-t" x="552" y="359">I · Refining</text><text class="node-s" x="552" y="371">15h</text>
+
+          <rect x="712" y="112" width="112" height="36" rx="3" fill="var(--c1)"/><text class="node-t" x="724" y="129">Projects 1 · 8</text><text class="node-s" x="724" y="141">market spine output</text>
+          <rect x="712" y="286" width="112" height="36" rx="3" fill="var(--c5)"/><text class="node-t" x="724" y="303">Projects 2 · 9</text><text class="node-s" x="724" y="315">financial spine output</text>
+        </g>
+
+        <text class="lane-t" x="880" y="120">Market spine</text>
+        <text class="flow-t" x="880" y="140">A → B → C/E/F → N</text>
+        <text class="flow-t" x="880" y="156">how prices form, and the</text>
+        <text class="flow-t" x="880" y="170">assets that set them</text>
+
+        <text class="lane-t" x="880" y="294">Financial spine</text>
+        <text class="flow-t" x="880" y="314">A → Q → R → S</text>
+        <text class="flow-t" x="880" y="330">what converts you from</text>
+        <text class="flow-t" x="880" y="344">adviser to principal</text>
+        <text class="flow-t" x="24" y="404">Highlighted path = the critical route. If you only ever complete B and R, you are still substantially more employable than today.</text>
+      </svg>
+    </div>
+    <p class="caption"><b>Order matters more than coverage.</b> Accounting comes before project finance because you cannot sculpt debt against cash flow without knowing how CFADS differs from EBITDA — engineers routinely skip this and then build models with the tax line wrong. Power markets come before everything commercial because every revenue assumption in every energy model traces back to how the price forms. Data centres come late but not last: the module is only credible once you can discuss capacity markets, connection constraints and backup generation.</p>
+    <p class="src">Hours are estimates to the stated depth including practicals. Full table with prerequisites and deliverables: curriculum/02-curriculum-index.md</p>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section>
+  <div class="shead"><span class="snum">07</span><div class="col">
+    <h2>The first ninety days</h2>
+    <p class="lede">At ten hours per week. The gates matter more than the modules — the dominant failure mode is drift, not difficulty.</p>
+  </div></div>
+
+  <ul class="tl col" style="max-width:74ch">
+    <li>
+      <span class="wk">Week 1</span>
+      <h4>Module A1, and the conversation</h4>
+      <p>Energy, power and units. Build the LCOE and marginal-cost workbook. In the same week, ask your line manager to be staffed on lender's technical adviser and transaction due-diligence mandates. Frame it as a proposal to be more useful, with the market model attached as evidence — not as a request for a favour.</p>
+    </li>
+    <li>
+      <span class="wk">Weeks 2–4</span>
+      <h4>Finish A1, start the market work</h4>
+      <p>Complete the quiz and the Scottish Borders valuation case. Register for Elexon data access. Begin Module B. Book the first two informational conversations. Request two recruiter salary guides — public aggregator data for these roles is unreliable and you need better numbers.</p>
+    </li>
+    <li class="gate">
+      <span class="wk">Day 30 — gate</span>
+      <h4>Did the internal conversation happen?</h4>
+      <p>Not "did it succeed" — did it happen. If you completed thirty of forty planned hours and had the conversation, continue. If you avoided the conversation, that is the real finding, and it is the thing to fix.</p>
+    </li>
+    <li>
+      <span class="wk">Weeks 5–8</span>
+      <h4>Market fluency</h4>
+      <p>Price formation, merit order, balancing and imbalance settlement, capacity mechanisms. Master capture price, cannibalisation and the clean spark spread. Three conversations: a technical adviser, an infrastructure debt or fund professional, a battery optimiser. Project 1 pulling live data and producing four charts.</p>
+    </li>
+    <li>
+      <span class="wk">Weeks 9–13</span>
+      <h4>Ship, and reposition</h4>
+      <p>Route-to-market, PPAs, CfDs, capture price. Start accounting in parallel — it uses different mental energy from market work. Book the project-finance modelling course for month four; it is the one paid course worth buying. Publish Project 1. Rewrite LinkedIn around what you assess, not what you are called.</p>
+    </li>
+    <li class="gate">
+      <span class="wk">Day 90 — gate</span>
+      <h4>Has your work content changed at all?</h4>
+      <p>If you have been staffed on transaction work, the primary route is validated. If the conversation went nowhere, the internal bridge is closed and the plan shifts towards an external move at month twelve to eighteen. Either answer is useful. Discovering it at day ninety rather than year two is the entire point of the gate.</p>
+    </li>
+  </ul>
+
+  <div class="callout col" style="max-width:74ch">
+    <span class="eyebrow">Do not apply for anything yet</span>
+    <p>No applications before day ninety, deliberately. You get one first impression with each employer, and sending it before Project 1 exists wastes it. Five targeted applications after the portfolio is live will outperform fifty sent before.</p>
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section>
+  <div class="shead"><span class="snum">08</span><div class="col">
+    <h2>How engineering becomes ownership</h2>
+    <p class="lede">The transition is not a leap. It is four steps, each of which uses the previous one as evidence.</p>
+  </div></div>
+
+  <div class="panel">
+    <div class="scroll">
+      <svg viewBox="0 0 1080 280" width="1080" height="280" role="img" aria-label="Four-stage progression from selling engineering hours to owning equity in energy assets">
+        <g fill="none" stroke="var(--accent)" stroke-width="2.4" opacity=".8">
+          <path d="M244 88 L280 88" marker-end="url(#ar)"/>
+          <path d="M500 88 L536 88" marker-end="url(#ar)"/>
+          <path d="M756 88 L792 88" marker-end="url(#ar)"/>
+        </g>
+        <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--accent)"/></marker></defs>
+
+        <rect x="8" y="52" width="236" height="72" rx="3" fill="var(--c2)"/>
+        <text class="node-t" x="22" y="76">1 · Sell hours</text>
+        <text class="node-s" x="22" y="94">Feasibility, yield, TDD</text>
+        <text class="node-s" x="22" y="108">Paid a day rate</text>
+
+        <rect x="280" y="52" width="220" height="72" rx="3" fill="var(--c5)"/>
+        <text class="node-t" x="294" y="76">2 · Advise transactions</text>
+        <text class="node-s" x="294" y="94">LTA and deal TDD</text>
+        <text class="node-s" x="294" y="108">You see the model</text>
+
+        <rect x="536" y="52" width="220" height="72" rx="3" fill="var(--c1)"/>
+        <text class="node-t" x="550" y="76">3 · Allocate capital</text>
+        <text class="node-s" x="550" y="94">Infra debt, PE, developer</text>
+        <text class="node-s" x="550" y="108">Bonus, then carry</text>
+
+        <rect x="792" y="52" width="280" height="72" rx="3" fill="var(--c4)"/>
+        <text class="node-t" x="806" y="76">4 · Own the outcome</text>
+        <text class="node-s" x="806" y="94">Carry · development equity</text>
+        <text class="node-s" x="806" y="108">Where multi-million happens</text>
+
+        <text class="flow-t" x="8" y="160">Today</text>
+        <text class="flow-t" x="280" y="160">Months 1–12 — no job change required</text>
+        <text class="flow-t" x="536" y="160">Years 2–4</text>
+        <text class="flow-t" x="792" y="160">Years 5–15</text>
+
+        <text class="flow-t" x="8" y="196">What carries you forward at each step is evidence, not credentials:</text>
+        <text class="flow-t" x="8" y="214">Step 1→2  being useful on a mandate the firm already sells</text>
+        <text class="flow-t" x="8" y="232">Step 2→3  a project-finance model you built from blank and can defend</text>
+        <text class="flow-t" x="8" y="250">Step 3→4  a track record of decisions, not analyses</text>
+      </svg>
+    </div>
+    <p class="caption"><b>Step 2 is the one that matters and the one people skip.</b> It requires no job change, no relocation, no pay cut and no credential — only being staffed on work your employer already sells to financial investors. It is also where you first see how a lender actually uses the technical report you have been writing for years, which reframes everything that follows. <b>The failure mode is benign:</b> stopping at step 2 makes you a well-paid senior technical adviser in Edinburgh. That floor is what makes taking risk beyond it rational.</p>
+  </div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section>
+  <div class="shead"><span class="snum">09</span><div class="col">
+    <h2>The honest probabilities</h2>
+    <p class="lede">You asked for realism about the £200k and multi-million targets. These are estimates on a ten-year horizon, conditional on completing the programme, obtaining transaction exposure, and changing employer at least once.</p>
+  </div></div>
+
+  <div class="panel">
+    <div class="scroll"><table>
+      <thead><tr><th>Outcome</th><th class="n">Probability</th><th>What it depends on</th></tr></thead>
+      <tbody>
+        <tr><td>Total compensation above £200k at some point</td><td class="n">45–60%</td><td>Route change succeeding; bonus cycle timing</td></tr>
+        <tr><td>Sustained above £200k for five consecutive years</td><td class="n">30–40%</td><td>Reaching senior level, not just touching it</td></tr>
+        <tr><td>Net worth above £2m by around age 45</td><td class="n">25–35%</td><td>Equity or carry participation, and savings rate — far more than salary</td></tr>
+        <tr><td>Career stagnation — same job, same real pay, 2036</td><td class="n">15–25%</td><td>Concentrated in the drift scenario: study without conversion</td></tr>
+      </tbody>
+    </table></div>
+    <p class="caption"><b>The dominant risk is not failure — it is drift.</b> Completing modules, accumulating knowledge, and never converting any of it into a different seat. Every gate in the ninety-day plan exists to counter that specific failure. <b>And the downside is asymmetric in your favour:</b> attempt the ambitious path and land in the central case, and you have roughly £2m. Attempt the central case and land in the conservative one, and you have a good career in Scotland and roughly £890k. The cost of trying is small; the upside is large. That asymmetry, not optimism, is the rational case for the programme.</p>
+    <p class="src">All figures estimates, not forecasts. Nothing here is promised. Full scenario tables with stated assumptions for salary, savings rate, investment return, equity, tax, inflation and failure risk: curriculum/06-wealth-strategy.md</p>
+  </div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section style="border-bottom:none">
+  <div class="shead"><span class="snum">10</span><div class="col">
+    <h2>This week</h2>
+  </div></div>
+  <div class="col body" style="max-width:70ch">
+    <p><b>One.</b> Book the conversation with your line manager about being staffed on lender's technical adviser and transaction due-diligence mandates. It is the highest-return action available to you, it costs nothing, and its answer reshapes the plan either way.</p>
+    <p><b>Two.</b> Start Module A1. Target sections one to seven and the Excel workbook by the end of the week.</p>
+    <p><b>Three.</b> Re-run Project 1 over twelve months instead of thirty days, and chart capture rates by month. The seasonality is the finding, and it feeds directly into the merchant tail of the project-finance model you will build next.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="col">
+    <p><b>Sources and standards.</b> Market data from Elexon BMRS, DESNZ, NESO, PJM, IEA and Modo Energy, cited with retrieval dates in the programme files. Claims are tagged FACT, CALC, ASSUMPTION, ESTIMATE or OPINION throughout. Salary figures are treated sceptically and their limitations stated — public aggregator data for investment and trading roles conflates job titles severely.</p>
+    <p>Nothing here is investment advice or a promise of any outcome. Compensation and probability figures are estimates offered for planning, and should be challenged.</p>
+    <p style="font-family:var(--mono);font-size:12px">Full programme · curriculum/ · Module A1 · Project 1 (working, live data)</p>
+  </div>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- competency heat map ---------------- */
+  var CATS=[
+    [1,"General engineering",4,4,"Strong and directly transferable. No action needed."],
+    [2,"Thermodynamics",3,3,"Sufficient. Commercially rewarded only via heat rate and efficiency."],
+    [3,"Electrical power systems",2,3,"Need commercial not specialist depth: why fault level headroom kills a battery project."],
+    [4,"Renewable technologies",4,4,"Your core strength. Reframe it commercially rather than deepening it."],
+    [5,"Conventional generation",1,3,"Larger gap than you expect. Thermal assets are where most energy P&L is made."],
+    [6,"Oil and gas",1,2,"Awareness only. Lowest-return large investment available to you."],
+    [7,"LNG",0,2,"Awareness, rising to working knowledge only if commodities appeal."],
+    [8,"Nuclear",1,2,"Awareness. Its risks are political and construction, not physics."],
+    [9,"Energy markets",2,4,"Deep required. Every revenue assumption traces back here. Module B, 60 hrs."],
+    [10,"Commodity markets",1,3,"Working knowledge for general commercial fluency."],
+    [11,"Trading and hedging",0,3,"Nothing transfers. Only worth deep study if you choose the trading route."],
+    [12,"Accounting",1,3,"Read accounts, do not prepare them. No ACA or ACCA."],
+    [13,"Corporate finance",2,3,"Partly there. Valuation and capital structure are the gaps."],
+    [14,"Project finance",1,4,"Highest priority in the programme. Debt sizing and sculpting. Module R, 80 hrs."],
+    [15,"Financial modelling",2,4,"Institutional discipline, not difficulty. Build Project 2 twice."],
+    [16,"Investment analysis",2,4,"Closed by doing — Projects 2 and 9, not by reading."],
+    [17,"M&A and transactions",1,3,"Your TDD background is the entry route. Module S."],
+    [18,"Commercial contracts",1,3,"PPAs, tolls, EPC, SPAs. Learn risk transfer, not drafting."],
+    [19,"Regulation and policy",3,4,"Already strong. Deepen on REMA, connections reform and CfD mechanics."],
+    [20,"Data analysis",3,4,"Strong. Direct advantage over conventional finance candidates."],
+    [21,"Python",3,4,"Strong. Extend into optimisation and dispatch modelling."],
+    [22,"Excel",3,5,"Fast, high-leverage gap. Institutional model structure differs from engineering sheets."],
+    [23,"Leadership and communication",3,4,"Client-facing consultancy transfers well. IC-paper writing is the gap."],
+    [24,"Entrepreneurship",1,2,"Awareness now; revisit once you have a track record."],
+    [25,"Capital allocation",1,4,"This is the actual senior job. Closed by deciding, not analysing."]
+  ];
+  // Sequential ramp, one hue, light to dark. Ink paired per step so every cell
+  // clears 4.5:1 in both modes — checked, not assumed.
+  var FILL=[
+    ["var(--surface-2)","var(--ink)","var(--muted)"],
+    ["#bcd9e4","#10222b","#3d5560"],
+    ["#68a8c1","#0b1e26","#26424e"],
+    ["#00719a","#ffffff","rgba(255,255,255,.74)"]
+  ];
+  var DARKFILL=[
+    ["var(--surface-2)","var(--ink)","var(--muted)"],
+    ["#1d4a5c","#dfeaf0","rgba(223,234,240,.7)"],
+    ["#116a8c","#eaf4f8","rgba(234,244,248,.72)"],
+    ["#2f9ec4","#06171f","rgba(6,23,31,.68)"]
+  ];
+  function isDark(){
+    var t=document.documentElement.getAttribute("data-theme");
+    if(t==="dark")return true; if(t==="light")return false;
+    return window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  var heat=document.getElementById("heat");
+  function drawHeat(){
+    var ramp=isDark()?DARKFILL:FILL, out="";
+    CATS.forEach(function(c){
+      var step=ramp[Math.min(3,c[3]-c[2])];
+      out+='<div class="cell" tabindex="0" style="background:'+step[0]+'">'+
+        '<div class="cn" style="color:'+step[2]+'">'+c[0]+'</div>'+
+        '<div class="ct" style="color:'+step[1]+'">'+c[1]+'</div>'+
+        '<div class="cs" style="color:'+step[1]+'">'+c[2]+' &rarr; '+c[3]+'</div>'+
+        '<div class="tip"><b>'+c[1]+'</b><br>Now '+c[2]+' of 5 &middot; target '+c[3]+' &middot; gap '+(c[3]-c[2])+'<br><br>'+c[4]+'</div>'+
+      '</div>';
+    });
+    heat.innerHTML=out;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-sw]"),function(i){
+      i.style.background=ramp[+i.getAttribute("data-sw")][0];
+    });
+  }
+  drawHeat();
+
+  /* ---------------- career scatter ---------------- */
+  // name, entry probability %, ceiling £k, recommended, works-from-Scotland, label dy
+  var ROUTES=[
+    ["Infra PE (renewables)",20,450,1,0,-11],["LTA to infra debt",48,260,1,1,0],
+    ["Developer commercial",30,300,1,1,0],["Data-centre energy",35,350,1,0,14],
+    ["Project finance",30,350,0,0,-12],["Energy M&A advisory",35,275,0,0,0],
+    ["Utility commercial",40,210,0,1,0],["BESS optimisation",35,235,0,1,0],
+    ["Power trading",12,600,0,0,0],["Quant energy analysis",20,400,0,0,14,1],
+    ["Consultancy leadership",62,135,0,1,-12],["Energy IB",12,650,0,0,0],
+    ["LNG trading",6,1150,0,0,15],["Oil trading",5,1150,0,0,-9],
+    ["Search fund / acquisition",12,700,0,1,0]
+  ];
+  var sv=document.getElementById("scatter");
+  var W=1080,H=470,ML=76,MR=196,MT=26,MB=54;
+  var PW=W-ML-MR, PH=H-MT-MB;
+  function sx(p){return ML+(p/70)*PW}
+  function sy(v){var lo=Math.log(120),hi=Math.log(1250);return MT+PH-((Math.log(v)-lo)/(hi-lo))*PH}
+
+  function drawScatter(mode){
+    var s='';
+    [200,400,600,800,1000,1200].forEach(function(v){
+      s+='<line class="grid-line" x1="'+ML+'" y1="'+sy(v).toFixed(1)+'" x2="'+(ML+PW)+'" y2="'+sy(v).toFixed(1)+'"/>';
+      s+='<text class="axis-t" x="'+(ML-9)+'" y="'+(sy(v)+3.5).toFixed(1)+'" text-anchor="end">£'+v+'k</text>';
+    });
+    [0,10,20,30,40,50,60,70].forEach(function(p){
+      s+='<text class="axis-t" x="'+sx(p).toFixed(1)+'" y="'+(MT+PH+20)+'" text-anchor="middle">'+p+'%</text>';
+    });
+    s+='<line class="axis-line" x1="'+ML+'" y1="'+(MT+PH)+'" x2="'+(ML+PW)+'" y2="'+(MT+PH)+'"/>';
+    s+='<line class="axis-line" x1="'+ML+'" y1="'+MT+'" x2="'+ML+'" y2="'+(MT+PH)+'"/>';
+    s+='<text class="axis-title" x="'+(ML+PW/2)+'" y="'+(MT+PH+44)+'" text-anchor="middle">Probability of successful entry</text>';
+    s+='<text class="axis-title" transform="translate(20,'+(MT+PH/2)+') rotate(-90)" text-anchor="middle">Realistic earnings ceiling</text>';
+
+    ROUTES.forEach(function(r){
+      var on = mode==="all" || (mode==="rec"&&r[3]) || (mode==="scot"&&r[4]);
+      var x=sx(r[1]), y=sy(r[2]);
+      var col = r[3] ? "var(--c1)" : "var(--c3)";
+      var op = on ? 1 : .17;
+      s+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(r[3]?7.5:6)+'" fill="'+col+'" opacity="'+op+'" stroke="var(--surface)" stroke-width="2"><title>'+r[0]+' — ceiling £'+r[2]+'k, entry probability '+r[1]+'%</title></circle>';
+      var right = x < ML+PW-150 && !r[6];   // r[6] forces the label to the left
+      var ly = y+3.5+(r[5]||0);
+      s+='<text class="axis-t" x="'+((right?x+12:x-12)).toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="'+(right?'start':'end')+'" opacity="'+op+'" style="fill:var(--ink-2);font-size:11px">'+r[0]+'</text>';
+    });
+
+    s+='<text class="flow-t" x="'+(ML+PW-4)+'" y="'+(MT+16)+'" text-anchor="end">High ceiling, hard to enter</text>';
+    s+='<text class="flow-t" x="'+(ML+PW-4)+'" y="'+(MT+PH-8)+'" text-anchor="end">Accessible, lower ceiling</text>';
+    sv.innerHTML=s;
+  }
+  drawScatter("all");
+  Array.prototype.forEach.call(document.querySelectorAll("[data-hl]"),function(b){
+    b.addEventListener("click",function(){
+      Array.prototype.forEach.call(document.querySelectorAll("[data-hl]"),function(o){o.setAttribute("aria-pressed","false")});
+      b.setAttribute("aria-pressed","true");
+      drawScatter(b.getAttribute("data-hl"));
+    });
+  });
+
+  /* ---------------- GB price shape ---------------- */
+  var HOURLY=[126.1,123.1,120.0,123.0,131.9,136.6,127.6,119.2,106.2,98.3,89.0,87.8,
+              87.9,88.7,98.2,106.7,134.1,152.8,164.2,162.7,156.0,147.3,134.5,130.0];
+  var WINDOWS={classic:[7,19],evening:[16,22],none:null};
+  var sh=document.getElementById("shape");
+  var W2=1080,H2=400,L2=68,R2=26,T2=26,B2=56;
+  var PW2=W2-L2-R2, PH2=H2-T2-B2;
+  var YMIN=70,YMAX=180;
+  function px(h){return L2+(h/23)*PW2}
+  function py(v){return T2+PH2-((v-YMIN)/(YMAX-YMIN))*PH2}
+
+  function drawShape(mode){
+    var win=WINDOWS[mode], s='';
+    if(win){
+      var x1=px(win[0]-0.5), x2=px(win[1]-0.5);
+      s+='<rect x="'+x1.toFixed(1)+'" y="'+T2+'" width="'+(x2-x1).toFixed(1)+'" height="'+PH2+'" fill="var(--accent)" opacity=".09"/>';
+      s+='<text class="flow-t" x="'+((x1+x2)/2).toFixed(1)+'" y="'+(T2+15)+'" text-anchor="middle">peak window</text>';
+    }
+    [80,100,120,140,160,180].forEach(function(v){
+      s+='<line class="grid-line" x1="'+L2+'" y1="'+py(v).toFixed(1)+'" x2="'+(L2+PW2)+'" y2="'+py(v).toFixed(1)+'"/>';
+      s+='<text class="axis-t" x="'+(L2-9)+'" y="'+(py(v)+3.5).toFixed(1)+'" text-anchor="end">£'+v+'</text>';
+    });
+    var mean=HOURLY.reduce(function(a,b){return a+b},0)/24;
+    s+='<line x1="'+L2+'" y1="'+py(mean).toFixed(1)+'" x2="'+(L2+PW2)+'" y2="'+py(mean).toFixed(1)+'" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 4"/>';
+    s+='<text class="flow-t" x="'+(L2+PW2-4)+'" y="'+(py(mean)-7).toFixed(1)+'" text-anchor="end">period mean £'+mean.toFixed(2)+'/MWh</text>';
+
+    [0,3,6,9,12,15,18,21,23].forEach(function(h){
+      s+='<text class="axis-t" x="'+px(h).toFixed(1)+'" y="'+(T2+PH2+20)+'" text-anchor="middle">'+(h<10?'0':'')+h+':00</text>';
+    });
+    s+='<line class="axis-line" x1="'+L2+'" y1="'+(T2+PH2)+'" x2="'+(L2+PW2)+'" y2="'+(T2+PH2)+'"/>';
+    s+='<line class="axis-line" x1="'+L2+'" y1="'+T2+'" x2="'+L2+'" y2="'+(T2+PH2)+'"/>';
+    s+='<text class="axis-title" x="'+(L2+PW2/2)+'" y="'+(T2+PH2+46)+'" text-anchor="middle">Hour of day (UTC)</text>';
+    s+='<text class="axis-title" transform="translate(18,'+(T2+PH2/2)+') rotate(-90)" text-anchor="middle">Mean price (£/MWh)</text>';
+
+    var d='';
+    HOURLY.forEach(function(v,h){d+=(h?' L':'M')+px(h).toFixed(1)+' '+py(v).toFixed(1)});
+    s+='<path d="'+d+'" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
+
+    HOURLY.forEach(function(v,h){
+      s+='<circle cx="'+px(h).toFixed(1)+'" cy="'+py(v).toFixed(1)+'" r="4" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.6"><title>'+(h<10?'0':'')+h+':00 — £'+v.toFixed(1)+'/MWh</title></circle>';
+    });
+
+    var lo=11, hi=18;
+    s+='<text class="flow-t" x="'+px(lo).toFixed(1)+'" y="'+(py(HOURLY[lo])+20).toFixed(1)+'" text-anchor="middle" style="fill:var(--ink-2)">solar trough £'+HOURLY[lo].toFixed(1)+'</text>';
+    s+='<text class="flow-t" x="'+px(hi).toFixed(1)+'" y="'+(py(HOURLY[hi])-13).toFixed(1)+'" text-anchor="middle" style="fill:var(--ink-2)">evening peak £'+HOURLY[hi].toFixed(1)+'</text>';
+    sh.innerHTML=s;
+
+    // stats
+    var st=document.getElementById("peakstats");
+    if(!win){
+      st.innerHTML='<div class="stat"><div class="k">Period mean</div><div class="v">£'+mean.toFixed(2)+'</div></div>'+
+        '<div class="stat"><div class="k">Daily range</div><div class="v">£'+(Math.max.apply(null,HOURLY)-Math.min.apply(null,HOURLY)).toFixed(1)+'</div></div>'+
+        '<div class="stat"><div class="k">Wind capture</div><div class="v">94.0%</div></div>'+
+        '<div class="stat"><div class="k">Solar capture</div><div class="v">81.9%</div></div>';
+      return;
+    }
+    var pk=[],op=[];
+    HOURLY.forEach(function(v,h){ (h>=win[0]&&h<win[1]) ? pk.push(v) : op.push(v) });
+    var pm=pk.reduce(function(a,b){return a+b},0)/pk.length;
+    var om=op.reduce(function(a,b){return a+b},0)/op.length;
+    var sp=pm-om;
+    var col = sp<0 ? "var(--crit)" : "var(--good)";
+    st.innerHTML='<div class="stat"><div class="k">Peak mean</div><div class="v">£'+pm.toFixed(2)+'</div></div>'+
+      '<div class="stat"><div class="k">Off-peak mean</div><div class="v">£'+om.toFixed(2)+'</div></div>'+
+      '<div class="stat"><div class="k">Spread</div><div class="v" style="color:'+col+'">'+(sp<0?'−£':'+£')+Math.abs(sp).toFixed(2)+'</div></div>'+
+      '<div class="stat"><div class="k">Peak hours</div><div class="v">'+pk.length+'</div></div>';
+  }
+  drawShape("classic");
+  Array.prototype.forEach.call(document.querySelectorAll("[data-peak]"),function(b){
+    b.addEventListener("click",function(){
+      Array.prototype.forEach.call(document.querySelectorAll("[data-peak]"),function(o){o.setAttribute("aria-pressed","false")});
+      b.setAttribute("aria-pressed","true");
+      drawShape(b.getAttribute("data-peak"));
+    });
+  });
+
+  // Re-step the heat-map ramp when the OS theme flips (tokens handle the rest).
+  if(window.matchMedia){
+    var mq=window.matchMedia("(prefers-color-scheme: dark)");
+    if(mq.addEventListener) mq.addEventListener("change",drawHeat);
+  }
+})();
+</script>
