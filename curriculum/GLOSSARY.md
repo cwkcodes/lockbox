@@ -5,6 +5,32 @@
 Organised by theme so you can learn a topic, then alphabetically within each theme so you can
 look one up. Terms in **bold** inside a definition are defined elsewhere in this glossary.
 
+> **You should not need this file to read a module.** Every taught module spells out each
+> abbreviation in full the first time it appears *in each section*, and explains financial
+> phrases where they are used. This glossary is a lookup table for reference and revision —
+> not a prerequisite. If you ever find yourself having to come here to follow a module, that
+> is a fault in the module: tell me and I will fix it.
+
+### The phrases people assume you know
+
+Financial writing is full of shorthand that sounds like ordinary English but is not. The most
+common offenders, up front:
+
+| Phrase | What it actually means |
+|---|---|
+| "the project **supports** £8m of debt" | £8 million is the largest loan a bank would advance against it |
+| "**sizing** the debt" | working out that maximum |
+| "it's **bankable**" | reliable enough that a bank will lend against it |
+| "apply a **haircut**" | deliberately reduce a number for safety before relying on it |
+| "**underwrite** the risk" | a lender formally accepting that risk |
+| "the **equity cheque**" | the cash the owner must put in themselves |
+| "**highly geared**" / "**levered**" | funded mostly by borrowing |
+| "**merchant** exposure" | income depends on market prices, with no contract protecting it |
+| "**contracted**" | someone has signed an agreement promising to pay |
+| "the **stack**" | all of a project's income sources added together |
+| "**cash is trapped**" | the company has money but is contractually barred from paying it to its owners |
+| "**CFADS**" | cash available to pay the loan with — not profit, and not EBITDA |
+
 **Jump to:** [1. Units](#1-units-and-measurement) · [2. Electricity market](#2-electricity-market-and-system-operation)
 · [3. Subsidy & certificates](#3-subsidy-schemes-and-certificates) · [4. Network charges](#4-network-charges-and-connections)
 · [5. Contracts & route to market](#5-contracts-and-route-to-market) · [6. Storage](#6-storage-and-flexibility)

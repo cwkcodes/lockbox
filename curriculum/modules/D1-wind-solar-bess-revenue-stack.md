@@ -1,1138 +1,1440 @@
-# Module D1 — Where the Money Comes From: Wind, Solar and BESS Revenue
+# Module D1 — Where the Money Comes From: Wind, Solar and Battery Storage
 
-> **Assumed knowledge: none.** Every acronym is spelled out in full the first time it
-> appears, then explained in plain English before it is used. Every financial term is
-> defined at the point of use. If a term appears that you do not recognise, it is also in
-> [`../GLOSSARY.md`](../GLOSSARY.md).
+> **How this module is written.**
+> Every abbreviation is written out in full the first time it appears **in each section** —
+> not just once at the top of the page. You should never have to scroll back or open another
+> file to remember what something stands for.
 >
-> **BESS** = **B**attery **E**nergy **S**torage **S**ystem. A grid-connected battery.
-> **PV** = **P**hoto**v**oltaic. Solar panels that convert light directly to electricity.
+> Every financial phrase is explained in plain English **where it is used**. Phrases like
+> "supports more debt", "sizing the debt" or "the equity cheque" are industry shorthand, not
+> ordinary English, and they are explained rather than assumed.
 >
-> **Estimated study time:** 14–18 hours.
-> **Prerequisite:** Module A1 (units, capacity factor, LCOE).
-> **Deliverable:** a revenue-stack model in Excel for one wind, one solar and one BESS asset.
+> **Estimated study time:** 16–20 hours.
+> **Prerequisite:** Module A1 (units, capacity factor, cost per unit of energy).
+> **Deliverable:** a revenue model in Excel for one wind, one solar and one battery asset.
 
 ---
 
-## 0. The single idea this module exists to teach
+# PART 0 — THE MONEY VOCABULARY
+
+**Read this part first.** It contains no energy content at all. It defines the financial
+words that the rest of the module uses constantly. If you skip it, later sections will use
+phrases that sound like plain English but are not.
+
+## 0.1 What a project looks like as a set of numbers
+
+A wind farm, a solar farm or a battery is, financially, a very simple thing:
+
+1. You spend a large amount of money **once**, at the start, to build it.
+2. It then produces a **stream of money** every year for 20–35 years.
+3. You want the stream to be worth more than the initial spend.
+
+That is the whole business. Everything else is detail about how certain the stream is, who
+supplied the initial money, and in what order they get paid back.
+
+## 0.2 Money words, in order of how confusing they are
+
+**Revenue** — the money that comes *in*. Also called turnover or income. If you sell
+100,000 megawatt-hours of electricity at £120 each, your revenue is £12,000,000.
+
+**Cost** — the money that goes *out*.
+
+**Profit** — revenue minus cost, as measured by accountants. **Profit is an opinion.** It
+includes non-cash items (see *depreciation* below) and can be positive in a year when your
+bank balance falls.
+
+**Cash flow** — the money that actually moved in or out of the bank account in a period.
+**Cash is a fact.** In this industry cash flow matters more than profit, because you repay a
+loan with cash, not with profit.
+
+**Depreciation** — an accounting entry that spreads the cost of building something across the
+years it is used, rather than charging it all in year one. It is a *bookkeeping* charge: no
+money moves. This is the main reason profit and cash flow differ.
+
+**CAPEX** — short for **cap**ital **ex**penditure. The money spent building or buying the
+asset. A one-off, upfront cost. Quoted per unit of size: "£1.3 million per megawatt".
+
+**OPEX** — short for **op**erating **ex**penditure. The money spent every year keeping the
+asset running — maintenance, land rent, insurance, business rates. Quoted as "£45,000 per
+megawatt per year".
+
+## 0.3 The two kinds of money that build a project
+
+This distinction underpins everything in Parts 3 and 4. There are exactly two ways to fund
+building something.
+
+### Debt — borrowed money
+
+A bank (or a fund that lends money) gives you cash now, and you contract to pay it back on a
+fixed schedule, plus interest.
+
+- The schedule is **fixed**. You owe the same amount whether the wind blew or not.
+- The lender is paid **before** the owners get anything.
+- Because it is paid first and its return is capped at the agreed interest rate, lending is
+  relatively low risk — so lenders accept a relatively low return. **Debt is cheap money.**
+- If you cannot pay, the lender can take the project away from you. That is **default**.
+
+### Equity — the owners' own money
+
+The investor puts in cash and, in exchange, owns the project.
+
+- There is no schedule. Equity gets whatever cash is left after everyone else is paid.
+- If the project does badly, equity gets nothing and may lose everything.
+- Because it is paid last and can lose everything, equity demands a much higher return.
+  **Equity is expensive money.**
+
+### Putting it together
+
+A £100 million project might be funded with £70 million of debt and £30 million of equity.
+That mix is what people mean by:
+
+**Gearing** (or **leverage**) — the proportion of the total funded by borrowing. £70m debt out
+of £100m total is "70% geared". Both words mean the same thing; British practitioners tend to
+say gearing, Americans leverage.
+
+**The equity cheque** — industry shorthand for *the amount of their own money the investor
+has to put in*. In the example above, the equity cheque is £30 million. When someone says "it
+shrinks the equity cheque", they mean the investor has to find less of their own cash.
+
+## 0.4 What "supports debt" actually means
+
+This is the phrase I used carelessly, so here it is properly.
+
+When someone says a project **"supports £63 million of debt"**, they mean:
+
+> Given how much cash this project is expected to generate each year, and given how cautious
+> the lender is, **£63 million is the largest loan a bank would be willing to advance against
+> it.**
+
+The lender is not looking at how big the project is, or how much it cost. The lender is
+looking at one thing: **is there enough cash coming in each year to comfortably cover the
+repayments?** If the answer is yes for a £63 million loan but no for a £70 million loan, then
+the project "supports £63 million".
+
+Related phrases, all meaning roughly the same thing:
+
+| Phrase | Plain English |
+|---|---|
+| "supports £63m of debt" | a bank would lend up to £63m against it |
+| "debt capacity" | the maximum a bank would lend |
+| "sizing the debt" | working out that maximum |
+| "**bankable**" | reliable enough that a bank will lend against it |
+| "**underwrite**" | a lender formally accepting the risk of lending |
+| "raising debt" | going out and arranging the loan |
+| "**haircut**" | deliberately reducing a number for safety before relying on it |
+
+### Why supporting more debt is a good thing
+
+Not obvious, and central to the whole module.
+
+Debt is cheap money and equity is expensive money. If a project can be funded with more of
+the cheap money and less of the expensive money, the owner needs to put in less of their own
+cash — for **the same physical asset earning the same income**.
+
+**[CALC] Worked example, deliberately simple**
+
+A project costs £100 million and pays £12 million a year to whoever owns it, after all
+running costs and loan repayments have been handled.
+
+*Case A — 50% debt.* Investor puts in £50 million of their own money.
+Suppose after debt repayments £6 million a year is left for the owner.
+Return on their money = 6 ÷ 50 = **12% a year**.
+
+*Case B — 70% debt.* Investor puts in only £30 million of their own money.
+More borrowing means more interest, so suppose only £4.5 million a year is left for the owner.
+Return on their money = 4.5 ÷ 30 = **15% a year**.
+
+**The owner receives less cash in Case B (£4.5m instead of £6m) but earns a higher return,
+because they tied up far less of their own money.** That is what leverage does, and it is why
+"supports more debt" is a compliment.
+
+**The catch, stated honestly:** leverage magnifies losses in exactly the same way. If income
+falls, the loan repayments do not. In Case B a bad year wipes out the owner's cash far faster
+than in Case A. **Leverage is not free money; it is a trade of safety for return.**
+
+## 0.5 What "return" means
+
+**Return** is what an investor earns, expressed as a percentage of the money they put in, per
+year. A 10% return means £10 a year on every £100 invested.
+
+**IRR** — short for **I**nternal **R**ate of **R**eturn. The single percentage that summarises
+a whole stream of cash flows over many years. Formally it is the discount rate at which the
+investment breaks even; informally, **it is the annual percentage return the investment earns,
+accounting for the timing of every payment**.
+
+Two versions, and confusing them is a common and serious error:
+
+- **Project IRR** (also called *unlevered* IRR — "unlevered" means "before borrowing"). The
+  return on the project's cash flows before any loan. **Measures the quality of the asset.**
+- **Equity IRR** (also called *levered* IRR — "levered" means "after borrowing"). The return on
+  the owner's own money after the loan has been repaid. **Measures the asset plus the
+  financing.**
+
+In §0.4, 12% and 15% were both equity IRRs. The project IRR was the same in both cases,
+because the wind farm did not change.
+
+**Discounting and present value.** £100 next year is worth less than £100 today, because you
+could invest today's £100. **Discounting** converts future money into today's money.
+**Present value** is the result.
+
+**NPV** — **N**et **P**resent **V**alue. Add up all future cash flows in today's money and
+subtract what you spend. Positive means the investment creates value.
+
+**Discount rate** — the percentage used to shrink future money. A high discount rate means you
+are treating future money as much less valuable, which is what you do when it is risky or when
+interest rates are high.
+
+## 0.6 Contracted versus merchant — the most important distinction in this module
+
+**Contracted** revenue means **someone has signed a contract promising to pay you a known
+amount.** You know roughly what you will receive.
+
+**Merchant** revenue means **you sell at whatever the market happens to pay**, with nobody
+promising anything. It might be more than expected. It might be a lot less.
+
+**Why this matters more than the amount.** A lender does not much care how *large* your
+expected income is. A lender cares how *reliable* it is, because the loan repayments are
+fixed. Contracted income can be lent against; merchant income largely cannot.
+
+**This one idea explains almost every commercial structure in the rest of this module.**
+
+## 0.7 A few more words used constantly
+
+| Word | Plain English |
+|---|---|
+| **Counterparty** | The other party to a contract. Your counterparty in a power sale is whoever is buying |
+| **Offtaker** | The party who buys — literally, who "takes off" — your electricity |
+| **Sponsor** | The company developing and owning the project; the one standing behind it |
+| **Exposure** | Being unprotected against something. "Price exposure" means your income moves when the price moves |
+| **Hedge** | Any arrangement that removes exposure, usually by fixing a price in advance |
+| **Upside / downside** | Things turning out better / worse than expected |
+| **Downside case** | A deliberately pessimistic version of the forecast, used to test whether the project survives |
+| **Covenant** | A promise written into a loan agreement. Break it and the lender gains rights over you |
+| **Tenor** | How long a loan lasts |
+| **Amortising** | A loan repaid gradually over its life, rather than in one lump at the end |
+| **Refinancing** | Replacing an existing loan with a new, usually cheaper one |
+| **Due diligence** | Investigating something thoroughly before buying it |
+
+---
+
+# PART 1 — THE REVENUE LINES
+
+## 1.0 The one idea this part exists to teach
 
 **A renewable asset almost never earns "the power price".**
 
-It earns a **stack** — several separate revenue lines, from separate counterparties, under
-separate contracts, with separate risk profiles. Some are fixed for 20 years; some change
-every half hour. When an engineer builds a revenue model by multiplying annual megawatt-hours
-by an assumed price per megawatt-hour, they have not built a revenue model. They have built
-one line of it, usually the most volatile line, and usually with the wrong price.
+It earns a **stack** — several separate revenue lines, from different payers, under different
+contracts, with different levels of certainty. Some are fixed for twenty years; some change
+every half hour.
 
-Here is the whole picture before we take it apart.
+"The stack" is just industry shorthand for *the full list of a project's income sources added
+together*. When someone says "the revenue stack", they mean the whole picture rather than
+one line of it.
 
 ```mermaid
 flowchart LR
   subgraph GEN["WIND / SOLAR"]
-    W1["1 · Wholesale power<br/>sold at market price"]
-    W2["2 · Subsidy<br/>ROC or CfD"]
-    W3["3 · REGO certificates<br/>green attribute"]
-    W4["4 · Capacity Market<br/>small, low derating"]
+    W1["1 · Wholesale power<br/>sold at market prices"]
+    W2["2 · Subsidy<br/>certificates or a<br/>government contract"]
+    W3["3 · Green certificates<br/>(REGOs)"]
+    W4["4 · Capacity Market<br/>small for these assets"]
   end
-  subgraph BAT["BESS"]
-    B1["1 · Wholesale arbitrage<br/>buy low, sell high"]
-    B2["2 · Balancing Mechanism<br/>paid to move"]
-    B3["3 · Ancillary services<br/>frequency response"]
-    B4["4 · Capacity Market<br/>derated by duration"]
+  subgraph BAT["BATTERY STORAGE"]
+    B1["1 · Buy low, sell high<br/>(arbitrage)"]
+    B2["2 · Balancing Mechanism<br/>paid to adjust output"]
+    B3["3 · Ancillary services<br/>grid stability products"]
+    B4["4 · Capacity Market<br/>paid to be available"]
   end
-  subgraph OUT["NET REVENUE"]
-    N["Gross revenue<br/>− network charges<br/>− imbalance cost<br/>− route-to-market fee"]
+  subgraph OUT["WHAT YOU ACTUALLY KEEP"]
+    N["Total income<br/>− network charges<br/>− cost of forecast errors<br/>− fee to whoever sells it for you"]
   end
   W1-->N; W2-->N; W3-->N; W4-->N
   B1-->N; B2-->N; B3-->N; B4-->N
 ```
 
-**Note the asymmetry immediately.** Wind and solar have one large contracted line (the
-subsidy) and one volatile line (wholesale). BESS has **no contracted line at all** unless
-someone gives it one. That single structural difference explains almost everything about how
-the two asset classes are financed, valued and bought — and it is the thread running through
-this entire module.
+**Notice the asymmetry.** Wind and solar have one large **contracted** line (the subsidy — a
+contract someone signed) and one volatile **merchant** line (selling at market prices). A
+battery has **no contracted line at all**, unless someone deliberately gives it one.
+
+That single structural difference explains nearly everything about how the two are financed
+and valued, and it is the thread running through this whole module.
 
 ---
 
-# PART 1 — THE REVENUE LINES, ONE BY ONE
+## 1.1 Selling the electricity itself
 
-## 1.1 Wholesale power — the base of every stack
+*Abbreviations used in this section, written out: MWh (megawatt-hour), PPA (Power Purchase
+Agreement), CPPA (Corporate Power Purchase Agreement), MID (Market Index Data), N2EX (the
+Nord Pool GB day-ahead exchange), EPEX (European Power Exchange).*
 
-### What it is
+### How electricity actually gets sold
 
 The **wholesale market** is where electricity is bought and sold in bulk, before it reaches
-a consumer's bill. In Great Britain the main reference is the **day-ahead auction**: every
-day at around 11:00, buyers and sellers submit bids for each half-hour of the following day,
-and a single clearing price is set for each half-hour.
+anyone's bill. The main reference point in Great Britain is the **day-ahead auction**: each
+day at around 11:00, buyers and sellers bid for each half-hour of tomorrow, and a single
+clearing price is set for each half-hour.
 
-**Settlement period.** GB electricity is settled in **half-hourly blocks** — 48 per day,
-17,520 per year. Every price, every volume, every payment is calculated per settlement
-period. When you see "the power price was £123/MWh", that is an average of thousands of
-individual half-hourly prices.
+**Settlement period.** Great Britain settles electricity in **half-hour blocks** — 48 a day,
+17,520 a year. Every price and every payment is calculated per half-hour. When you read "the
+price was £123 per megawatt-hour", that is an average of thousands of individual half-hourly
+prices.
 
-**£/MWh** = pounds per megawatt-hour. One megawatt-hour is one megawatt of power sustained
-for one hour. It is the unit almost all electricity trading uses.
+**Price benchmarks you will see quoted:**
 
-### The two benchmark indices
-
-| Index | Full name | What it is |
+| Name | Written out | What it is |
 |---|---|---|
-| **N2EX** | Nord Pool's GB day-ahead auction | The most-referenced GB day-ahead price; most PPAs settle against it |
-| **EPEX SPOT** | European Power Exchange, spot market | The other GB day-ahead auction and the main intraday platform |
-| **MID** | **M**arket **I**ndex **D**ata | The Elexon-published price used in imbalance settlement. Provider code `APXMIDP` is the N2EX-derived index |
+| **N2EX** | Nord Pool's GB day-ahead exchange | The most-referenced GB day-ahead price. Most sale contracts settle against it |
+| **EPEX SPOT** | European Power Exchange, spot market | The other GB day-ahead auction, and the main platform for trading within the day |
+| **MID** | Market Index Data | The published price used when calculating penalties for forecast errors. The code `APXMIDP` is the N2EX-derived version |
 
-### The critical concept: capture price
+### Capture price — the concept most often got wrong
 
-**This is the most important idea in renewable revenue modelling, and the one most often
-got wrong.**
+**A wind farm does not earn the average market price.** It earns the average price **weighted
+by how much it produced in each half-hour**. That figure is its **capture price**.
 
-A wind farm does not earn the average market price. It earns the **volume-weighted average
-price across the half-hours in which it actually generated**. That number is its
-**capture price**.
+**Capture price = (price in each half-hour × megawatt-hours produced in that half-hour), all
+added up, then divided by total megawatt-hours produced**
 
-**Capture price = Σ(price in each half-hour × MWh generated in that half-hour) ÷ Σ(MWh generated)**
-
-**Capture rate** = capture price ÷ the simple average (baseload) price, expressed as a
-percentage. Below 100% means the asset earns less than the market average.
+**Capture rate** = capture price ÷ the plain average market price, as a percentage. Below 100%
+means the asset earns less than the market average.
 
 **Why it is below 100% for wind and solar.** Wind farms generate when it is windy — and so
-does every other wind farm. High output means high supply, which pushes the price down.
-Solar is worse: every solar farm in the country generates at the same time on the same
-sunny afternoon. This self-inflicted price depression is called **cannibalisation**, and it
-deepens as more of the same technology connects to the grid.
+does every other wind farm in the country. Lots of supply arriving at once pushes the price
+down. Solar is worse, because every solar farm produces on the same sunny afternoon. This
+self-inflicted price depression is called **cannibalisation**: the technology eats its own
+price. It gets worse as more of the same technology connects.
 
-### Measured evidence — not theory
+### Measured evidence, not theory
 
-From Project 1 in this repository, using real Elexon settlement data for the 1,441 half-hour
+From the working code in this repository, using real settlement data for the 1,441 half-hour
 periods between 26 July and 25 August 2026:
 
-| Technology | Capture price | Capture rate | Reading |
+| Technology | Capture price | Capture rate | What it tells you |
 |---|---:|---:|---|
-| Baseload (simple average) | £123.00/MWh | 100.0% | The reference |
+| Plain market average ("baseload") | £123.00/MWh | 100.0% | The reference point |
 | **Wind** | £115.57/MWh | **94.0%** | Modest cannibalisation |
 | **Solar** | £100.69/MWh | **81.9%** | Heavy cannibalisation |
-| Nuclear | £126.94/MWh | 103.2% | Runs flat, so slightly above |
-| Gas | £142.11/MWh | 115.5% | **Dispatchable — runs when prices are high** |
+| Nuclear | £126.94/MWh | 103.2% | Runs flat, so slightly above average |
+| Gas | £142.11/MWh | 115.5% | **Can choose when to run, so runs when prices are high** |
 
-**[FACT]** Source: Elexon BMRS dataset MID (APXMIDP) and generation-by-fuel-type, retrieved
+**[FACT]** Source: Elexon Balancing Mechanism Reporting Service, dataset MID, retrieved
 25 August 2026. Reproduce with `curriculum/projects/p1_gb_power_dashboard/`.
 
-**How to read this table, because it contains three separate lessons:**
+**Three separate lessons in that table:**
 
-1. **Solar earns 18.1% less than the market average.** If you model a solar farm's revenue
-   at baseload price, you overstate it by roughly 18% before considering anything else.
-   On a £50m asset that error alone is worth millions.
-2. **Gas earns 15.5% more than the market average**, for exactly the mirror-image reason:
-   it can choose when to run, so it runs when prices are high. **Dispatchability is worth
-   money, and the capture rate is where you can see it.**
-3. **These are summer figures.** Solar's capture rate is worst in summer (long days, high
-   output, low demand) and better in winter. Wind is the reverse. **Never take a
-   capture rate from one month and apply it to a year.**
+1. **Solar earns 18.1% less than the market average.** Model a solar farm at the average price
+   and you overstate its income by roughly 18% before considering anything else. On a
+   £50 million asset that single error is worth millions.
+2. **Gas earns 15.5% more than average**, for the mirror-image reason — it can choose its
+   hours. **Being able to choose when you run is worth money, and the capture rate is where
+   you can see it.**
+3. **These are summer figures.** Solar's capture rate is worst in summer and better in winter;
+   wind is the reverse. **Never take one month's capture rate and apply it to a year.**
 
-### Route to market — how a generator actually gets paid
+### How a generator actually gets paid: "route to market"
 
 A wind farm cannot simply "sell into the market". It is not a licensed electricity supplier
-and cannot participate directly in settlement. It needs a **route to market** — a
-counterparty who takes its power and handles the market interface.
+and cannot take part in the settlement process directly. It needs a **route to market** —
+industry shorthand for *the commercial arrangement by which someone else sells your power for
+you and handles the paperwork*.
 
-**PPA** = **P**ower **P**urchase **A**greement. The contract under which a generator sells
-its output. The main types:
+**PPA — Power Purchase Agreement.** The contract under which a generator sells its output.
+The main types:
 
-| PPA type | How the price is set | Who takes the price risk |
-|---|---|---|
-| **Fixed-price PPA** | An agreed £/MWh for an agreed term | The offtaker (buyer) |
-| **Floating / market-reflective PPA** | Market price minus a discount or fee | The generator |
-| **CPPA** (**C**orporate **PPA**) | Negotiated directly with a corporate energy user | Depends on structure |
-| **Sleeved PPA** | A corporate buys from the generator, but a licensed supplier "sleeves" it — handling settlement for a fee | Shared |
-| **Synthetic / virtual PPA** | Purely financial: no physical power moves; the parties settle the difference against a reference price | Shared |
-| **Baseload PPA** | The seller must deliver a flat, constant volume | **The generator** — it must buy power to fill gaps |
+| Type | Written out | How the price works | Who carries the price risk |
+|---|---|---|---|
+| **Fixed-price PPA** | Power Purchase Agreement | An agreed price per megawatt-hour for an agreed number of years | The buyer |
+| **Floating PPA** | — | Market price minus a fee | The generator |
+| **CPPA** | Corporate Power Purchase Agreement | Negotiated directly with a large company that uses electricity | Depends on structure |
+| **Sleeved PPA** | — | A company buys from the generator while a licensed supplier handles settlement for a fee ("sleeving" it through) | Shared |
+| **Synthetic PPA** | Also called a *virtual* PPA | Purely financial — no electricity physically moves; the two parties just settle the difference against a reference price | Shared |
+| **Baseload PPA** | — | The seller must deliver a **flat, constant** volume every hour | **The generator** |
 
-**The trap in a baseload PPA.** A wind farm does not produce a flat output. If it signs a
-baseload PPA it must buy power on the market whenever it is not generating enough — at
-whatever price prevails, which is typically *high* precisely when the wind is not blowing.
-That is **shape risk**, and it has bankrupted renewable traders.
+**The trap inside a baseload PPA.** A wind farm does not produce a flat output. If it has
+promised a flat volume, it must **buy** electricity on the market whenever it is not
+generating enough — typically at high prices, because prices are high exactly when the wind is
+not blowing. That mismatch is called **shape risk**, and it has bankrupted renewable traders.
 
-### The three risks hiding inside "route to market"
+### The four risks hiding inside "route to market"
 
-| Risk | Definition | Example |
-|---|---|---|
-| **Shape risk** | Your generation profile does not match the profile you have contracted to deliver | Wind farm on a baseload PPA |
-| **Volume risk** | You produce more or less than forecast | A calm year; a P90 outcome |
-| **Basis risk** | Your hedge settles against a different price than your physical exposure | Hedged on N2EX day-ahead, but settled at the imbalance price |
-| **Imbalance risk** | The cost of the difference between what you told the system you would produce and what you actually produced | Forecast 40 MW, delivered 25 MW → buy the shortfall at the imbalance price |
+| Risk | What it means in plain English |
+|---|---|
+| **Shape risk** | Your output pattern does not match the pattern you promised to deliver |
+| **Volume risk** | You produce more or less energy than forecast |
+| **Basis risk** | Your protective arrangement is priced against one thing but your actual income depends on another, so they do not cancel out |
+| **Imbalance risk** | The cost of being wrong about what you told the grid you would produce |
 
-**PPA discount.** Because the offtaker absorbs these risks, they charge for them. A
-market-reflective PPA typically pays the generator the capture price **minus a discount**
-covering imbalance, shape, credit and profit. **[OPINION]** The size of that discount is
-one of the most commercially important numbers in a renewable model, and it is almost
-never in the public domain — you learn it from deal experience, which is one concrete
-reason transaction exposure is worth more than study.
+**PPA discount.** Because the buyer absorbs those risks, they charge for them. A
+market-linked Power Purchase Agreement typically pays the generator the capture price **minus
+a discount**. **[OPINION]** The size of that discount is one of the most commercially
+important numbers in the sector and is almost never public — you learn it from doing deals,
+which is a concrete reason transaction experience is worth more than study.
 
 ---
 
 ## 1.2 Subsidy — the contracted line
 
-Great Britain has run three main support schemes. **Which one an asset is on depends
-entirely on when it was built**, and this is the first thing you check when looking at any
-GB renewable asset.
+*Abbreviations used in this section, written out: RO (Renewables Obligation), ROC (Renewables
+Obligation Certificate), FiT (Feed-in Tariff), CfD (Contract for Difference), LCCC (Low
+Carbon Contracts Company), AR (Allocation Round), ASP (Administrative Strike Price), CIB
+(Clean Industry Bonus), RPI (Retail Prices Index), CPI (Consumer Prices Index), DESNZ
+(Department for Energy Security and Net Zero), MWh (megawatt-hour), GW (gigawatt).*
+
+Great Britain has run three main support schemes. **Which one an asset receives depends
+entirely on when it was built** — and that is the first thing to check about any British
+renewable asset.
 
 ```mermaid
 timeline
-  title GB renewable support schemes — which asset gets what
-  2002-2017 : Renewables Obligation (RO) : closed to new capacity 31 March 2017
-  2010-2019 : Feed-in Tariff (FiT) : small scale, up to 5 MW : closed 2019
-  2014-now  : Contracts for Difference (CfD) : competitive auctions : AR7 results Jan-Feb 2026
+  title Which support scheme an asset gets, by when it was built
+  2002-2017 : Renewables Obligation (RO) : closed to new projects 31 March 2017
+  2010-2019 : Feed-in Tariff (FiT) : small projects only, up to 5 megawatts : closed 2019
+  2014-now  : Contracts for Difference (CfD) : competitive auctions : Allocation Round 7 results Jan-Feb 2026
 ```
 
-### 1.2.1 The Renewables Obligation (RO) and ROCs
+### 1.2.1 The Renewables Obligation and its certificates
 
-**RO** = **R**enewables **O**bligation. **ROC** = **R**enewables **O**bligation
-**C**ertificate.
+**RO — Renewables Obligation.** **ROC — Renewables Obligation Certificate.**
 
-**What it is, mechanically.** Electricity suppliers (the companies that sell power to homes
-and businesses) are legally obliged to source a set proportion of their electricity from
-renewable sources. They prove compliance by presenting ROCs to the regulator, Ofgem.
-Renewable generators are issued ROCs for the electricity they generate, and sell them to
-suppliers. The generator therefore has **two** revenue lines: the power itself, and the
-certificates.
+**How it works.** Electricity suppliers — the companies that sell power to homes and
+businesses — are legally required to source a set proportion of their electricity from
+renewable sources. They prove they have done so by handing certificates to the regulator.
+Renewable generators are *issued* those certificates for the electricity they generate, and
+sell them to suppliers who need them. So the generator has **two** income lines: the
+electricity, and the certificates.
 
-**Banding.** Not all technologies receive one ROC per MWh. The number is "banded" by
-technology and by the year the project was accredited. As examples: onshore wind commonly
-receives **0.9 ROCs/MWh** and offshore wind **1.8 ROCs/MWh**
-([FACT] — banding varies by accreditation vintage, so **always check the specific
-accreditation certificate for the asset you are looking at**, never assume).
+**Banding.** Not every technology receives one certificate per megawatt-hour. The number is
+"banded" by technology and by the year the project was registered. Examples: onshore wind
+commonly receives **0.9 certificates per megawatt-hour**, offshore wind **1.8**. **[FACT] —
+banding varies by registration year, so always check the specific asset's registration
+paperwork rather than assuming.**
 
-**How a ROC is priced — this is the bit that confuses people.** A ROC is not worth a fixed
-amount. Its value has two components:
+**How a certificate is priced.** A Renewables Obligation Certificate is not worth a fixed
+amount. Its value has two parts:
 
-1. **The buy-out price.** A supplier that does not present enough ROCs must instead pay a
-   per-certificate penalty into a fund. This sets a ceiling on what a ROC is worth: no
-   supplier will pay more for a ROC than the cost of simply buying out.
-   **For the obligation year 1 April 2026 to 31 March 2027 the buy-out price is £69.34 per
-   ROC**, up from £67.06 in 2025/26
-   ([FACT] — [Ofgem](https://www.ofgem.gov.uk/data/renewables-obligation-buy-out-price-and-mutualisation-threshold-and-ceilings-2026-2027)).
-2. **The recycle value.** The money paid into the buy-out fund is redistributed back to the
-   suppliers who *did* present ROCs, in proportion to how many they presented. This makes a
-   ROC worth **more** than the buy-out price. The combined figure is the ROC's "notional
-   worth". In 2022/23 Ofgem reported a notional worth of **£59.76 per ROC = £52.88 buy-out
-   + £6.88 recycle** ([FACT]).
+1. **The buy-out price.** A supplier that does not hand over enough certificates must instead
+   pay a penalty per missing certificate into a central fund. That caps what a certificate is
+   worth — no supplier pays more for a certificate than the cost of simply paying the penalty.
+   **For the year 1 April 2026 to 31 March 2027 the buy-out price is £69.34 per
+   certificate**, up from £67.06 the year before ([FACT] —
+   [Ofgem](https://www.ofgem.gov.uk/data/renewables-obligation-buy-out-price-and-mutualisation-threshold-and-ceilings-2026-2027)).
+2. **The recycle value.** The penalty money in that central fund is then **redistributed back**
+   to the suppliers who *did* hand over certificates, in proportion to how many they handed
+   over. That makes a certificate worth **more** than the buy-out price. In 2022/23 the total
+   was **£59.76 per certificate = £52.88 buy-out + £6.88 recycle** ([FACT]).
 
-**A change you must know about.** From **1 April 2026** the annual uprating of the buy-out
-price switched from **RPI** (**R**etail **P**rices **I**ndex) to **CPI** (**C**onsumer
-**P**rices **I**ndex). CPI is typically lower than RPI, so **this permanently reduces the
-long-run value of every ROC-accredited asset in Great Britain.** The 2026/27 figure of
-£69.34 reflects CPI of 3.4% for calendar 2025
-([FACT] — [DESNZ government response](https://www.gov.uk/government/consultations/renewables-obligation-ro-scheme-indexation-changes/outcome/renewables-obligation-ro-scheme-indexation-changes-government-response-html)).
+**A change with real financial consequences.** From **1 April 2026** the annual increase in
+the buy-out price switched from being linked to **RPI (Retail Prices Index)** to **CPI
+(Consumer Prices Index)**. CPI is normally the lower of the two inflation measures, so
+**this permanently reduces the future value of every Renewables Obligation-backed asset in
+Great Britain.** The 2026/27 figure of £69.34 reflects CPI inflation of 3.4% for calendar
+2025 ([FACT] — [DESNZ, Department for Energy Security and Net Zero](https://www.gov.uk/government/consultations/renewables-obligation-ro-scheme-indexation-changes/outcome/renewables-obligation-ro-scheme-indexation-changes-government-response-html)).
 
-**[CALC] Worked example — what ROCs are actually worth to an onshore wind farm**
+**[CALC] What the certificates are actually worth to a wind farm**
 
-A 40 MW onshore wind farm, 32% capacity factor, accredited at 0.9 ROCs/MWh:
+A 40 megawatt onshore wind farm, running at a 32% capacity factor, registered at 0.9
+certificates per megawatt-hour:
 
-- Annual generation = 40 MW × 8,760 h × 0.32 = **112,128 MWh**
-- ROCs issued = 112,128 × 0.9 = **100,915 ROCs**
-- At £69.34 buy-out plus, say, an assumed 10% recycle **[ASSUMPTION]** = £76.27/ROC
-- **ROC revenue = 100,915 × £76.27 = £7,696,777/year**
+- Annual generation = 40 × 8,760 hours × 0.32 = **112,128 megawatt-hours**
+- Certificates issued = 112,128 × 0.9 = **100,915 certificates**
+- At £69.34 buy-out plus an assumed 10% recycle **[ASSUMPTION]** = £76.27 each
+- **Certificate income = 100,915 × £76.27 = £7,696,777 a year**
 
-Now compare with the power revenue at the measured wind capture price:
+Against the electricity income at the measured wind capture price:
 
-- Power revenue = 112,128 MWh × £115.57 = **£12,958,032/year**
-- **ROC revenue is 37% of total revenue** (7.70m ÷ 20.65m)
+- Electricity income = 112,128 × £115.57 = **£12,958,032 a year**
+- **The certificates are 37% of total income**
 
-**Why this matters commercially:** more than a third of this asset's revenue comes from a
-scheme that is closed to new entrants and whose indexation has just been reduced. When the
-RO ends for this asset, that revenue disappears entirely and the asset falls back to pure
-merchant exposure. **The date the RO support ends is one of the first things to check in any
-acquisition** — it is a cliff edge, not a gentle decline.
+**Why that matters:** more than a third of this asset's income comes from a scheme that is
+closed to new entrants and whose inflation link has just been reduced. When the Renewables
+Obligation support ends for this asset, **that income stops completely** — it does not taper.
+**The end date is one of the first things to check in any purchase**, because it is a cliff
+edge in the cash flows.
 
-**Scheme status.** The RO **closed to all new generating capacity on 31 March 2017** (with
-earlier closure for solar PV and onshore wind in many circumstances, and grace periods
-extending it in others) ([FACT] — [Ofgem](https://www.ofgem.gov.uk/environmental-programmes/ro/about-ro/ro-closure)).
-Existing accredited assets continue to receive ROCs for 20 years from accreditation, so
-ROC-backed assets will be traded well into the 2030s. **You will encounter them constantly
-in due diligence work.**
+**Scheme status.** The Renewables Obligation **closed to all new capacity on 31 March 2017**,
+with earlier closure for solar and onshore wind in many cases and extensions ("grace periods")
+in others ([FACT] — [Ofgem](https://www.ofgem.gov.uk/environmental-programmes/ro/about-ro/ro-closure)).
+Existing registered assets keep receiving certificates for 20 years from registration, so
+these assets will be bought and sold well into the 2030s. **You will meet them constantly in
+due diligence work.**
 
-### 1.2.2 The Feed-in Tariff (FiT)
+### 1.2.2 The Feed-in Tariff
 
-**FiT** = **F**eed-**i**n **T**ariff. Ran **April 2010 to 2019**, for installations up to
-**5 MW** ([FACT]). It paid a **generation tariff** for every unit generated plus an
-**export tariff** for units exported to the grid. Closed to new applicants in 2019.
+**FiT — Feed-in Tariff.** Ran **April 2010 to 2019**, for installations up to **5 megawatts**
+([FACT]). Paid a **generation tariff** for every unit produced plus an **export tariff** for
+units sent to the grid. Closed to new applicants in 2019.
 
-**Relevance to you:** low, except that small hydro, small wind and rooftop solar portfolios
-being traded today are often FiT-accredited, and FiT tariffs are generous and
-index-linked. **Awareness level only** — but know the acronym and that it is closed.
+**Relevance to you: low**, except that small hydro and rooftop solar portfolios being traded
+today are often on it, and the tariffs are generous and inflation-linked. Awareness only.
 
-### 1.2.3 Contracts for Difference (CfD) — the current scheme
+### 1.2.3 Contracts for Difference — the current scheme
 
-**CfD** = **C**ontract for **D**ifference. This is how new large-scale renewables in Great
-Britain are supported today, and it is the scheme you must understand properly.
+**CfD — Contract for Difference.** This is how new large-scale renewables in Great Britain are
+supported today.
 
-**The counterparty.** **LCCC** = **L**ow **C**arbon **C**ontracts **C**ompany, a
-government-owned company that is the counterparty to every CfD. The generator's contract is
-with LCCC, not with the government directly.
+**Who pays.** **LCCC — Low Carbon Contracts Company**, a government-owned company that is the
+counterparty (the other party) to every Contract for Difference. The generator's contract is
+with that company, not with government directly.
 
-**How it works — the two-way mechanism.** The generator is awarded a **strike price** in
-£/MWh. A **reference price** is calculated from the market (day-ahead for intermittent
-technologies).
+**How it works.** The generator is awarded a **strike price** in pounds per megawatt-hour. A
+**reference price** is calculated from the actual market.
 
-- If **reference price < strike price**: LCCC pays the generator the difference.
-- If **reference price > strike price**: **the generator pays LCCC back the difference.**
+- If the **market price is below the strike price**, the Low Carbon Contracts Company **pays
+  the generator the difference**.
+- If the **market price is above the strike price**, **the generator pays the money back**.
 
-That second direction is what makes it a *contract for difference* rather than a subsidy.
-The generator effectively receives the strike price regardless of the market — it has sold
-its price risk.
+That second direction is what makes it a *contract for difference* rather than a subsidy. The
+generator ends up receiving roughly the strike price whatever the market does — it has sold
+away its price risk.
 
 ```mermaid
 flowchart LR
-  M["Market reference price<br/>£/MWh, varies half-hourly"] --> C{"Compare to<br/>strike price"}
-  C -->|"market below strike"| P1["LCCC pays generator<br/>the difference"]
-  C -->|"market above strike"| P2["Generator pays LCCC<br/>the difference"]
-  P1 --> R["Generator's net revenue<br/>≈ strike price"]
+  M["Actual market price<br/>changes every half hour"] --> C{"Compare with the<br/>agreed strike price"}
+  C -->|"market lower"| P1["Low Carbon Contracts Company<br/>pays the generator the difference"]
+  C -->|"market higher"| P2["The generator pays<br/>the difference back"]
+  P1 --> R["Net result: the generator<br/>receives about the strike price<br/>whatever happens"]
   P2 --> R
 ```
 
-**What the generator still bears.** The CfD removes *price* risk. It does **not** remove:
-- **Volume risk** — a windless year still means fewer MWh, and CfD pays per MWh generated.
-- **Curtailment risk** — if the grid tells you to turn down, you do not generate, so you do
-  not get paid (arrangements vary by contract vintage).
-- **Negative price risk** — CfD payments are suspended during sustained negative price
-  periods in more recent contract terms.
+**What the generator still carries.** A Contract for Difference removes *price* risk. It does
+**not** remove:
+- **Volume risk** — a still year means fewer megawatt-hours, and payment is per megawatt-hour.
+- **Curtailment risk** — if the grid instructs you to turn down, you do not generate, so you
+  are not paid.
+- **Negative price risk** — payments are suspended during sustained periods of negative prices
+  under more recent contract terms.
 - **The merchant tail** — see below.
 
-### AR7 — the current round, and what changed
+### Allocation Round 7, and what changed
 
-**AR** = **A**llocation **R**ound. AR7 is the seventh CfD auction. Results were announced
-in January 2026 (offshore wind) and February 2026 (Pot 1). **[FACT] throughout:**
+**AR — Allocation Round.** Allocation Round 7 is the seventh auction. Results were announced
+January 2026 (offshore wind) and February 2026 (onshore wind and solar). **[FACT] throughout:**
 
-| Technology | Strike price (2024 prices) | Capacity awarded |
+| Technology | Strike price (in 2024 money) | Capacity awarded |
 |---|---:|---:|
-| Offshore wind (fixed-bottom) | **£91/MWh** | 8.4 GW (record) |
+| Offshore wind, fixed to the seabed | **£91/MWh** | 8.4 gigawatts (a record) |
 | Floating offshore wind | **£216.49/MWh** | Erebus, Pentland |
-| Onshore wind | **£72/MWh** | 1.3 GW |
-| Solar PV | **£65/MWh** | 4.9 GW |
-| Tidal stream | — | 21 MW |
+| Onshore wind | **£72/MWh** | 1.3 gigawatts |
+| Solar | **£65/MWh** | 4.9 gigawatts |
 
-RWE alone secured 6.9 GW of offshore wind at **£91.20/MWh** across Norfolk Vanguard East and
-West, two Dogger Bank South projects and Awel y Môr, alongside a long-term partnership with
-KKR ([FACT] — [RWE](https://www.rwe.com/en/press/rwe-ag/2026-01-14-rwe-secures-contracts-for-difference-for-6-9-gigawatts-of-offshore-wind-capacity/)),
-and 291 MW of Pot 1 capacity at **£65.23/MWh for solar and £72.24/MWh for onshore wind**
-([FACT] — [SolarQuarter](https://solarquarter.com/2026/02/11/rwe-secures-291-mw-of-solar-and-onshore-wind-in-uks-ar7-auction-winning-cfds-at-65-23-mwh-for-solar-and-72-24-mwh-for-wind/)).
-Pot 1 delivered a record 6.2 GW in total.
-[Full results PDF](https://assets.publishing.service.gov.uk/media/6966861de8c04eb2919f773a/contracts-for-difference-allocation-round-7-results-.pdf).
+RWE alone secured 6.9 gigawatts of offshore wind at **£91.20/MWh**, alongside a long-term
+partnership with the investment firm KKR ([FACT] —
+[RWE](https://www.rwe.com/en/press/rwe-ag/2026-01-14-rwe-secures-contracts-for-difference-for-6-9-gigawatts-of-offshore-wind-capacity/)),
+and 291 megawatts of onshore capacity at **£65.23/MWh for solar and £72.24/MWh for onshore
+wind** ([FACT] — [SolarQuarter](https://solarquarter.com/2026/02/11/rwe-secures-291-mw-of-solar-and-onshore-wind-in-uks-ar7-auction-winning-cfds-at-65-23-mwh-for-solar-and-72-24-mwh-for-wind/)).
+[Full results](https://assets.publishing.service.gov.uk/media/6966861de8c04eb2919f773a/contracts-for-difference-allocation-round-7-results-.pdf).
 
-**Three reforms in AR7 you must be able to explain:**
+**Three reforms you must be able to explain:**
 
-1. **Contract length extended from 15 to 20 years** for fixed-bottom offshore wind, floating
-   offshore wind, onshore wind and solar ([FACT] —
+1. **Contracts extended from 15 to 20 years** for offshore wind, floating offshore wind,
+   onshore wind and solar ([FACT] —
    [Flint Global](https://flint-global.com/blog/the-most-important-cfd-round-in-years-what-do-the-major-reforms-mean/)).
-   **Why this matters financially:** it shortens the *merchant tail* — the period after the
-   CfD expires when the asset is exposed to raw market prices. A shorter merchant tail means
-   more of the asset's life is contracted, which means lenders will lend more against it,
-   which means the sponsor needs less equity, which means a lower strike price is acceptable.
-   **This single change is the reason the auction cleared where it did.**
-2. **Price base changed to 2024 prices** (AR6 used 2012 real prices). **This is a trap for
-   the unwary.** A £91/MWh strike price in 2024 money is not comparable to a strike price
-   quoted in 2012 money without inflating it. **Always ask "in which year's prices?"** before
-   comparing any two strike prices. Strike prices are then indexed annually to CPI.
-3. **CIB** = **C**lean **I**ndustry **B**onus. Extra revenue support for offshore wind
-   applicants who invest in a more sustainable UK supply chain. Only tangible assets count —
-   not skills programmes or research and development — and investment must fall between
-   March 2024 and the project's CfD start date ([FACT] —
-   [Pager Power](https://www.pagerpower.com/news/the-clean-industry-bonus-rewiring-britains-offshore-wind-auctions/)).
 
-**ASP** = **A**dministrative **S**trike **P**rice: the maximum price the government will
-accept in the auction — a ceiling, not a target. For AR7 solar the ASP was **£75/MWh**
-(2024 prices) and the auction cleared at £65 — a 13% saving delivered by competition
-([FACT]).
+   **Why this reduced prices — follow the chain carefully, because it is the whole logic of
+   the auction.** A longer contract means fewer years at the end of the asset's life exposed
+   to unpredictable market prices. Fewer unpredictable years means the income is more reliable
+   overall. More reliable income means **a bank will lend more against the project** (see
+   §0.4). More borrowing means the developer needs less of their own expensive money. Needing
+   less of their own money means they can accept a **lower** guaranteed price and still earn
+   their target return — so they bid lower. **This single change is why the auction cleared
+   where it did.**
+
+2. **Prices now quoted in 2024 money** (the previous round used 2012 money). **This is a
+   trap.** £91 in 2024 money is not comparable with a price quoted in 2012 money unless you
+   adjust for inflation first. **Always ask "in which year's money?" before comparing two
+   strike prices.** Prices are then increased each year in line with CPI (Consumer Prices
+   Index) inflation.
+
+3. **CIB — Clean Industry Bonus.** Extra support for offshore wind developers who invest in a
+   more sustainable British supply chain. Only physical assets count — not training or
+   research — and the investment must fall between March 2024 and the contract start date
+   ([FACT] — [Pager Power](https://www.pagerpower.com/news/the-clean-industry-bonus-rewiring-britains-offshore-wind-auctions/)).
+
+**ASP — Administrative Strike Price.** The maximum price government will accept in the
+auction: a ceiling, not a target. For solar in Allocation Round 7 the ceiling was **£75/MWh**
+and the auction cleared at £65 — competition delivered a 13% saving ([FACT]).
 
 ### The merchant tail — where valuations are won and lost
 
-**Merchant** means "exposed to market prices with no contract". The **merchant tail** is the
-portion of an asset's operating life after its subsidy ends.
+**Merchant** means selling at market prices with no contract protecting you (see §0.6). The
+**merchant tail** is the part of an asset's operating life **after** its subsidy contract ends.
 
-A wind farm with a 30-year design life and a 20-year CfD has a **10-year merchant tail**.
-During those ten years its revenue is whatever the market pays — which nobody can forecast
-with confidence.
+A wind farm with a 30-year life and a 20-year contract has a **10-year merchant tail**. During
+those ten years its income is whatever the market pays — which nobody can forecast confidently.
 
-**Why this dominates valuation:** the merchant tail is simultaneously the **least certain**
-and often a **large fraction of total value**. Two buyers looking at the same asset can
-differ by 30% on price purely because they use different long-term power price forecasts and
-different discount rates for the uncontracted period. **[OPINION]** If you can form and
-defend an independent view on merchant tail value, you are doing the job of an investment
-professional rather than a technical adviser. That is the whole transition, compressed into
-one modelling assumption.
+**Why this dominates valuation.** The merchant tail is simultaneously the **least certain**
+part of the forecast and often a **large share of total value**. Two serious buyers can differ
+by 30% on what an asset is worth purely because they hold different long-term views on power
+prices, and because they apply different discount rates (see §0.5) to those uncertain years.
+
+**[OPINION]** If you can form and defend your own view on merchant tail value, you are doing
+the job of an investment professional rather than a technical adviser. That is the whole
+career transition, compressed into one assumption in a spreadsheet.
 
 ---
 
-## 1.3 REGOs — the green certificate
+## 1.3 Green certificates
 
-**REGO** = **R**enewable **E**nergy **G**uarantees of **O**rigin.
+*Abbreviations used in this section, written out: REGO (Renewable Energy Guarantees of
+Origin), GoO (Guarantee of Origin), MWh (megawatt-hour).*
 
-**What it is.** One certificate issued per MWh of renewable generation, proving the
-electricity came from a renewable source. Suppliers buy them to back "100% green tariff"
-claims to consumers. It is a *separate, tradeable* product from the electricity itself —
-the certificate and the electron are sold independently.
+**REGO — Renewable Energy Guarantees of Origin.**
 
-**What it is worth — and the volatility lesson [FACT]:**
+**What it is.** One certificate issued for each megawatt-hour of renewable generation, proving
+the electricity came from a renewable source. Suppliers buy them so they can advertise "100%
+green" tariffs. It is a **separate, tradeable product from the electricity** — the certificate
+and the electricity are sold independently, to different buyers if you like.
 
-| Period | Approximate REGO price |
+**What it is worth [FACT]:**
+
+| Period | Approximate price |
 |---|---|
-| Early 2020 | ~£0.20/MWh |
-| 2023 peak | £20–25/MWh |
-| Summer 2026 | **£1–2/MWh** |
+| Early 2020 | ~£0.20 per megawatt-hour |
+| 2023 peak | £20–25 per megawatt-hour |
+| Summer 2026 | **£1–2 per megawatt-hour** |
 
-([Good Energy](https://www.goodenergy.co.uk/business/insights/rego-prices-renewable-energy/),
-[TotalEnergies](https://business.totalenergies.uk/uk-rego-market-2025))
+([Good Energy](https://www.goodenergy.co.uk/business/insights/rego-prices-renewable-energy/))
 
-**The commercial lesson is the shape of that table, not the level.** REGO prices moved by a
-factor of roughly 100 in three years and then collapsed. A revenue model built in 2023 that
-assumed £20/MWh REGOs into perpetuity would be catastrophically wrong today.
+**The lesson is the shape of that table, not the level.** The price moved roughly a
+hundredfold in three years and then collapsed. An income forecast built in 2023 assuming
+£20 per megawatt-hour forever would be catastrophically wrong today.
 
-**[CALC]** For our 40 MW wind farm at 112,128 MWh/year:
-- At £1.50/MWh **[ASSUMPTION, current market]**: £168,192/year
-- At £22/MWh (2023 level): £2,466,816/year
+**[CALC]** For the 40 megawatt wind farm producing 112,128 megawatt-hours a year:
+- At £1.50 **[ASSUMPTION, current market]**: **£168,192 a year**
+- At £22 (the 2023 level): **£2,466,816 a year**
 
-**How a lender treats it:** with deep suspicion. Because the price is volatile and the
-market is thin, most project finance lenders give REGOs **little or no credit** when sizing
-debt. Equity investors may value them; debt providers generally will not. **This is a good
-first example of a general principle: contracted, predictable revenue supports debt;
-volatile revenue supports only equity.**
+**How a lender treats it: with deep suspicion.** Because the price is so volatile, most
+lenders give these certificates **little or no credit when deciding how much to lend** — in
+other words, they leave the income out of the calculation almost entirely. Equity investors
+(the owners) may value it; lenders generally will not.
 
-**GoO** = **G**uarantee **o**f **O**rigin — the European equivalent of a REGO. Since Brexit,
-GB REGOs are not automatically recognised in the EU, which is part of why the GB price
+**This is the first clear example of the general rule:** predictable income lets you borrow;
+volatile income does not, and only benefits the owners.
+
+**GoO — Guarantee of Origin** is the European equivalent. Since Brexit, British certificates
+are not automatically recognised in the European Union, which is part of why the British price
 diverged.
 
 ---
 
-## 1.4 The Capacity Market (CM)
+## 1.4 The Capacity Market
 
-**CM** = **C**apacity **M**arket. A scheme that pays generators and storage to **be
-available** at times of system stress — not to generate. It is an insurance policy for the
-system, paid for by consumers.
+*Abbreviations used in this section, written out: CM (Capacity Market), T-4 and T-1 (auctions
+held four years and one year before delivery), kW (kilowatt), MW (megawatt), DESNZ
+(Department for Energy Security and Net Zero), PJM (PJM Interconnection, the largest United
+States regional grid operator).*
 
-**How it works.** The government forecasts how much reliable capacity Great Britain needs
-four years ahead (a **T-4** auction) and one year ahead (**T-1**). Providers bid the price
-at which they will commit to being available. The auction clears at a single price in
-**£/kW/year** — pounds per kilowatt of *derated* capacity per year.
+**CM — Capacity Market.** A scheme that pays generators and batteries **to be available** at
+times when the system is under stress — **not** to generate. It is essentially an insurance
+policy for the country, paid for through consumers' bills.
+
+**How it works.** Government forecasts how much reliable capacity Britain needs four years
+ahead (the **T-4** auction) and one year ahead (**T-1**). Providers bid the price at which
+they will commit to being available. The auction clears at one price for everyone, quoted in
+**pounds per kilowatt of derated capacity per year**.
 
 **Derating factor — the concept that catches everyone out.** You are not paid on your
-nameplate capacity. You are paid on your **derated** capacity, which reflects how likely
-your asset is to actually deliver during a stress event. A gas plant derates lightly. A
-1-hour battery derates heavily, because a stress event can last longer than an hour. A
-4-hour battery derates much less. Wind and solar derate very heavily indeed.
+nameplate size. You are paid on your **derated** size, which reflects how likely you are to
+actually deliver during a stress event. A gas plant is derated only slightly. A one-hour
+battery is derated heavily, because a stress event can easily last longer than an hour. A
+four-hour battery is derated much less. Wind and solar are derated very heavily indeed.
 
-**[CALC] Worked example**
+**[CALC]**
 
-50 MW battery, 1-hour duration, assumed derating factor 12% **[ASSUMPTION — real derating
-factors are published annually by DESNZ and vary by duration; look them up, do not guess]**,
-at the T-4 clearing price for delivery year 2029/30 of **£27.10/kW/year** ([FACT] —
+A 50 megawatt battery with **one hour** of storage, assumed derating factor 12%
+**[ASSUMPTION — real factors are published annually by DESNZ (Department for Energy Security
+and Net Zero) and vary by duration; look them up rather than guessing]**, at the clearing
+price of **£27.10 per kilowatt per year** for delivery year 2029/30 ([FACT] —
 [Modo Energy](https://modoenergy.com/research/en/gb-capacity-market-t4-2029-30-battery-energy-storage-march-2026)):
 
-- Derated capacity = 50 MW × 12% = 6 MW = **6,000 kW**
-- Revenue = 6,000 kW × £27.10 = **£162,600/year**
+- Derated size = 50 × 12% = 6 megawatts = **6,000 kilowatts**
+- Income = 6,000 × £27.10 = **£162,600 a year**
 
-Now the same battery at 4-hour duration with an assumed 55% derating **[ASSUMPTION]**:
-- Derated capacity = 50 × 55% = 27.5 MW = 27,500 kW
-- Revenue = 27,500 × £27.10 = **£745,250/year**
+The same battery with **four hours** of storage, assumed derating 55% **[ASSUMPTION]**:
+- Derated size = 50 × 55% = 27.5 megawatts = 27,500 kilowatts
+- Income = 27,500 × £27.10 = **£745,250 a year**
 
-**A 4.6× difference in capacity revenue from duration alone.** This is one of the main
-commercial reasons the GB market has been building longer-duration batteries.
+**A 4.6× difference in this income line from storage duration alone** — which is one of the
+main commercial reasons Britain has been building longer-duration batteries.
 
-**Market context you should know [FACT]:** the T-4 auction for 2029/30 cleared at
-**£27.10/kW/year, down roughly 55% year on year**, with 44 GW competing for a 39.4 GW target
-— a 12% oversupply. Compare with **PJM in the United States, whose 2027/28 auction cleared
-at the regulatory price cap of $333.44/MW-day and still fell 6,623 MW short** of its
-reliability requirement ([FACT] —
+**Market context worth knowing [FACT]:** the four-year-ahead auction for 2029/30 cleared at
+**£27.10 per kilowatt per year, roughly 55% below the previous year**, with 44 gigawatts
+competing for a 39.4 gigawatt target — a 12% oversupply. Compare that with **PJM
+Interconnection in the United States, whose equivalent auction for 2027/28 cleared at the
+regulatory maximum of $333.44 per megawatt per day and still fell 6,623 megawatts short** of
+what it needed ([FACT] —
 [PJM](https://insidelines.pjm.com/pjm-auction-procures-134479-mw-of-generation-resources/)).
 
-**Read those two facts together.** Two large developed power markets, same decade, opposite
-signals. GB is telling you not to build capacity; PJM is telling you to build urgently. That
-contrast is the single clearest illustration of why market structure, not technology,
-determines returns.
+**Read those two facts together.** Two large developed electricity markets, same decade,
+completely opposite signals. Britain is saying "we do not need more capacity"; PJM is saying
+"we urgently do". That contrast is the clearest illustration in this module of why **market
+structure, not technology, determines returns.**
 
 ---
 
-## 1.5 The Balancing Mechanism (BM)
+## 1.5 The Balancing Mechanism and the cost of forecast errors
 
-**BM** = **B**alancing **M**echanism. The market **NESO** (**N**ational **E**nergy
-**S**ystem **O**perator, the body that runs the GB grid) uses in the final hour before real
-time to keep supply and demand exactly matched.
+*Abbreviations used in this section, written out: BM (Balancing Mechanism), NESO (National
+Energy System Operator), BOA (Bid-Offer Acceptance), MW (megawatt), MWh (megawatt-hour).*
 
-**How it works.** Generators and storage submit **bid-offer pairs** for each settlement
-period:
-- An **offer** is a price at which you will *increase* output (or reduce demand).
-- A **bid** is a price at which you will *decrease* output (or increase demand).
+**BM — Balancing Mechanism.** The market that **NESO (National Energy System Operator**, the
+organisation that runs the British grid**)** uses in the final hour before real time to keep
+supply and demand exactly matched.
 
-NESO accepts whichever bids and offers it needs. Acceptance is called a **BOA**
-(**B**id-**O**ffer **A**cceptance).
+**How it works.** Generators and batteries submit prices for each half-hour:
+- An **offer** is a price at which you will *increase* output.
+- A **bid** is a price at which you will *decrease* output.
 
-**Why this matters for wind:** when the grid is congested, NESO pays wind farms to turn
-*down* — a **bid** at a negative price, meaning the wind farm pays to stop, or more commonly
-is paid to stop. This is **curtailment**, and it is a major feature of Scottish wind
-economics.
+NESO accepts whichever it needs. An acceptance is called a **BOA — Bid-Offer Acceptance**.
 
-**Why this matters for BESS:** the BM is now one of the largest battery revenue lines. A
-battery can respond in seconds and can both absorb and inject power, making it ideally
-suited to balancing.
+**Why it matters for wind:** when the grid is congested, NESO pays wind farms to turn *down*.
+That is **curtailment**, and it is a major feature of Scottish wind economics.
 
-**BM revenue in context [FACT]:** wholesale plus Balancing Mechanism together make up around
-**60%** of the GB battery revenue stack over the twelve months to April 2026
-([Modo Energy](https://modoenergy.com/research/en/how-does-battery-energy-storage-make-money)).
+**Why it matters for batteries:** a battery responds in seconds and can both absorb and inject
+power, which makes it ideal for balancing. Wholesale trading and the Balancing Mechanism
+together make up around **60%** of British battery income over the twelve months to April 2026
+([FACT] — [Modo Energy](https://modoenergy.com/research/en/how-does-battery-energy-storage-make-money)).
 
-### Imbalance settlement — the cost of being wrong
+### Imbalance — paying for being wrong
 
-Every party that generates or supplies electricity must tell the system in advance what it
-expects to do. The difference between that notification and reality is **imbalance**, and it
-is settled at the **imbalance price** (also called the **system price** or **cash-out
-price**).
+Everyone who generates or supplies electricity must tell the system in advance what they
+expect to do. The gap between that and reality is **imbalance**, and it is settled at the
+**imbalance price** (also called the system price or cash-out price). Britain uses a **single**
+price for being over and under.
 
-Great Britain uses a **single imbalance price**: both long and short positions settle at the
-same price. That price can be extremely high or deeply negative.
+**[CALC]** A 40 megawatt wind farm tells the system it will produce 30 megawatts for a
+half-hour but delivers 18 megawatts.
+- Shortfall = 12 megawatts × 0.5 hours = **6 megawatt-hours short**
+- At an imbalance price of £250 per megawatt-hour, that costs 6 × 250 = **£1,500** for one
+  half-hour
+- Repeated across a badly forecast day, it becomes material money
 
-**[CALC]** A 40 MW wind farm notifies 30 MW for a settlement period but delivers 18 MW.
-- Shortfall = 12 MW × 0.5 h = **6 MWh short**
-- If the imbalance price is £250/MWh, the cost is 6 × 250 = **£1,500** for one half-hour
-- Repeated across a badly forecast day, this becomes material
-
-This is precisely the risk an offtaker absorbs in exchange for the **PPA discount** discussed
-in §1.1. **You now understand what that discount is buying.**
+This is exactly the risk the buyer absorbs in exchange for the **PPA discount** in §1.1. **You
+now know what that discount is paying for.**
 
 ---
 
-## 1.6 Ancillary services — mainly a BESS story
+## 1.6 Ancillary services — mainly a battery story
 
-**Ancillary services** are the products NESO buys to keep the system stable second by
-second: keeping frequency at 50 Hz, maintaining voltage, holding reserve in case a plant
-trips.
+*Abbreviations used in this section, written out: DC (Dynamic Containment), DM (Dynamic
+Moderation), DR (Dynamic Regulation), FFR (Firm Frequency Response), QR (Quick Reserve), BR
+(Balancing Reserve), SR (Slow Reserve), OBP (Optimised Balancing Platform), NESO (National
+Energy System Operator), Hz (hertz, meaning cycles per second).*
 
-**Hz** = hertz, cycles per second. GB grid frequency must stay within **50 Hz ± 1%**
-under NESO's licence obligations.
+**Ancillary services** are the products the grid operator buys to keep the system stable
+second by second — holding frequency at 50 hertz, maintaining voltage, keeping spare capacity
+in case a power station trips off.
 
-### The current suite of frequency response services [FACT]
+British grid frequency must stay within **50 hertz plus or minus 1%** under NESO's licence.
 
-| Acronym | Full name | Response time | Delivery duration |
+### The frequency response products [FACT]
+
+| Short name | Written out | Must respond within | Must keep going for |
 |---|---|---|---|
-| **DC** | **D**ynamic **C**ontainment | 0.5 seconds | 15 minutes |
-| **DM** | **D**ynamic **M**oderation | 0.5 seconds | 15 minutes |
-| **DR** | **D**ynamic **R**egulation | 2 seconds | 60 minutes |
+| **DC** | Dynamic Containment | 0.5 seconds | 15 minutes |
+| **DM** | Dynamic Moderation | 0.5 seconds | 15 minutes |
+| **DR** | Dynamic Regulation | 2 seconds | 60 minutes |
 
-Source: [NESO Dynamic Services](https://www.neso.energy/industry-information/balancing-services/frequency-response-services/dynamic-services-dcdmdr).
-From January 2026 these are activated directly within the **OBP** (**O**ptimised
-**B**alancing **P**latform).
+Source: [NESO](https://www.neso.energy/industry-information/balancing-services/frequency-response-services/dynamic-services-dcdmdr).
+From January 2026 these are activated through the **OBP — Optimised Balancing Platform**.
 
-### Reserve services [FACT]
+### The reserve products [FACT]
 
-| Acronym | Full name | Note |
+| Short name | Written out | Note |
 |---|---|---|
-| **FFR** | **F**irm **F**requency **R**esponse | The legacy service, being phased out |
-| **QR** | **Q**uick **R**eserve | Released Q4 2025; replacing FFR during 2026 |
-| **PQR / NQR** | **P**ositive / **N**egative **Q**uick **R**eserve | Increase generation / reduce generation |
-| **BR** | **B**alancing **R**eserve | Availability payment for holding headroom |
-| **SR** | **S**low **R**eserve | Longer-notice reserve |
+| **FFR** | Firm Frequency Response | The old service, being retired during 2026 |
+| **QR** | Quick Reserve | Its replacement, launched late 2025 |
+| **BR** | Balancing Reserve | Pays you to hold capacity back from other markets |
+| **SR** | Slow Reserve | Longer-notice reserve |
 
-Assets contracted into BR, QR or SR receive an **availability payment** for withholding
-capacity from other markets — giving NESO guaranteed **headroom** (ability to increase) or
-**footroom** (ability to decrease).
+Assets contracted into these receive an **availability payment** — money simply for being
+ready, whether or not they are called on.
 
-### The single most important trend in BESS revenue
+### The single most important trend in battery income
 
-**Ancillary services now contribute around 33% of GB battery revenue on a gross basis, down
-from 87% across 2020–2022** ([FACT] — [Modo Energy](https://modoenergy.com/benchmarks/methodology/asset/gb)).
+**Ancillary services now provide about 33% of British battery income, down from 87% across
+2020–2022** ([FACT] — [Modo Energy](https://modoenergy.com/benchmarks/methodology/asset/gb)).
 
-**Why this happened, and why it matters to an investor.** Frequency response markets are
-small and **saturate quickly**. Early batteries earned extraordinary returns because there
-were few of them and NESO needed the service badly. As the fleet grew, the requirement was
-met, prices collapsed, and revenue migrated to wholesale and the BM.
+**Why, and why it generalises.** Frequency response markets are small and **saturate
+quickly**. Early batteries earned extraordinary money because there were few of them and the
+grid badly needed the service. As the fleet grew, the requirement was met, prices collapsed,
+and income shifted to wholesale trading and the Balancing Mechanism.
 
-**The investment lesson generalises far beyond batteries:** *any* revenue stream backed by a
-fixed-volume requirement will be competed away as capacity enters. A business case built on
-a saturating market has a shelf life. Ask of any revenue line: **how big is the total
-requirement, and how much capacity is chasing it?**
+**The investment lesson goes far beyond batteries:** *any* income stream backed by a
+**fixed-size requirement** will be competed away as more capacity arrives. Always ask of any
+income line: **how big is the total requirement, and how much capacity is chasing it?**
 
 ---
 
-## 1.7 Putting the stack together
+## 1.7 Putting the stack together — and the point of the whole module
 
-**[CALC] Full revenue stack — 50 MW / 2-hour BESS, illustrative**
+*Abbreviations used in this section, written out: BM (Balancing Mechanism), CM (Capacity
+Market), MW (megawatt), DSCR (Debt Service Cover Ratio — explained in Part 3).*
 
-The GB benchmark: a 2-hour battery averaged **£73,145/MW/year** across the full stack over
-the twelve months to April 2026 ([FACT] — Modo Energy), with monthly figures swinging from
-**£41k/MW/yr (February 2026)** to **£70k/MW/yr (March 2026)** — a 71% range inside one
-quarter ([FACT]).
+**[CALC] Full income stack for a 50 megawatt, 2-hour battery**
 
-| Revenue line | £/MW/yr **[ASSUMPTION, indicative split]** | Contracted? | Debt-supportable? |
+The British benchmark: a 2-hour battery averaged **£73,145 per megawatt per year** across all
+income lines over the twelve months to April 2026 ([FACT] — Modo Energy), with monthly figures
+swinging from **£41,000 (February 2026)** to **£70,000 (March 2026)** — a 71% range inside a
+single quarter ([FACT]).
+
+| Income line | £ per MW per year **[ASSUMPTION, indicative split]** | Contracted? | Can you borrow against it? |
 |---|---:|---|---|
-| Wholesale arbitrage | ~26,000 | No | Weakly |
-| Balancing Mechanism | ~18,000 | No | Weakly |
-| Ancillary services | ~24,000 | Short-term only | Weakly |
-| Capacity Market | ~5,000 | **Yes, 1–15 yr agreement** | **Yes** |
+| Buying low and selling high (wholesale) | ~26,000 | No | Barely |
+| Balancing Mechanism | ~18,000 | No | Barely |
+| Ancillary services | ~24,000 | Short-term only | Barely |
+| Capacity Market | ~5,000 | **Yes — a multi-year agreement** | **Yes** |
 | **Total** | **~73,000** | | |
 
-**Now the point of the whole table.** Only about **£5,000 of £73,000 — 7% — is contracted.**
+**Now the point.** Only about **£5,000 out of £73,000 — roughly 7% — is contracted.**
 Everything else can halve in a quarter, and demonstrably has.
 
-**This is why merchant BESS is hard to finance with debt**, and why **tolling agreements**
-exist. A **toll** is a contract where a counterparty (usually a utility or trading house)
-pays a fixed fee for the exclusive right to operate the battery and take all its market
-revenue. The battery owner gives up upside and receives a predictable payment.
+**This is why a merchant battery is hard to borrow against**, and why **tolling agreements**
+exist.
 
-| | Merchant BESS | Tolled BESS |
+**Tolling agreement** — a contract where a counterparty (usually a large utility or trading
+company) pays the battery owner **a fixed annual fee** in exchange for the exclusive right to
+operate the battery and keep all the market income it earns. The owner gives up the upside and
+receives a predictable payment instead. The word comes from a toll road: you pay a fixed fee
+to use someone else's asset.
+
+| | Merchant battery | Tolled battery |
 |---|---|---|
-| Expected revenue | Higher | Lower |
-| Revenue volatility | Very high | Near zero |
-| Debt available | Low (lenders size to a severe downside) | **Much higher** |
-| Equity required | High | Lower |
-| Equity return | Higher if things go well | Lower but far more certain |
+| Expected income | Higher | Lower |
+| How volatile that income is | Very | Almost none |
+| **How much a bank will lend** | **Low** | **Much higher** |
+| Owner's own cash required | High | Lower |
+| Owner's return | Higher if all goes well | Lower but far more certain |
 
-**[OPINION]** Understanding that a *lower-revenue* contract can produce a *higher* equity
-return — because it unlocks cheaper leverage — is the moment engineering intuition gives way
-to financial intuition. It is counter-intuitive and it is the core of infrastructure
-investing. Sit with it until it feels obvious.
+**[OPINION]** The idea that a contract paying you *less money* can produce a *higher return*
+for the owner — because it lets you borrow more cheaply, so you tie up less of your own cash
+(§0.4) — is the moment engineering intuition gives way to financial intuition. It is genuinely
+counter-intuitive. Sit with it until it feels obvious, because it is the core of
+infrastructure investing.
+
+**You can see this happen numerically** in the companion tool
+(`curriculum/revenue-stack-explorer.html`): switching from merchant to tolled reduces annual
+income by about £260,000 but increases the amount a bank will lend from about £3.3 million to
+about £7.9 million.
 
 ---
 
 # PART 2 — THE COSTS
 
-## 2.1 CAPEX — capital expenditure
+## 2.1 Capital expenditure — the cost of building it
 
-**CAPEX** = **CAP**ital **EX**penditure. The upfront cost of building the asset. Usually
-quoted in **£/MW** (pounds per megawatt of capacity) or, for batteries, **£/MWh** (pounds
-per megawatt-hour of storage).
+*Abbreviations used in this section, written out: CAPEX (capital expenditure), EPC
+(Engineering, Procurement and Construction), BoP (Balance of Plant), TSA (Turbine Supply
+Agreement), LDs (Liquidated Damages), MW (megawatt), DESNZ (Department for Energy Security
+and Net Zero).*
 
-### What sits inside a wind farm CAPEX
+**CAPEX — capital expenditure.** The one-off, upfront cost of building the asset. Quoted per
+megawatt of size, or for batteries per megawatt-hour of storage.
 
-| Component | Typical share **[ESTIMATE]** | Notes |
+### What sits inside a wind farm's build cost
+
+| Component | Typical share **[ESTIMATE]** | Note |
 |---|---:|---|
-| Turbines (supply) | 55–70% | The **TSA** (**T**urbine **S**upply **A**greement) |
-| **BoP** — **B**alance **o**f **P**lant | 15–25% | Civils, foundations, roads, cabling |
-| Grid connection | 5–15% | Substation, transmission works |
-| Development costs | 3–8% | Land, planning, surveys, legal |
-| Contingency | 5–10% | The number lenders check first |
+| Turbines themselves | 55–70% | Bought under a **TSA — Turbine Supply Agreement** |
+| **BoP — Balance of Plant** | 15–25% | Everything except the turbines: groundworks, foundations, roads, cabling |
+| Grid connection | 5–15% | Substation and transmission works |
+| Development costs | 3–8% | Land agreements, planning, surveys, legal fees |
+| Contingency | 5–10% | Money set aside for surprises. **The first number a lender checks** |
 
-**EPC** = **E**ngineering, **P**rocurement and **C**onstruction. A contract where one
-contractor takes responsibility for delivering the whole plant, usually for a fixed price by
-a fixed date. A **full-wrap EPC** transfers most construction risk to the contractor.
+**EPC — Engineering, Procurement and Construction.** A contract where a single contractor
+takes responsibility for delivering the whole plant, usually for a fixed price by a fixed
+date. A **full-wrap EPC** means that contractor carries essentially all the construction risk.
 
-**Why lenders love an EPC wrap:** cost and schedule overruns during construction are the
-main way infrastructure projects fail. If a single creditworthy contractor is liable for
-them, the lender's risk falls sharply. **Multi-contract** structures (where the sponsor
-manages several contractors) are cheaper but riskier, and they attract less debt.
+**Why lenders like a full wrap.** Cost overruns and delays during construction are the main
+way infrastructure projects fail. If one financially solid contractor is legally liable for
+them, the lender's risk falls sharply — so the lender will **lend more** (§0.4). Splitting the
+work across several contractors is cheaper upfront but riskier, and attracts less borrowing.
 
-**LDs** = **L**iquidated **D**amages. Pre-agreed compensation the contractor pays for late
-delivery or underperformance. **Read the LD cap** — it is usually limited to a percentage of
-contract value, and above that cap the risk falls back to the owner.
+**LDs — Liquidated Damages.** Compensation agreed in advance that the contractor must pay if
+they deliver late or the plant underperforms. **Always check the cap** — liability is usually
+limited to a percentage of the contract value, and beyond that cap the risk falls back onto
+the owner.
 
-### Cost benchmarks — with a health warning
+### Cost benchmarks — with a deliberate health warning
 
-**[FACT, but interpret carefully]** AR7 cleared at £72/MWh for onshore wind and £65/MWh for
-solar in 2024 prices. Published international CAPEX ranges for onshore wind sit around
-**$1,150–1,800/kW** with levelised costs of **$26–54/MWh**
-([Energy Solutions Intelligence, 2026](https://energy-solutions.co/articles/sub/onshore-wind-farm-economics-2026)) —
-note these are **global** figures in **dollars**, and UK costs differ.
+**[FACT]** Allocation Round 7 cleared at £72 per megawatt-hour for onshore wind and £65 for
+solar, in 2024 money. Published international build-cost ranges for onshore wind sit around
+**$1,150–1,800 per kilowatt** ([Energy Solutions Intelligence, 2026](https://energy-solutions.co/articles/sub/onshore-wind-farm-economics-2026)) —
+but note those are **global** figures in **US dollars**, and British costs differ.
 
-**For UK-specific figures use the primary source:** DESNZ (**D**epartment for **E**nergy
-**S**ecurity and **N**et **Z**ero) publishes *Renewable Energy Generation Cost and Technical
-Assumptions* and *Electricity Generation Costs*. **[FACT]** A July 2025 update covering
-onshore wind and solar PV exists
-([DESNZ](https://assets.publishing.service.gov.uk/media/68ba91f411b4ded2da19fe92/onshore-wind-and-solar-pv-cost-electricity-report-update-2024.pdf)).
-**I have not quoted specific £/MW figures from it because I have not verified the current
-numbers directly — download it and extract them yourself.** That is deliberate: the habit of
-refusing to quote a cost benchmark you have not personally checked is exactly the discipline
-that makes a technical adviser trustworthy.
+**For British figures use the primary source:** DESNZ (Department for Energy Security and Net
+Zero) publishes *Renewable Energy Generation Cost and Technical Assumptions*, updated July
+2025 ([link](https://assets.publishing.service.gov.uk/media/68ba91f411b4ded2da19fe92/onshore-wind-and-solar-pv-cost-electricity-report-update-2024.pdf)).
 
-## 2.2 OPEX — operating expenditure
+**I have deliberately not quoted specific per-megawatt figures from it, because I have not
+personally verified the current numbers.** Download it and extract them yourself. That refusal
+is the point: the habit of never quoting a cost benchmark you have not checked is exactly what
+makes a technical adviser trustworthy to an investor.
 
-**OPEX** = **OP**erating **EX**penditure. Annual running costs, usually **£/MW/year**.
+## 2.2 Operating expenditure — the cost of running it
+
+*Abbreviations used in this section, written out: OPEX (operating expenditure), O&M
+(Operations and Maintenance), MW (megawatt).*
+
+**OPEX — operating expenditure.** The annual running cost, usually quoted per megawatt per
+year.
 
 | Component | What it is |
 |---|---|
-| **O&M** (**O**perations & **M**aintenance) | The service contract for the turbines or panels |
-| Land rent | Payments to landowners, often indexed or revenue-linked |
+| **O&M — Operations and Maintenance** | The service contract for the turbines or panels |
+| Land rent | Payments to landowners, often inflation-linked or income-linked |
 | Business rates | Local property tax |
-| Insurance | Property damage, business interruption, liability |
-| Asset management | Commercial and financial administration of the SPV |
+| Insurance | Damage, business interruption, liability |
+| Asset management | Running the company that owns the project |
 | Grid and metering | Connection charges, metering services |
-| **Network charges** | TNUoS, BSUoS, DUoS — see §2.3 |
-| Balancing / route to market | The PPA discount or trading fee |
+| **Network charges** | See §2.3 — frequently forgotten |
+| Route to market fee | The discount taken by whoever sells your power (§1.1) |
 
-**Availability warranty.** The O&M contractor typically guarantees the asset will be
-*available* to operate for a percentage of the time — commonly 97%+ for modern wind. **This
-is not a guarantee of production.** The wind not blowing is not the contractor's problem.
-**Never confuse a 97% availability warranty with a 97% capacity factor**; they are entirely
-different quantities, as Module A1 sets out.
+**Availability warranty.** The maintenance contractor typically guarantees the asset will be
+*capable of operating* for a percentage of the time — commonly 97% or better for modern wind.
+**This is not a guarantee of how much electricity you will produce.** The wind failing to blow
+is not the contractor's problem. **Never confuse a 97% availability warranty with a 97%
+capacity factor** — they are completely different quantities.
 
-## 2.3 Network charges — the costs people forget
+## 2.3 Network charges — the costs engineers forget
 
-These are the charges for using the electricity networks. **They are large, they are rising,
-and engineers routinely omit them from revenue models.**
+*Abbreviations used in this section, written out: TNUoS (Transmission Network Use of System),
+BSUoS (Balancing Services Use of System), DUoS (Distribution Use of System), TCR (Targeted
+Charging Review), NESO (National Energy System Operator), DNO (Distribution Network Operator),
+REMA (Review of Electricity Market Arrangements), kW (kilowatt), MWh (megawatt-hour).*
+
+These are charges for using the electricity networks. **They are large, they are rising fast,
+and they are routinely left out of engineers' income models.**
 
 ### TNUoS — Transmission Network Use of System
 
-**TNUoS** = **T**ransmission **N**etwork **U**se **o**f **S**ystem. The charge for using the
-high-voltage transmission network — the pylons and the supergrid.
+The charge for using the high-voltage network: the pylons and the supergrid.
 
-**The commercially critical feature: TNUoS generation charges are locational.** A generator
-in northern Scotland — far from demand, exporting south down a congested network — pays a
-**high** TNUoS charge. A generator in southern England pays a **low** charge, and in some
-zones may even be *paid*. This can amount to a very substantial annual cost difference for
-two otherwise identical wind farms.
+**The commercially critical feature: for generators, this charge depends on where you are.**
+A generator in northern Scotland — far from demand, pushing power south down a congested
+network — pays a **high** charge. A generator in southern England pays a **low** one, and in
+some places is actually paid. Two otherwise identical wind farms can face very different
+annual costs purely because of location.
 
-**[FACT, 2026/27]** The average generation tariff is **£13.03/kW** for 2026/27. Total TNUoS
-revenue collected is forecast to rise from **£4.3 billion in 2025/26 to £7 billion in
-2026/27**, with average demand charges rising over 60%, from £18.9/MWh to £31/MWh
-([NESO final tariffs](https://www.neso.energy/document/376336/download),
+**[FACT, 2026/27]** The average generation charge is **£13.03 per kilowatt**. Total money
+collected through this charge is forecast to rise from **£4.3 billion in 2025/26 to £7 billion
+in 2026/27** ([NESO](https://www.neso.energy/document/376336/download),
 [Drax](https://energy.drax.com/intelligence/final-tnuos-charges-almost-identical-to-draft-tariffs/)).
 
-**[CALC]** For a 40 MW wind farm at the average generation tariff:
-40,000 kW × £13.03/kW = **£521,200/year**. Against the ~£20.7m revenue calculated earlier
-that is ~2.5% of revenue — but in a high-charge Scottish zone it can be multiples of the
-average, and **it is charged on capacity, not output, so it does not fall in a low-wind
-year.** A fixed cost against a variable revenue is exactly the combination that breaks
-downside cases.
+**[CALC]** For a 40 megawatt wind farm at the average rate:
+40,000 kilowatts × £13.03 = **£521,200 a year**. Against the roughly £20.7 million of income
+calculated in §1.2 that is about 2.5% — but in an expensive Scottish zone it can be several
+times the average, and **it is charged on your capacity, not your output, so it does not fall
+in a low-wind year.** A fixed cost sitting against a variable income is precisely the
+combination that breaks a pessimistic scenario.
 
-**Zonal pricing was rejected, but location still costs money.** DESNZ's REMA (**R**eview of
-**E**lectricity **M**arket **A**rrangements) Summer Update of 10 July 2025 confirmed GB keeps
-a single national wholesale price ([FACT] —
-[Norton Rose Fulbright](https://www.nortonrosefulbright.com/en/knowledge/publications/4399413b/rema-summer-update-no-to-zonal-pricing-yes-to-reformed-national-pricing)).
-So locational value is now expressed through **TNUoS, curtailment and constraint costs**
-rather than through the energy price. **Location still drives value — it is just harder to
-see, which means it is more often mispriced.** For someone with geospatial and grid skills,
-that is an opportunity.
+**Location still costs money even though zonal pricing was rejected.** The government's
+**REMA — Review of Electricity Market Arrangements** update of 10 July 2025 confirmed Britain
+keeps a single national electricity price rather than different prices in different regions
+([FACT] — [Norton Rose Fulbright](https://www.nortonrosefulbright.com/en/knowledge/publications/4399413b/rema-summer-update-no-to-zonal-pricing-yes-to-reformed-national-pricing)).
+So the cost of a bad location now shows up through **network charges, curtailment and
+constraint costs** instead of through the electricity price. **Location still drives value —
+it is just harder to see, which means it is more often mispriced.** For someone with your
+geospatial and grid background, that is an opportunity.
 
 ### BSUoS — Balancing Services Use of System
 
-**BSUoS** = **B**alancing **S**ervices **U**se **o**f **S**ystem. Recovers the cost NESO
-incurs balancing the system — including the constraint payments made to curtailed wind farms.
+Recovers what NESO spends balancing the system, including the payments it makes to curtailed
+wind farms.
 
-**[FACT, 2026/27]** NESO published final BSUoS charges on 29 December 2025:
-**£13.74/MWh** for Fixed Tariff 7 (April–September 2026) and **£12.49/MWh** for Fixed Tariff
-8 (October 2026–March 2027)
+**[FACT, 2026/27]** Final charges published 29 December 2025: **£13.74 per megawatt-hour** for
+April–September 2026 and **£12.49** for October 2026–March 2027
 ([Drax](https://energy.drax.com/intelligence/initial-2026-27-bsuos-forecasts-published/)).
+The charge is now set as a **fixed six-monthly rate in advance** rather than varying half-hour
+by half-hour, which makes it far easier to forecast.
 
-BSUoS moved to a **fixed, six-monthly tariff set in advance** rather than a volatile
-half-hourly charge — a significant improvement for anyone trying to forecast costs.
-**[VERIFY]** BSUoS liability was reformed to fall on demand rather than being split with
-generation; confirm the current treatment for the specific asset you are modelling before
-relying on it, as this materially changes a generator's cost line.
+**[VERIFY]** Liability for this charge was reformed so that it falls on demand rather than
+being split with generators. Confirm the current treatment for the specific asset you are
+modelling, because it materially changes a generator's cost line.
 
 ### DUoS — Distribution Use of System
 
-**DUoS** = **D**istribution **U**se **o**f **S**ystem. The equivalent charge for the
-lower-voltage local networks operated by **DNOs** (**D**istribution **N**etwork
-**O**perators). Applies to assets connected at distribution rather than transmission level —
+The equivalent charge for the lower-voltage local networks run by **DNOs — Distribution
+Network Operators**. It applies to assets connected at local rather than transmission level,
 which includes most solar farms and many batteries.
 
-### Embedded benefits and the Targeted Charging Review
+### Embedded benefits and the Targeted Charging Review — a history lesson with money in it
 
-**Embedded generator** = one connected to the distribution network rather than transmission.
+**Embedded generator** — one connected to the local distribution network rather than the
+high-voltage transmission network.
+
 Historically these enjoyed **embedded benefits**: they helped their supplier avoid
-transmission charges, and the supplier shared the saving.
+transmission charges, and the supplier shared the saving with them.
 
-**Triad.** The three half-hour settlement periods of highest GB demand between November and
-February, separated by at least ten days. Transmission demand charges were historically based
-on demand during these periods, so generating during a Triad was extremely valuable.
+**Triad.** The three half-hours of highest national demand between November and February, at
+least ten days apart. Transmission demand charges used to be based on how much you were using
+during those three half-hours — so *generating* during them was extremely valuable.
 
-**What happened.** Ofgem ran the **TCR** (**T**argeted **C**harging **R**eview) and issued
-its final decision on **21 November 2019**. Residual network charges moved to **fixed
-charges** for all users, liability for the Transmission Generation Residual was removed from
-generators, and embedded benefits relating to balancing charges were changed. Triad avoidance
-payments had already been cut substantially from April 2018 ([FACT] —
-[Ofgem TCR decision](https://www.ofgem.gov.uk/decision/targeted-charging-review-decision-and-impact-assessment),
-[Gowling WLG](https://gowlingwlg.com/en/insights-resources/articles/2020/ofgem-s-targeted-charging-review-decision)).
+**What happened.** Ofgem ran the **TCR — Targeted Charging Review** and issued its decision on
+**21 November 2019**. Residual network charges moved to fixed charges for all users, generators
+stopped being liable for one of them, and embedded benefits were substantially cut. Triad
+avoidance payments had already been reduced sharply from April 2018 ([FACT] —
+[Ofgem](https://www.ofgem.gov.uk/decision/targeted-charging-review-decision-and-impact-assessment)).
 
-**Why you need to know this history.** Assets built before 2018–2020 were financed on
-business cases that included Triad income which **no longer exists**. When you diligence an
-older distributed asset, check whether its original model assumed embedded benefits — if so,
-its actual performance will have undershot its base case, and you should expect to find
-refinancing or covenant history as a result. **This is the kind of observation that makes a
-technical adviser useful to an investor.**
+**Why you need this history.** Assets built before roughly 2018–2020 were financed on business
+plans that **included income which no longer exists**. When you investigate an older
+distribution-connected asset, check whether its original plan assumed embedded benefits. If it
+did, the asset will have underperformed its original case, and you should expect to find a
+history of refinancing or broken loan conditions. **Spotting that is exactly the kind of
+observation that makes a technical adviser valuable to an investor.**
 
 ---
 
-# PART 3 — HOW THE DEAL IS FINANCED
+# PART 3 — HOW THE PROJECT IS FUNDED
 
-## 3.1 The SPV — the box the project lives in
+## 3.1 The company that owns the project
 
-**SPV** = **S**pecial **P**urpose **V**ehicle. A company created for the sole purpose of
-owning and operating one project (or one portfolio). Also called a **ProjectCo**.
+*Abbreviations used in this section, written out: SPV (Special Purpose Vehicle), EPC
+(Engineering, Procurement and Construction), O&M (Operations and Maintenance), PPA (Power
+Purchase Agreement), CfD (Contract for Difference), DSRA (Debt Service Reserve Account), MRA
+(Maintenance Reserve Account).*
 
-**Why it exists.** If the project fails, the lenders can take the SPV and its assets — but
-they **cannot** pursue the parent company's other assets. That is **non-recourse** finance.
-**Limited-recourse** means there is some, carefully defined, recourse to the sponsor —
-typically during construction only.
+**SPV — Special Purpose Vehicle.** A company created for the single purpose of owning and
+running one project. Also called a **ProjectCo**. It exists so that the project's finances are
+completely separate from everything else its owners do.
 
-**Sponsor** = the equity owner or developer standing behind the project.
+**Why that separation matters.** If the project fails, the lenders can take the Special
+Purpose Vehicle and the wind farm inside it — but they **cannot** come after the parent
+company's other assets. That arrangement is called **non-recourse** lending: the lender has no
+"recourse" (no legal claim) beyond the project itself. **Limited-recourse** means there is
+some carefully defined claim on the parent, usually only during construction.
+
+**Sponsor** — the company that develops and owns the project and stands behind it.
 
 ```mermaid
 flowchart TB
-  SP["Sponsor / equity investor"] -->|"equity"| SPV["SPV — the project company<br/>owns the wind farm"]
-  LEND["Lenders — banks or infra debt funds"] -->|"senior debt"| SPV
-  SPV -->|"EPC contract"| EPC["Construction contractor"]
-  SPV -->|"O&M contract"| OM["Operator"]
-  SPV -->|"PPA or CfD"| OFF["Offtaker / LCCC"]
-  OFF -->|"revenue"| SPV
-  SPV -->|"1 · opex"| OM
-  SPV -->|"2 · debt service"| LEND
-  SPV -->|"3 · reserve accounts"| RES["DSRA / MRA"]
-  SPV -->|"4 · distributions, if covenants pass"| SP
+  SP["Sponsor — the owner<br/>puts in its own money (equity)"] -->|"equity"| SPV["Special Purpose Vehicle<br/>the company that owns the wind farm"]
+  LEND["Lenders — banks or debt funds<br/>lend money"] -->|"loan"| SPV
+  SPV -->|"construction contract"| EPC["Contractor who builds it"]
+  SPV -->|"maintenance contract"| OM["Operator who runs it"]
+  SPV -->|"power sale contract"| OFF["Buyer of the electricity"]
+  OFF -->|"income"| SPV
+  SPV -->|"1 · pay running costs"| OM
+  SPV -->|"2 · repay the loan"| LEND
+  SPV -->|"3 · top up reserve accounts"| RES["Rainy-day accounts"]
+  SPV -->|"4 · whatever is left goes to the owner"| SP
 ```
 
-**Note the numbered order on the arrows out of the SPV.** That order is the **cash
-waterfall**, and it is legally binding — see §3.4.
+**The numbers on the outgoing arrows are the order of payment**, and that order is legally
+binding. See §3.4.
 
-## 3.2 Debt sizing — the most valuable calculation in this module
+## 3.2 Working out how much a bank will lend
 
-**Gearing** (or **leverage**) = the proportion of total funding provided by debt. A project
-that is 70% debt and 30% equity is "70% geared".
+*Abbreviations used in this section, written out: CFADS (Cash Flow Available for Debt
+Service), DSCR (Debt Service Cover Ratio), LLCR (Loan Life Cover Ratio), PLCR (Project Life
+Cover Ratio), EBITDA (Earnings Before Interest, Tax, Depreciation and Amortisation), MWh
+(megawatt-hour).*
 
-**Why leverage matters.** Debt is cheaper than equity — a lender might want 6%, an equity
-investor 10–12%. Replacing expensive equity with cheap debt raises the return on the
-remaining equity. But debt must be repaid on a fixed schedule whether or not the wind blows,
-so more leverage means more risk of default.
+This section contains the single most valuable calculation in the whole programme.
 
-### The key measure: DSCR
+### First, the cash the lender actually looks at
 
-**DSCR** = **D**ebt **S**ervice **C**over **R**atio.
+**CFADS — Cash Flow Available for Debt Service.** Read the name literally: *the cash the
+project has available to pay its loan with*. It is:
 
-**DSCR = CFADS ÷ Debt Service**
+**Income − running costs − tax − changes in working capital − money that must be spent on
+major maintenance**
 
-- **CFADS** = **C**ash **F**low **A**vailable for **D**ebt **S**ervice. Revenue, minus
-  operating costs, minus tax, minus movements in working capital, minus maintenance capital
-  expenditure. **It is NOT EBITDA.**
-- **Debt service** = principal repayment + interest for the period.
+**It is NOT the same as EBITDA** — **E**arnings **B**efore **I**nterest, **T**ax,
+**D**epreciation and **A**mortisation, a common accounting measure of operating profit. EBITDA
+ignores tax and ignores cash that must be reinvested in the asset. **Using EBITDA where CFADS
+is required is one of the most common and most serious errors engineers make when they first
+build a project model**, and it always flatters the answer.
 
-**EBITDA** = **E**arnings **B**efore **I**nterest, **T**ax, **D**epreciation and
-**A**mortisation. A common measure of operating profit. **Using EBITDA where CFADS is
-required is one of the most common and most serious modelling errors an engineer makes**,
-because it ignores tax and cash reinvestment.
+### The ratio everything turns on
 
-**[CALC]** CFADS £8.5m, debt service £6.8m → DSCR = 8.5 ÷ 6.8 = **1.25×**. There is £1.7m of
-headroom before the ratio hits 1.00× and the project cannot pay its debt — equivalent to a
-20% fall in cash flow.
+**DSCR — Debt Service Cover Ratio.**
 
-**Typical minimum DSCR covenants [ESTIMATE — verify per deal]:**
+**DSCR = CFADS ÷ debt service**
+
+where **debt service** means the loan repayment plus interest due in that period.
+
+**In plain English: how many times over can this project afford its loan repayments?**
+
+- A DSCR of 1.00 means the project generates exactly enough cash to pay the loan and not a
+  penny more. Any bad luck and it defaults.
+- A DSCR of 1.30 means it generates 30% more cash than it needs. There is a cushion.
+
+**[CALC]** Cash available £8.5 million, loan repayments £6.8 million.
+DSCR = 8.5 ÷ 6.8 = **1.25**. Read as "one-point-two-five times covered". There is £1.7 million
+of cushion — the project could lose 20% of its cash and still just about pay.
+
+**Typical minimum ratios lenders insist on [ESTIMATE — verify on every deal]:**
 
 | Asset type | Typical minimum DSCR |
 |---|---|
-| CfD-contracted wind or solar | 1.20–1.30× |
-| Merchant-exposed wind or solar | 1.40–1.60× |
-| Tolled BESS | 1.30–1.45× |
-| Merchant BESS | 1.60×+, if financeable at all |
+| Wind or solar with a government contract | 1.20–1.30 |
+| Wind or solar selling at market prices | 1.40–1.60 |
+| Battery with a tolling agreement | 1.30–1.45 |
+| Battery selling purely at market prices | 1.60 or more, if a bank will lend at all |
 
-**Read that table as a price list for risk.** The more volatile the revenue, the more cover
-the lender demands, the less debt the project can carry, the more equity is required, the
-lower the equity return. **This is the mechanism by which contract structure determines
-value.**
+**Read that table as a price list for risk.** The less reliable the income, the bigger the
+cushion the lender demands. A bigger cushion means the same cash can only support a smaller
+loan. A smaller loan means the owner must put in more of their own expensive money. **That is
+the mechanism by which contract structure determines the owner's return** — the point made
+in §0.4 and §1.7, now with the machinery visible.
 
-### Debt sculpting
+### Debt sculpting — shaping the repayments to fit the cash
 
-For a project with lumpy cash flows, a flat repayment schedule is inefficient — you would
-have to size debt for the worst year. **Sculpting** solves this by deriving the repayment
-schedule *from* the cash flow so that DSCR is constant:
+If a project's cash flow varies year to year, a flat repayment schedule is inefficient: you
+would have to size the whole loan around the worst year. **Sculpting** means shaping the
+repayment schedule so it follows the cash, keeping the cover ratio constant:
 
-**Debt service in period t = CFADS in period t ÷ target DSCR**
+**Repayment in any year = that year's CFADS ÷ the target DSCR**
 
-**[CALC]** CFADS £8.5m, target DSCR 1.30× → allowable debt service = 8.5 ÷ 1.30 = **£6.538m
-per year**. Over 15 years at a 6% interest rate, the annuity factor is
-(1 − 1.06⁻¹⁵) ÷ 0.06 = 9.712, so:
+**[CALC] Working out the maximum loan**
 
-**Maximum debt = £6.538m × 9.712 ≈ £63.5m**
+Cash available £8.5 million a year, target cover ratio 1.30:
+- Affordable annual repayment = 8.5 ÷ 1.30 = **£6.538 million a year**
 
-**Why this is the highest-value calculation in the programme:** it determines leverage;
-leverage determines the equity cheque; the equity cheque determines the return. Debt sizing
-is where value is created or destroyed in infrastructure — **not** in the energy yield. An
-engineer who can sculpt debt is a different professional from one who cannot.
+Now convert that annual stream into a lump sum today. Over 15 years at 6% interest, the
+**annuity factor** — the multiplier that converts "£1 a year for n years" into "how much you
+could borrow today" — is (1 − 1.06⁻¹⁵) ÷ 0.06 = **9.712**.
+
+- **Maximum loan = £6.538 million × 9.712 ≈ £63.5 million**
+
+**That is what "the project supports £63.5 million of debt" means** (§0.4). It is the largest
+loan whose repayments this project's cash can cover with the required cushion.
+
+**Why this is the highest-value calculation in the programme:** it sets how much you can
+borrow; how much you can borrow sets how much of your own money you must put in; how much of
+your own money you put in sets your return. **Value in infrastructure is created or destroyed
+in the debt sizing, not in the energy yield.** An engineer who can do this is a different
+professional from one who cannot.
 
 ### The two other cover ratios
 
-- **LLCR** = **L**oan **L**ife **C**over **R**atio = present value of CFADS over the
-  remaining loan life ÷ debt outstanding. Measures whether the *whole loan* is covered, not
-  just this period.
-- **PLCR** = **P**roject **L**ife **C**over **R**atio = the same, but over the whole project
-  life including the period after the loan matures (the **tail**). Always higher than LLCR.
+- **LLCR — Loan Life Cover Ratio.** The present value of all future cash over the remaining
+  life of the loan, divided by the amount still owed. Asks: *is the whole loan covered?*
+  rather than just this year's payment.
+- **PLCR — Project Life Cover Ratio.** The same, but over the entire life of the project,
+  including the years after the loan is repaid. Always a higher number than LLCR.
 
-**Tail.** Lenders like the loan to mature well before the asset stops producing, leaving a
-buffer. A "2-year tail" means the debt is repaid two years before the expected end of life.
+**Tail** — the gap between the loan being fully repaid and the asset reaching the end of its
+life. Lenders want a buffer here. A "two-year tail" means the loan finishes two years before
+the wind farm is expected to stop.
 
 ### The P90 rule — where your existing skill becomes financial
 
-Lenders do **not** size debt on P50 energy. They size it on a downside case, typically
-**P90** — the annual production level that will be exceeded 90% of the time.
+*P50 and P90 are production levels: the amount of energy that will be exceeded 50% of the
+time and 90% of the time respectively.*
 
-**P90 = P50 × (1 − 1.2816 × σ)**, where σ (sigma) is the combined uncertainty as a fraction
-of P50, and 1.2816 is the standard normal value for a 90% one-sided confidence level.
+**Lenders do not size loans on P50 production.** They size on a pessimistic case, usually
+**P90** — the output level you would beat in nine years out of ten.
 
-**[CALC]** P50 = 112,128 MWh, combined uncertainty 12%:
-P90 = 112,128 × (1 − 1.2816 × 0.12) = 112,128 × 0.84621 = **94,882 MWh** — a 15.4% haircut.
+**P90 = P50 × (1 − 1.2816 × σ)**, where σ (sigma) is the combined uncertainty expressed as a
+fraction of P50, and 1.2816 is the statistical constant for a 90% one-sided confidence level.
 
-**The commercial consequence, which is the point:** every percentage point by which you
-reduce measurement uncertainty increases debt capacity by roughly 1.28%. **Your energy yield
-uncertainty analysis is directly, arithmetically, a debt-sizing input.** This is the single
-clearest bridge between what you already do and what a project finance professional does —
-and it is worth saying out loud in an interview.
+**[CALC]** P50 = 112,128 megawatt-hours, combined uncertainty 12%:
+P90 = 112,128 × (1 − 1.2816 × 0.12) = 112,128 × 0.84621 = **94,882 megawatt-hours** — a 15.4%
+reduction.
+
+**The commercial consequence, which is the point of this whole section:** every percentage
+point by which you reduce measurement uncertainty increases how much the project can borrow by
+roughly 1.28%. **Your energy yield uncertainty analysis is, arithmetically, a debt-sizing
+input.** This is the clearest single bridge between the work you already do and the work a
+project finance professional does — and it is worth saying out loud in an interview.
 
 **A subtlety that catches people out:** P90 for a *single year* and P90 for a *ten-year
-average* are different numbers, because inter-annual variability averages out over time.
-Lenders test debt service against the one-year P90 and overall repayment against the
-ten-year. Know which one you are being asked for.
+average* are different numbers, because good and bad years partly cancel out over time.
+Lenders test the annual repayment against the one-year P90, and overall repayment against the
+ten-year figure. Know which one you are being asked for.
 
-## 3.3 Debt instruments and terms
+## 3.3 Loan terminology
 
-| Term | Full name / meaning |
+| Term | Written out / plain English |
 |---|---|
-| **Senior debt** | First in line for repayment; lowest risk; lowest interest rate |
-| **Mezzanine / junior debt** | Repaid after senior; higher rate |
-| **Construction facility** | Debt drawn during building, converted to term debt at completion |
-| **Term debt** | Long-term amortising loan during operations |
-| **Amortisation** | Gradual repayment of principal over the loan life |
-| **Bullet repayment** | Principal repaid in one lump at maturity |
-| **Tenor** | The length of the loan |
-| **Margin** | The lender's spread over the reference rate, in **bps** (**b**asis **p**oint**s**; 1 bp = 0.01%) |
-| **SONIA** | **S**terling **O**vernight **I**ndex **A**verage — the GB reference interest rate |
-| **IDC** | **I**nterest **D**uring **C**onstruction — interest accrued before the asset earns anything, usually capitalised into the loan |
-| **Interest rate swap** | A hedge converting a floating rate to a fixed rate; lenders usually require most of the debt to be hedged |
-| **Refinancing** | Replacing existing debt with new debt, usually on better terms once construction risk has gone |
+| **Senior debt** | The loan that gets repaid first. Lowest risk, so lowest interest rate |
+| **Mezzanine** or **junior debt** | A loan repaid only after the senior loan. Higher risk, higher rate |
+| **Construction facility** | The loan drawn while building, converted to a long-term loan once complete |
+| **Term debt** | The long-term loan during operation |
+| **Amortising** | Repaid gradually over the loan's life |
+| **Bullet repayment** | The whole principal repaid in one lump at the end |
+| **Tenor** | How many years the loan runs for |
+| **Margin** | The lender's profit, added on top of a reference interest rate, quoted in **basis points** (one basis point = 0.01%; 100 basis points = 1%) |
+| **SONIA** | **S**terling **O**vernight **I**ndex **A**verage — the standard British reference interest rate |
+| **IDC** | **I**nterest **D**uring **C**onstruction — interest that builds up before the asset earns anything. Usually added to the loan rather than paid in cash |
+| **Interest rate swap** | An arrangement converting a variable interest rate into a fixed one. Lenders normally insist most of the loan is fixed this way |
+| **Refinancing** | Replacing the loan with a new, cheaper one |
 
-**Refinancing is a major value driver.** Once a project is built and operating, its risk
-drops sharply. Refinancing at that point releases cash to equity and can add several
-percentage points to the equity **IRR** (**I**nternal **R**ate of **R**eturn) without any
-change to the physical asset. **[OPINION]** Sponsors who plan the refinancing at financial
-close, rather than treating it as an afterthought, materially outperform.
+**Why refinancing matters so much.** Once a project is built and running, its risk drops
+sharply — construction, the most dangerous phase, is behind it. Replacing the original loan
+with a cheaper one at that point releases cash to the owner and can add several percentage
+points to the owner's return **without any physical change to the asset**. **[OPINION]**
+Sponsors who plan the refinancing from day one materially outperform those who treat it as an
+afterthought.
 
-## 3.4 The cash waterfall
+## 3.4 The cash waterfall — who gets paid in what order
 
-Project revenue is paid into a controlled account and released in a strict legal order. This
-is the **cash waterfall** (or **payment cascade**). Each level is paid in full before the
-next receives anything.
+*Abbreviations used in this section, written out: DSRA (Debt Service Reserve Account), MRA
+(Maintenance Reserve Account), DSCR (Debt Service Cover Ratio).*
+
+Project income is paid into a controlled bank account and released in a strict legal order,
+called the **cash waterfall** — the image is water filling one level completely before
+spilling into the next.
 
 | Order | Payment |
 |---:|---|
-| 1 | Operating costs and taxes |
-| 2 | Senior debt **interest** |
-| 3 | Senior debt **principal** |
-| 4 | **DSRA** (**D**ebt **S**ervice **R**eserve **A**ccount) top-up |
-| 5 | **MRA** (**M**aintenance **R**eserve **A**ccount) top-up |
-| 6 | Junior/mezzanine debt |
-| 7 | **Distributions to equity** — but only if the distribution tests pass |
+| 1 | Running costs and tax |
+| 2 | Loan **interest** |
+| 3 | Loan **principal** (the borrowed amount itself) |
+| 4 | Top up the **DSRA — Debt Service Reserve Account** |
+| 5 | Top up the **MRA — Maintenance Reserve Account** |
+| 6 | Junior lenders |
+| 7 | **The owner** — but only if the tests below are passed |
 
-**DSRA.** A reserve holding typically six months of debt service, so a bad quarter does not
-cause an immediate default.
+**DSRA — Debt Service Reserve Account.** A rainy-day fund, typically holding six months of
+loan repayments, so one bad quarter does not immediately cause default.
 
-**Distribution lock-up.** Equity is only paid if DSCR exceeds a **lock-up level** — set
-*above* the default level. For example, default at 1.00× but lock-up at 1.10×: between those
-two, the project is not in default but **cash is trapped and equity receives nothing**.
+**MRA — Maintenance Reserve Account.** The same idea for future major maintenance.
 
-**[OPINION]** The lock-up level, not the default level, is the covenant that actually
-governs equity returns in a stressed case. Junior modellers watch the default covenant.
-Experienced ones watch the lock-up. Knowing the difference is a genuine marker of competence.
+**Distribution lock-up — the one people miss.** The owner is only paid if the cover ratio
+(§3.2) is above a **lock-up level**, which is set *higher* than the default level. For example,
+default at 1.00 but lock-up at 1.10. If the ratio falls between those two numbers, the project
+is **not** in default — but **cash is trapped inside the company and the owner receives
+nothing.**
+
+**[OPINION]** In a bad scenario, it is the lock-up level, not the default level, that actually
+governs whether an owner sees any money. Junior modellers watch the default covenant.
+Experienced ones watch the lock-up. Knowing the difference is a real marker of competence.
 
 ---
 
-# PART 4 — VALUATION AND TRANSACTIONS
+# PART 4 — WHAT IT IS WORTH, AND HOW IT IS BOUGHT AND SOLD
 
-## 4.1 The core return measures
+## 4.1 Measuring the return
 
-| Measure | Full name | Definition | What it misses |
+*Abbreviations used in this section, written out: NPV (Net Present Value), IRR (Internal Rate
+of Return), MOIC (Multiple on Invested Capital), WACC (Weighted Average Cost of Capital).*
+
+| Measure | Written out | What it is | What it misses |
 |---|---|---|---|
-| **NPV** | **N**et **P**resent **V**alue | Sum of future cash flows discounted to today, minus the initial investment | Says nothing about scale relative to risk |
-| **IRR** | **I**nternal **R**ate of **R**eturn | The discount rate at which NPV = 0 | Assumes reinvestment at the IRR; can be misleading |
-| **MOIC** | **M**ultiple **o**n **I**nvested **C**apital | Total cash returned ÷ cash invested | Ignores time entirely |
-| **Payback** | — | Years until cumulative cash flow turns positive | Ignores everything after payback |
-| **Yield** | — | Annual cash distribution ÷ equity invested | Ignores capital growth |
+| **NPV** | Net Present Value | All future cash converted into today's money, minus what you spend | Says nothing about size relative to risk |
+| **IRR** | Internal Rate of Return | The annual percentage return, accounting for timing | Assumes you can reinvest at the same rate |
+| **MOIC** | Multiple on Invested Capital | Total cash you get back ÷ cash you put in. "2.0×" means you doubled your money | **Ignores time entirely** — 2× over 3 years and over 30 years look identical |
+| **Payback** | — | How many years until you have your money back | Ignores everything afterwards |
+| **Yield** | — | Annual cash paid out ÷ money invested | Ignores any growth in value |
 
-**Project IRR vs equity IRR — a distinction you must never blur.**
-- **Project IRR** (or unlevered IRR) is calculated on the project's cash flows *before*
-  financing. It measures the quality of the asset.
-- **Equity IRR** (levered IRR) is calculated on the equity investor's cash flows *after*
-  debt. It measures the quality of the asset **plus the financing structure**.
+**Project return versus owner's return — never blur these** (introduced in §0.5):
+- **Project IRR** (unlevered — *before* borrowing): the quality of the asset itself.
+- **Equity IRR** (levered — *after* borrowing): the quality of the asset **plus** the financing.
 
-Equity IRR is normally higher, because debt is cheaper than equity. That difference is
-**leverage working**. It also amplifies losses if things go badly.
+The owner's return is normally higher, because cheap borrowed money replaced expensive own
+money. That gap is leverage working. It also amplifies losses when things go badly.
 
-**[ESTIMATE] Indicative target returns, GB renewables — verify per deal and per vintage:**
+**[ESTIMATE] Indicative target returns for British renewables — verify on every deal:**
 
-| Stage | Typical equity IRR target |
+| Stage of the project | Typical target return to the owner |
 |---|---|
-| Operating, fully contracted | 6–8% |
-| Operating, part merchant | 8–11% |
-| Construction-ready (post-consent, post-grid) | 10–14% |
-| Development-stage | 15–25%+ |
+| Built, running, fully contracted | 6–8% a year |
+| Built, running, partly selling at market prices | 8–11% |
+| Consented and ready to build | 10–14% |
+| Still in development | 15–25%+ |
 
-**The pattern is the lesson:** you are paid for absorbing risk, and the risks that pay most
-are planning, grid and construction — precisely the risks your existing technical work
-assesses.
+**The pattern is the lesson:** you are paid for absorbing risk, and the risks that pay best are
+planning, grid connection and construction — **precisely the risks your existing technical
+work assesses.**
 
-## 4.2 WACC — the discount rate
+## 4.2 The discount rate
 
-**WACC** = **W**eighted **A**verage **C**ost of **C**apital. The blended cost of the money
-funding the project.
+**WACC — Weighted Average Cost of Capital.** The blended cost of all the money funding the
+project, weighting cheap debt and expensive equity by how much of each there is.
 
-**WACC = (E/V × Re) + (D/V × Rd × (1 − t))**
+**WACC = (share that is equity × cost of equity) + (share that is debt × cost of debt ×
+(1 − tax rate))**
 
-Where E = equity value, D = debt value, V = E + D, Re = cost of equity, Rd = cost of debt,
-t = tax rate. The **(1 − t)** term reflects that interest is tax-deductible, making debt
-cheaper still.
+The **(1 − tax rate)** part reflects that loan interest is tax-deductible, which makes
+borrowing cheaper still in practice.
 
-**[CALC]** 70% debt at 6%, 30% equity at 11%, 25% tax rate:
+**[CALC]** 70% debt at 6%, 30% equity at 11%, tax at 25%:
 WACC = (0.30 × 11%) + (0.70 × 6% × 0.75) = 3.30% + 3.15% = **6.45%**
 
-**Why WACC dominates infrastructure valuation.** These are long-duration, bond-like cash
-flows, so their value is unusually sensitive to the discount rate.
+**Why the discount rate dominates infrastructure valuation.** These are long, steady,
+bond-like cash flows, so their value is unusually sensitive to what rate you discount at.
 
-**[CALC]** A level £10m/year for 25 years:
-- At 6.0%: annuity factor 12.783 → **£127.8m**
-- At 8.0%: annuity factor 10.675 → **£106.7m**
+**[CALC]** A steady £10 million a year for 25 years:
+- Discounted at 6.0%: annuity factor 12.783 → worth **£127.8 million**
+- Discounted at 8.0%: annuity factor 10.675 → worth **£106.7 million**
 
-**A 200 basis point rate move destroys 16.5% of gross asset value** before anything changes
-about the wind, the panels or the market. And the effect compounds: higher rates also tighten
-DSCR-based debt sizing, so less debt is available, so the equity cheque rises, so bid prices
-fall further. **This is why interest rates reprice renewable assets faster than energy-market
-news does.**
+**A two-percentage-point rise in rates destroys 16.5% of the value** before anything changes
+about the wind, the panels or the electricity market. And it compounds: higher rates also
+tighten the debt sizing in §3.2, so less can be borrowed, so the owner must put in more of
+their own money, so the price they can afford to pay falls further.
 
-## 4.3 Enterprise value and equity value
+**This is why interest rate moves reprice renewable assets faster than energy news does.**
 
-- **EV** = **E**nterprise **V**alue = the value of the whole business, regardless of how it
-  is financed.
-- **Equity value** = EV − net debt. What the shareholders' stake is worth.
-- **Net debt** = gross debt − cash, plus debt-like items (pension deficits, decommissioning
-  provisions, deferred consideration).
+## 4.3 What the business is worth versus what your shares are worth
 
-**Where deals go wrong:** arguing about EV and then discovering the parties disagree about
-what counts as a debt-like item. Decommissioning provisions in particular are frequently
-contested in renewable transactions.
+*Abbreviations used in this section, written out: EV (Enterprise Value).*
 
-## 4.4 The transaction mechanics
+- **EV — Enterprise Value.** What the whole business is worth, regardless of how it was funded.
+- **Equity value.** Enterprise Value **minus net debt**. What the shareholders' stake is worth.
+- **Net debt.** Total borrowings minus cash, plus **debt-like items** — other obligations
+  treated as if they were debt, such as pension deficits, decommissioning provisions and
+  deferred payments.
 
-| Term | Meaning |
-|---|---|
-| **SPA** | **S**ale and **P**urchase **A**greement — the contract selling the asset or shares |
-| **Locked box** | Price fixed at a historic balance-sheet date; the buyer gets economic benefit from that date |
-| **Completion accounts** | Price adjusted after closing based on actual cash and working capital |
-| **Reps and warranties** | Statements of fact by the seller; if untrue, the buyer may claim |
-| **Indemnity** | A promise to compensate for a specific identified risk |
-| **W&I insurance** | **W**arranty **a**nd **I**ndemnity insurance — a policy covering warranty breaches, allowing a clean exit for the seller |
-| **CP** | **C**ondition **P**recedent — something that must happen before completion |
-| **Earn-out** | Deferred payment contingent on future performance |
-| **Data room** | The secure repository of documents buyers review |
-| **VDD** | **V**endor **D**ue **D**iligence — reports the seller commissions to present to all bidders |
-| **IC** | **I**nvestment **C**ommittee — the body that approves an investment |
-| **NBO / IOI** | **N**on-**B**inding **O**ffer / **I**ndication **o**f **I**nterest |
-| **Exclusivity** | A period in which the seller negotiates with one bidder only |
+**Where deals go wrong:** the parties agree on the enterprise value, then discover they
+disagree about what counts as a debt-like item. **Decommissioning provisions are frequently
+contested in renewable transactions**, because they can be large and the assumptions behind
+them are arguable.
 
-### The due diligence workstreams
+## 4.4 How a sale actually happens
 
-| Workstream | Abbreviation | What it examines | **Who does it** |
+*Abbreviations used in this section, written out: SPA (Sale and Purchase Agreement), W&I
+(Warranty and Indemnity), CP (Condition Precedent), IC (Investment Committee), VDD (Vendor Due
+Diligence), NBO (Non-Binding Offer), IOI (Indication of Interest), TDD (Technical Due
+Diligence), LTA (Lender's Technical Adviser), CDD (Commercial Due Diligence), FDD (Financial
+Due Diligence), LDD (Legal Due Diligence).*
+
+| Term | Written out | Plain English |
+|---|---|---|
+| **SPA** | Sale and Purchase Agreement | The contract that actually sells the asset |
+| **Locked box** | — | The price is fixed as at a past accounts date; the buyer gets the benefit of everything the business earned since |
+| **Completion accounts** | — | The opposite: the price is adjusted after the sale based on actual cash and working capital |
+| **Reps and warranties** | Representations and warranties | Statements of fact the seller makes. If untrue, the buyer can claim compensation |
+| **Indemnity** | — | A specific promise to cover a specific identified risk |
+| **W&I insurance** | Warranty and Indemnity insurance | A policy covering breaches of those statements, so the seller can walk away cleanly |
+| **CP** | Condition Precedent | Something that must happen before the sale can complete |
+| **Earn-out** | — | Part of the price paid later, only if the asset performs |
+| **Data room** | — | The secure online folder of documents buyers are allowed to review |
+| **VDD** | Vendor Due Diligence | Reports the *seller* commissions and shows to every bidder |
+| **IOI / NBO** | Indication of Interest / Non-Binding Offer | An early price indication that does not commit you |
+| **Exclusivity** | — | A period where the seller talks to only one bidder |
+| **IC** | Investment Committee | The group inside an investor that approves or rejects the deal |
+
+### The due diligence workstreams — and your route in
+
+**Due diligence** means investigating something thoroughly before buying it. It is split into
+workstreams, each done by a different kind of specialist:
+
+| Workstream | Written out | The question it answers | Who does it |
 |---|---|---|---|
-| Technical | **TDD** | Will the asset physically perform? | **Engineers — this is you** |
-| Lender's technical | **LTA** (**L**ender's **T**echnical **A**dviser) | Same question, but for the banks | **Engineers — this is you** |
-| Commercial | **CDD** | Is the market view sound? | Strategy consultants |
-| Financial | **FDD** | Are the accounts and the model right? | Accountants |
-| Legal | **LDD** | Are the contracts and title sound? | Lawyers |
-| Tax | — | What is the tax exposure? | Tax advisers |
-| Insurance | — | Is cover adequate? | Brokers |
+| **TDD** | Technical Due Diligence | Will the asset physically perform? | **Engineers — this is you** |
+| **LTA** | Lender's Technical Adviser | The same question, but answered *for the banks* | **Engineers — this is you** |
+| **CDD** | Commercial Due Diligence | Is the view of the market sound? | Strategy consultants |
+| **FDD** | Financial Due Diligence | Are the accounts and the model right? | Accountants |
+| **LDD** | Legal Due Diligence | Are the contracts and land rights sound? | Lawyers |
+| Tax | — | What tax will be payable? | Tax advisers |
+| Insurance | — | Is the cover adequate? | Insurance brokers |
 
-**This table is the map of your entry route.** You already produce two of these seven
-workstreams. The LTA report is read directly by the credit committee that approves the debt.
-Being in that room — even as the technical adviser — is how you learn what lenders actually
-care about, which is the knowledge that makes the move to the investment side possible.
+**This table is the map of your entry route into investment work.** You already produce two of
+these seven workstreams. The Lender's Technical Adviser report goes directly to the committee
+that approves the loan. Being in that room — even as the engineer — is how you learn what
+lenders actually care about, and that knowledge is what makes moving to the investment side
+possible.
 
 ---
 
-## 5. Practical exercises
+# PART 5 — PRACTICAL WORK
 
-### Excel — build `D1_revenue_stack.xlsx`
+## 5.1 Excel exercise — build `D1_revenue_stack.xlsx`
 
-Three tabs, one per technology, plus shared inputs.
+Three tabs, one per technology, plus a shared inputs tab.
 
-**Wind tab.** Inputs: capacity, P50 generation, degradation, availability, curtailment %.
-Revenue: capture price (use 94.0% of your power curve, from Project 1) × volume; ROC revenue
-(ROCs/MWh × buy-out + recycle); REGO revenue; less TNUoS (£/kW × capacity), less PPA discount.
-Model both an RO case and a CfD case and compare.
+**Wind tab.** Inputs: size, P50 production, degradation, availability, curtailment
+percentage. Income: capture price (use 94.0% of your assumed market price) × volume;
+certificate income (certificates per megawatt-hour × buy-out price × (1 + recycle
+percentage)); green certificate income; less network charges (per kilowatt × size); less the
+route-to-market discount. Build both a Renewables Obligation version and a Contract for
+Difference version and compare them.
 
-**Solar tab.** Same structure but with an 81.9% capture rate and a CfD at £65/MWh (2024
-prices, indexed to CPI).
+**Solar tab.** The same structure with an 81.9% capture rate and a Contract for Difference at
+£65 per megawatt-hour in 2024 money, increased for inflation.
 
-**BESS tab.** Four revenue lines per §1.7. Then build the toll comparison: same asset, two
-contract structures, and show the difference in supportable debt at a 1.35× vs 1.60× DSCR.
+**Battery tab.** The four income lines from §1.7. Then build the tolling comparison: the same
+battery under two contract structures, showing how much each can borrow at a 1.35 versus a
+1.60 cover ratio.
 
-**Checks to include:** capture rate between 0 and 150%; revenue lines all positive;
-TNUoS charged on capacity not output; the CfD difference payment reverses sign correctly when
-the market price exceeds the strike price.
+**Checks to build in:** capture rate between 0 and 150%; every income line positive; network
+charges calculated on capacity not output; the Contract for Difference payment correctly
+**reversing direction** when the market price exceeds the strike price.
 
-### Python — extend Project 1
+## 5.2 Python exercise — extend the existing dashboard
 
-Add to `gb_power.py`:
-1. A `roc_revenue(mwh, roc_banding, buyout, recycle_pct)` function.
-2. A `cfd_revenue(prices, volumes, strike)` function that correctly handles the **two-way**
-   payment — including the case where the generator pays money back.
-3. A `revenue_stack(...)` function returning a dictionary of all lines, so you can chart the
-   stack.
+Add to `curriculum/projects/p1_gb_power_dashboard/gb_power.py`:
 
-### The decision case
+1. `roc_revenue(mwh, certificates_per_mwh, buyout_price, recycle_pct)`
+2. `cfd_revenue(prices, volumes, strike)` — handling the **two-way** payment properly,
+   including the case where the generator pays money back
+3. `revenue_stack(...)` returning a dictionary of all income lines, so the stack can be charted
 
-> You are the lender's technical adviser on a 45 MW operating onshore wind farm in
-> Lanarkshire. The information memorandum states: *"P50 production 126 GWh, RO-accredited at
-> 0.9 ROCs/MWh with 9 years of support remaining, availability 97.2%, 25-year design life
-> with 16 years elapsed."* The buyer's model applies a flat £85/MWh merchant price after the
-> RO ends and assumes 126 GWh every year.
+## 5.3 Decision case — you are the lender's technical adviser
 
-Before reading on, answer: (1) implied capacity factor and is it plausible? (2) name five
-things wrong with the revenue assumptions. (3) what single missing document would most change
-your view? (4) what do you recommend?
+> You are advising the banks on a 45 megawatt operating onshore wind farm in Lanarkshire. The
+> sales document states: *"P50 production 126 gigawatt-hours, registered under the Renewables
+> Obligation at 0.9 certificates per megawatt-hour with 9 years of support remaining,
+> availability 97.2%, 25-year design life with 16 years elapsed."* The buyer's model applies a
+> flat £85 per megawatt-hour market price after the support ends and assumes 126 gigawatt-hours
+> every single year.
+
+Answer before reading on: (1) What is the implied capacity factor, and is it plausible?
+(2) Name five things wrong with the income assumptions. (3) What single missing document would
+most change your view? (4) What do you recommend?
 
 <details>
-<summary>Model answer</summary>
+<summary>Model answer — open only after attempting</summary>
 
-**(1)** 126,000 ÷ (45 × 8,760) = **31.96%** — plausible for a good Lanarkshire site, at the
-upper end. Challenge the wind data vintage and the MCP (**M**easure-**C**orrelate-**P**redict)
-reference station.
+**(1)** 126,000 ÷ (45 × 8,760) = **31.96%**. Plausible for a good Lanarkshire site, towards
+the upper end — so challenge the age of the wind data and the reference station used.
 
-**(2)** Five errors:
-- **No degradation.** Wind output declines roughly 0.2–0.5%/year; nine flat years overstates
-  cumulative production.
-- **Flat merchant price ignores capture rate.** Wind captured 94.0% of baseload in the
-  measured period, and Scottish wind typically fares worse than the GB average. Applying
-  £85 baseload to wind volume overstates revenue.
-- **No curtailment.** Lanarkshire sits behind constrained boundaries. With zonal pricing
-  rejected, constraint costs and curtailment are the mechanism by which location bites.
-- **P50 used for debt sizing.** A lender will size to P90 — here roughly 15% lower.
-- **The ROC cliff is not modelled as a cliff.** In year 9 roughly a third of revenue vanishes
-  overnight. And the **RPI-to-CPI indexation change from 1 April 2026 permanently reduces**
-  the ROC value in the remaining years — check whether the model was built before that change.
-- Also: **remaining life**. 16 of 25 years elapsed, but the model runs 9 more years of RO
-  plus a merchant tail — does the asset physically last, and has life extension been
-  assessed? What is the decommissioning provision?
+**(2)** Five problems:
+- **No degradation.** Wind farms lose roughly 0.2–0.5% of output a year. Nine flat years
+  overstates cumulative production.
+- **A flat price ignores capture rate.** Wind captured 94.0% of the market average in the
+  measured period, and Scottish wind typically does worse than the national figure. Applying
+  £85 to wind volume overstates income.
+- **No curtailment.** Lanarkshire sits behind congested network boundaries. With zonal pricing
+  rejected, curtailment and constraint costs are how a poor location bites (§2.3).
+- **P50 used for the loan.** A lender will size on P90 — here roughly 15% lower (§3.2).
+- **The certificate income is not modelled as a cliff.** In year nine, roughly a third of
+  income vanishes overnight. And the **switch from RPI to CPI indexation on 1 April 2026
+  permanently reduces** the certificate value in the remaining years — check whether the model
+  was built before that change.
+- Also: 16 of 25 design years have elapsed but the model runs 9 more years plus a market-priced
+  tail. Does the asset physically last that long? Has life extension been assessed? What
+  decommissioning provision is held?
 
-**(3)** **The historical half-hourly generation and settlement data.** From it you derive the
-*actual achieved capture price* and observed curtailment, rather than assuming them. Second
-best: the connection agreement and any active network management or intertrip conditions.
+**(3)** **The historical half-hourly generation and settlement data.** From it you can derive
+the *actual achieved capture price* and *observed curtailment*, rather than assuming either.
+Second best: the grid connection agreement and any active network management conditions.
 
-**(4)** Re-run with a capture-rate curve rather than a flat price; apply degradation; model
-curtailment explicitly; rebuild debt on P90; model the ROC end date as a step change; confirm
-the CPI indexation is reflected. Expect a valuation materially below the seller's case. Do not
-sign the technical section until the half-hourly data is in the data room.
+**(4)** Rerun with a capture-rate curve instead of a flat price; apply degradation; model
+curtailment explicitly; rebuild the loan on P90; model the certificate end date as a step
+change; confirm the CPI indexation is reflected. Expect a valuation materially below the
+seller's. Do not sign off the technical section until the half-hourly data is in the data room.
 
-**What an experienced practitioner notices immediately:** the merchant tail plus the ROC cliff
-mean that **the least reliable assumption in the model drives most of the value**. That is the
-signature of a badly structured model, and it is the first thing to say in the report.
+**What an experienced practitioner spots immediately:** the market-priced tail plus the
+certificate cliff mean **the least reliable assumption in the model drives most of the value**.
+That is the signature of a badly structured model, and it should be the first line of your
+report.
 </details>
 
 ---
 
-## 6. Competence check
+## 6. Have you understood it?
 
 You have understood this module when you can, without notes:
 
-1. Explain what a ROC is, how its price is set, and why the RPI-to-CPI change matters.
-2. Explain the two-way CfD mechanism, including the direction of payment when prices are high.
-3. State why solar's capture rate is lower than wind's, and quantify both from real data.
-4. Explain why a tolled battery can support more debt than a merchant one despite earning less.
-5. Compute a DSCR, and sculpt a debt profile from a CFADS stream and a target ratio.
-6. Explain why P90 rather than P50 is used for debt sizing, and what a 1% uncertainty
-   reduction is worth.
+1. Explain what a Renewables Obligation Certificate is, how its price is set from the buy-out
+   price plus the recycle value, and why the switch from RPI to CPI indexation matters.
+2. Explain the two-way Contract for Difference mechanism — **including which direction the
+   money flows when market prices are high.**
+3. Say why solar's capture rate is lower than wind's, and quote both from real data.
+4. Explain, in plain English, what it means for a project to "support more debt", and why a
+   tolled battery supports more than a merchant one despite earning less.
+5. Calculate a Debt Service Cover Ratio, and work out a maximum loan from a cash flow, a target
+   ratio, an interest rate and a term.
+6. Explain why lenders use P90 rather than P50, and what a one-percentage-point reduction in
+   uncertainty is worth in borrowing capacity.
 7. Name the seven due diligence workstreams and say which two you already produce.
 
-**Next module: D2 — Building the Model**, which takes these revenue lines and constructs a
-full project finance model from a blank workbook.
+**Interactive companion:** `curriculum/revenue-stack-explorer.html` — build each stack and
+watch the borrowing capacity change.
 
-**Complete glossary of every acronym and financial term:** [`../GLOSSARY.md`](../GLOSSARY.md)
+**Next module: D2 — Building the Model**, which takes these income lines and constructs a
+complete project finance model from an empty spreadsheet.

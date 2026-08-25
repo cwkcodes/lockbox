@@ -110,7 +110,7 @@ footer p+p{margin-top:9px}
   <div class="wrap">
     <span class="eyebrow">Module D1 · companion tool</span>
     <h1>Revenue Stack Explorer</h1>
-    <p class="sub">A renewable asset almost never earns "the power price". It earns a stack of separate revenue lines, from separate counterparties, with separate risk. Change the assumptions below and watch what happens — first to revenue, then to how much a bank will lend.</p>
+    <p class="sub">A wind farm, solar farm or battery almost never earns "the power price". It earns a <b>stack</b> — several separate income lines, paid by different people, under different contracts, with different levels of certainty. Change the assumptions below and watch what happens: first to the income, then to how much money a bank would lend against it.</p>
   </div>
 </header>
 
@@ -118,7 +118,7 @@ footer p+p{margin-top:9px}
 
 <section>
   <h2>1 · Build the stack</h2>
-  <p class="lede">Five real GB structures. Switch between them and watch the composition change — particularly how much of the total is <em>contracted</em>.</p>
+  <p class="lede">Six real British structures. Switch between them and watch the mix change — above all, how much of the income is <b>contracted</b> (someone has signed a contract promising to pay it) rather than <b>merchant</b> (you sell at whatever the market happens to pay that day).</p>
 
   <div class="panel">
     <div class="grid">
@@ -126,12 +126,12 @@ footer p+p{margin-top:9px}
         <div class="ctl">
           <label for="tech">Asset and contract structure</label>
           <div class="segs" id="tech" style="flex-direction:column">
-            <button class="seg" data-t="windRO" aria-pressed="true">Onshore wind · RO / ROCs</button>
-            <button class="seg" data-t="windCfD" aria-pressed="false">Onshore wind · CfD @ £72</button>
-            <button class="seg" data-t="solarCfD" aria-pressed="false">Solar PV · CfD @ £65</button>
-            <button class="seg" data-t="solarMerch" aria-pressed="false">Solar PV · fully merchant</button>
-            <button class="seg" data-t="bessMerch" aria-pressed="false">BESS · merchant</button>
-            <button class="seg" data-t="bessToll" aria-pressed="false">BESS · tolled</button>
+            <button class="seg" data-t="windRO" aria-pressed="true">Onshore wind · Renewables Obligation</button>
+            <button class="seg" data-t="windCfD" aria-pressed="false">Onshore wind · Contract for Difference, £72</button>
+            <button class="seg" data-t="solarCfD" aria-pressed="false">Solar · Contract for Difference, £65</button>
+            <button class="seg" data-t="solarMerch" aria-pressed="false">Solar · sold at market prices only</button>
+            <button class="seg" data-t="bessMerch" aria-pressed="false">Battery storage · market-priced</button>
+            <button class="seg" data-t="bessToll" aria-pressed="false">Battery storage · tolled (fixed fee)</button>
           </div>
         </div>
 
@@ -172,40 +172,40 @@ footer p+p{margin-top:9px}
 </section>
 
 <section>
-  <h2>2 · What a bank will lend against it</h2>
-  <p class="lede">This is the part that surprises engineers. Revenue is not what determines value — <em>bankable</em> revenue is.</p>
+  <h2>2 · How much a bank will lend against it</h2>
+  <p class="lede">This is the part that surprises engineers. It is not how <em>much</em> income the asset earns that decides how much you can borrow — it is how <em>reliable</em> that income is. The phrase "this project supports £8 million of debt" simply means "£8 million is the largest loan a bank would advance against it".</p>
 
   <div class="panel">
     <div class="grid">
       <div>
         <div class="ctl">
-          <label for="dscr">Target DSCR <span class="val" id="dscrV">1.30×</span></label>
+          <label for="dscr">Cover ratio the lender demands <span class="val" id="dscrV">1.30×</span></label>
           <input type="range" id="dscr" min="1.10" max="1.80" step="0.05" value="1.30">
         </div>
         <div class="ctl">
-          <label for="rate">Debt interest rate <span class="val" id="rateV">6.0%</span></label>
+          <label for="rate">Interest rate on the loan <span class="val" id="rateV">6.0%</span></label>
           <input type="range" id="rate" min="3" max="10" step="0.25" value="6">
         </div>
         <div class="ctl">
-          <label for="tenor">Debt tenor <span class="val" id="tenorV">15 years</span></label>
+          <label for="tenor">Loan length (tenor) <span class="val" id="tenorV">15 years</span></label>
           <input type="range" id="tenor" min="5" max="25" step="1" value="15">
         </div>
         <div class="ctl">
-          <label for="opex">Operating costs <span class="val" id="opexV">£45k/MW/yr</span></label>
+          <label for="opex">Annual running costs <span class="val" id="opexV">£45k/MW/yr</span></label>
           <input type="range" id="opex" min="10" max="120" step="5" value="45">
         </div>
         <div class="ctl">
-          <label for="hc">Lender's haircut on merchant revenue <span class="val" id="hcV">30%</span></label>
+          <label for="hc">Safety cut applied to market-priced income <span class="val" id="hcV">30%</span></label>
           <input type="range" id="hc" min="0" max="60" step="5" value="30">
         </div>
-        <p class="note"><b>DSCR</b> = Debt Service Cover Ratio = cash available ÷ debt repayments. A lender sets a minimum. Volatile revenue means a higher minimum, which means less debt.</p>
-        <p class="note"><b>The haircut is the mechanism people miss.</b> A lender does not size debt on <em>expected</em> revenue — it sizes on a downside case. Contracted income is taken at face value; merchant income is cut before it counts, because nobody will underwrite a price and volume nobody controls. Set it to 0% and the distinction between contract structures largely vanishes, which is exactly why it exists.</p>
+        <p class="note"><b>Cover ratio</b> — properly the <b>DSCR (Debt Service Cover Ratio)</b> — is the cash the project generates divided by the loan repayments it owes. A ratio of 1.30 means it earns 30% more than it needs, so there is a cushion. The lender sets a minimum. <b>Less reliable income means a bigger cushion demanded, which means the same cash supports a smaller loan.</b></p>
+        <p class="note"><b>The safety cut is the mechanism people miss.</b> A bank does not lend against what you <em>expect</em> to earn — it lends against a deliberately pessimistic version. Income guaranteed by a contract counts in full. Income that depends on market prices gets cut before it counts, because no lender will take a risk on a price nobody controls. Slide it to 0% and the difference between contract structures largely disappears — which is precisely why lenders apply it.</p>
       </div>
 
       <div>
         <div class="stats" id="debtStats"></div>
         <div class="scroll">
-          <svg viewBox="0 0 700 200" width="700" height="200" id="debtChart" role="img" aria-label="Funding split between debt and equity"></svg>
+          <svg viewBox="0 0 700 225" width="700" height="225" id="debtChart" role="img" aria-label="Funding split between debt and equity"></svg>
         </div>
       </div>
     </div>
@@ -216,18 +216,32 @@ footer p+p{margin-top:9px}
 
   <div class="callout">
     <span class="eyebrow">The counter-intuitive bit — sit with this one</span>
-    <p>Switch between <b>BESS · merchant</b> and <b>BESS · tolled</b> at the default settings. The tolled battery earns about <b>£260,000 a year less</b>. It supports roughly <b>£4.6m more debt</b> — £7.9m against £3.3m, more than double.</p>
-    <p>Two things cause it, and both are visible in the controls. The toll is <em>contracted</em>, so it escapes the lender's haircut entirely, while merchant revenue is cut by 30% before it counts. And a contracted asset is allowed a lower DSCR — 1.35× rather than 1.60×. The two effects compound.</p>
-    <p>More debt means a smaller equity cheque for the same physical asset. Since return is measured against equity invested, the <em>lower-revenue</em> structure can produce the <em>higher</em> equity return. That is the moment engineering intuition gives way to financial intuition, and it is the core of infrastructure investing. Nothing about the battery changed — only who carries the risk.</p>
+    <p>Switch between <b>Battery storage · market-priced</b> and <b>Battery storage · tolled</b> at the default settings. The tolled battery earns about <b>£260,000 a year less</b>. Yet a bank will lend it roughly <b>£4.6 million more</b> — about £7.9 million against £3.3 million, more than double.</p>
+    <p>Two things cause that, and both are visible in the sliders. First, a tolling fee is <em>contracted</em> — someone has signed a contract promising to pay it — so it escapes the safety cut entirely, while market-priced income is reduced by 30% before it counts. Second, because the income is contracted, the lender accepts a smaller cushion: a cover ratio of 1.35 rather than 1.60. The two effects multiply together.</p>
+    <p>Borrowing more means the owner has to find <em>less of their own cash</em> for the same physical battery. And since return is measured against the owner's own cash, the structure that earns <em>less money</em> can produce the <em>higher return for the owner</em>.</p>
+    <p>That is genuinely counter-intuitive, and it is the core of infrastructure investing. Nothing about the battery changed — only who carries the risk of the income being wrong.</p>
   </div>
 </section>
 
 <section>
-  <h2>3 · Every term used above</h2>
-  <p class="lede">No acronym goes unexplained. The full list of roughly 350 terms is in the repository glossary.</p>
+  <h2>3 · Every term used above, written out in full</h2>
+  <p class="lede">Nothing on this page assumes you already know an abbreviation or a piece of finance jargon. Each entry spells the term out and explains it in ordinary English.</p>
 
   <div class="panel">
     <dl class="terms">
+      <div><dt>The stack</dt><dd>Shorthand for <b>the full list of a project's income sources added together</b>. A wind farm does not have one income; it has four or five, from different payers, and "the revenue stack" means all of them at once.</dd></div>
+      <div><dt>Contracted</dt><dd>Income where <b>someone has signed a contract promising to pay you a known amount</b>. You know roughly what is coming.</dd></div>
+      <div><dt>Merchant</dt><dd>The opposite: income where <b>you sell at whatever the market happens to pay</b>, with nobody promising anything. It might be more than expected; it might be far less.</dd></div>
+      <div><dt>"Supports £8m of debt"</dt><dd>Industry shorthand meaning <b>"£8 million is the largest loan a bank would be willing to advance against this project"</b>. The bank is not looking at how big or expensive the project is — only at whether the yearly cash comfortably covers the repayments. Related phrases meaning the same thing: <em>debt capacity</em>, <em>sizing the debt</em>, <em>how much it will raise</em>.</dd></div>
+      <div><dt>Debt</dt><dd><b>Borrowed money.</b> Repaid on a fixed schedule with interest, whether or not the wind blew. The lender is paid before the owner. Because it is paid first and its return is capped, lending is relatively safe — so it is <b>cheap money</b>.</dd></div>
+      <div><dt>Equity</dt><dd><b>The owner's own money.</b> Gets whatever cash is left after everyone else is paid, and can lose everything. Because of that, it demands a much higher return — it is <b>expensive money</b>.</dd></div>
+      <div><dt>Gearing<br>(or leverage)</dt><dd><b>The proportion of the project funded by borrowing.</b> £70m borrowed out of £100m total is "70% geared". British practitioners tend to say gearing, Americans leverage; they mean the same thing.</dd></div>
+      <div><dt>Why borrowing more is good</dt><dd>Borrowed money is cheap and the owner's own money is expensive. Funding more of the project with cheap money means <b>the owner has to put in less of their own cash for the same asset</b>. Since return is measured as a percentage of the owner's own cash, tying up less of it raises the return. <b>The catch:</b> the repayments do not shrink in a bad year, so borrowing magnifies losses just as much as gains.</dd></div>
+      <div><dt>Safety cut<br>("haircut")</dt><dd><b>Deliberately reducing a number before relying on it.</b> A bank does not lend against what you expect to earn — it lends against a pessimistic version, cutting market-priced income before counting it.</dd></div>
+      <div><dt>Bankable</dt><dd>Reliable enough that <b>a bank is willing to lend against it</b>. Contracted income is bankable; income that swings by 70% in a quarter mostly is not.</dd></div>
+      <div><dt>Cover ratio<br>(DSCR)</dt><dd>Properly the <b>Debt Service Cover Ratio</b>. The cash a project generates divided by the loan repayments it owes. <b>How many times over can it afford its repayments?</b> 1.00 means exactly enough and no cushion; 1.30 means 30% more than it needs. Lenders set a minimum, and demand a bigger one when income is less reliable.</dd></div>
+      <div><dt>Cash available<br>(CFADS)</dt><dd><b>Cash Flow Available for Debt Service</b> — read literally, the cash the project has available to pay its loan with. Income minus running costs, tax and money that must go back into the asset. <b>It is not the same as profit</b>, and treating it as profit always flatters the answer.</dd></div>
+      <div><dt>Annuity factor</dt><dd>The multiplier that converts <b>"£1 a year for n years"</b> into <b>"how much you could borrow today"</b>. At 6% over 15 years it is 9.71 — so an affordable repayment of £1m a year supports a loan of about £9.7m.</dd></div>
       <div><dt>RO / ROC</dt><dd><b>Renewables Obligation / Renewables Obligation Certificate.</b> The legacy GB subsidy. Suppliers must present certificates to prove they sourced renewable power, so generators can sell them. Closed to new capacity on 31 March 2017, but existing assets receive support for 20 years from accreditation — so you will meet ROC-backed assets in due diligence throughout the 2030s.</dd></div>
       <div><dt>Buy-out price</dt><dd>The penalty a supplier pays instead of presenting a ROC. It sets the ceiling on what a ROC is worth. <b>£69.34 for the year to 31 March 2027.</b> The uprating switched from RPI to CPI inflation on 1 April 2026, which permanently reduces the long-run value of every ROC-backed asset in Great Britain.</dd></div>
       <div><dt>CfD</dt><dd><b>Contract for Difference.</b> The current scheme. If the market price is below the agreed strike price the generator is topped up; <b>if it is above, the generator pays money back</b>. That two-way flow is what makes it a contract for difference rather than a subsidy — the generator has sold its price risk.</dd></div>
@@ -267,22 +281,22 @@ footer p+p{margin-top:9px}
   var COL={wholesale:"var(--c1)",subsidy:"var(--c4)",rego:"var(--c5)",cm:"var(--c3)",bm:"var(--c2)",anc:"var(--c5)",toll:"var(--c4)"};
 
   var TECH={
-    windRO:{label:"Onshore wind · RO",isBess:false,capture:0.940,cf:32,
+    windRO:{label:"Onshore wind, Renewables Obligation",isBess:false,capture:0.940,cf:32,
       note:"Receives 0.9 ROCs per MWh at £69.34 buy-out plus an assumed 10% recycle. Note how much of the stack is the certificate, not the power — and that this scheme has a hard end date.",
       dscr:1.30},
-    windCfD:{label:"Onshore wind · CfD",isBess:false,capture:0.940,cf:32,strike:72,
+    windCfD:{label:"Onshore wind, Contract for Difference",isBess:false,capture:0.940,cf:32,strike:72,
       note:"AR7 cleared onshore wind at £72/MWh in 2024 prices, on a 20-year contract. The CfD replaces the market price entirely, so the power price slider barely moves the answer — that is the whole point of a CfD.",
       dscr:1.25},
-    solarCfD:{label:"Solar PV · CfD",isBess:false,capture:0.819,cf:11,strike:65,
+    solarCfD:{label:"Solar, Contract for Difference",isBess:false,capture:0.819,cf:11,strike:65,
       note:"AR7 cleared solar at £65/MWh in 2024 prices. Solar's low capacity factor means large capacity produces modest energy — check the MWh figure against the capacity you set.",
       dscr:1.25},
-    solarMerch:{label:"Solar PV · merchant",isBess:false,capture:0.819,cf:11,
+    solarMerch:{label:"Solar, market prices only",isBess:false,capture:0.819,cf:11,
       note:"No subsidy at all. Revenue is capture price times volume, and solar captured only 81.9% of baseload in the measured window. Move the power price slider and watch revenue move one-for-one — this is unhedged price risk.",
       dscr:1.50},
-    bessMerch:{label:"BESS · merchant",isBess:true,
+    bessMerch:{label:"Battery storage, market-priced",isBess:true,
       note:"Anchored to Modo Energy's £73,145/MW/yr benchmark for 2-hour systems. Only the Capacity Market line is contracted — roughly 7% of the total. Everything else swung between £41k and £70k/MW/yr inside one quarter in 2026.",
       dscr:1.60},
-    bessToll:{label:"BESS · tolled",isBess:true,toll:true,
+    bessToll:{label:"Battery storage, tolled",isBess:true,toll:true,
       note:"A counterparty pays a fixed fee and takes all market revenue. Lower expected income, near-zero volatility. Now go to section 2 and lower the DSCR to about 1.35× — the debt capacity is the point.",
       dscr:1.35}
   };
@@ -316,13 +330,13 @@ footer p+p{margin-top:9px}
 
       if(t.toll){
         // Toll priced at a discount to expected merchant revenue, in exchange for certainty
-        lines.push({k:"Tolling fee (fixed, contracted)",v:base*0.85*state.cap,c:COL.toll,contracted:true});
+        lines.push({k:"Tolling fee — fixed, contracted",v:base*0.85*state.cap,c:COL.toll,contracted:true});
       } else {
-        lines.push({k:"Wholesale arbitrage",v:base*0.36*scale*state.cap,c:COL.wholesale,contracted:false});
-        lines.push({k:"Balancing Mechanism (BM)",v:base*0.25*scale*state.cap,c:COL.bm,contracted:false});
+        lines.push({k:"Buying low and selling high",v:base*0.36*scale*state.cap,c:COL.wholesale,contracted:false});
+        lines.push({k:"Balancing Mechanism (paid to adjust output)",v:base*0.25*scale*state.cap,c:COL.bm,contracted:false});
         lines.push({k:"Ancillary services",v:base*0.33*state.cap,c:COL.anc,contracted:false});
       }
-      lines.push({k:"Capacity Market",v:cmRev,c:COL.cm,contracted:true});
+      lines.push({k:"Capacity Market (paid to be available)",v:cmRev,c:COL.cm,contracted:true});
       return {lines:lines,mwh:null,tech:t};
     }
 
@@ -332,17 +346,17 @@ footer p+p{margin-top:9px}
     if(t.strike){
       // CfD: generator effectively receives the strike price for all output
       lines.push({k:"Wholesale (at capture price)",v:mwh*capturePrice,c:COL.wholesale,contracted:false});
-      lines.push({k:"CfD difference payment",v:mwh*(t.strike-capturePrice),c:COL.subsidy,contracted:true});
+      lines.push({k:"Contract for Difference top-up",v:mwh*(t.strike-capturePrice),c:COL.subsidy,contracted:true});
     } else {
       lines.push({k:"Wholesale (at capture price)",v:mwh*capturePrice,c:COL.wholesale,contracted:false});
       if(state.t==="windRO"){
         var rocValue=69.34*1.10;   // buy-out plus assumed 10% recycle
-        lines.push({k:"ROC revenue (0.9 ROCs/MWh)",v:mwh*0.9*rocValue,c:COL.subsidy,contracted:true});
+        lines.push({k:"Certificates: 0.9 ROCs per MWh",v:mwh*0.9*rocValue,c:COL.subsidy,contracted:true});
       }
-      lines.push({k:"REGO certificates",v:mwh*1.50,c:COL.rego,contracted:false});
+      lines.push({k:"Green certificates (REGOs)",v:mwh*1.50,c:COL.rego,contracted:false});
     }
     // Small capacity-market contribution; wind and solar derate very heavily
-    lines.push({k:"Capacity Market",v:state.cap*1000*0.05*27.10,c:COL.cm,contracted:true});
+    lines.push({k:"Capacity Market (paid to be available)",v:state.cap*1000*0.05*27.10,c:COL.cm,contracted:true});
     return {lines:lines,mwh:mwh,tech:t};
   }
 
@@ -412,25 +426,26 @@ footer p+p{margin-top:9px}
     var gearing=capex>0?debt/capex:0;
 
     $("debtStats").innerHTML=
-      '<div class="stat"><div class="k">Bankable revenue</div><div class="v">'+money(bankable)+'</div><div class="s">vs '+money(sum.total)+' expected</div></div>'+
-      '<div class="stat"><div class="k">CFADS (downside)</div><div class="v">'+money(cfads)+'</div><div class="s">'+money(cfadsExpected)+' at expected</div></div>'+
-      '<div class="stat"><div class="k">Max debt service</div><div class="v">'+money(maxDebtService)+'</div><div class="s">CFADS ÷ '+state.dscr.toFixed(2)+'×</div></div>'+
-      '<div class="stat"><div class="k">Supportable debt</div><div class="v" style="color:var(--accent)">'+money(maxDebt)+'</div><div class="s">× annuity factor '+af.toFixed(2)+'</div></div>'+
-      '<div class="stat"><div class="k">Gearing</div><div class="v">'+(gearing*100).toFixed(0)+'%</div><div class="s">debt ÷ capital cost</div></div>';
+      '<div class="stat"><div class="k">Income a bank will count</div><div class="v">'+money(bankable)+'</div><div class="s">out of '+money(sum.total)+' expected</div></div>'+
+      '<div class="stat"><div class="k">Cash left to repay a loan</div><div class="v">'+money(cfads)+'</div><div class="s">after running costs</div></div>'+
+      '<div class="stat"><div class="k">Affordable yearly repayment</div><div class="v">'+money(maxDebtService)+'</div><div class="s">cash ÷ '+state.dscr.toFixed(2)+' cover ratio</div></div>'+
+      '<div class="stat"><div class="k">Largest loan available</div><div class="v" style="color:var(--accent)">'+money(maxDebt)+'</div><div class="s">repayment × '+af.toFixed(2)+' (annuity factor)</div></div>'+
+      '<div class="stat"><div class="k">Share funded by borrowing</div><div class="v">'+(gearing*100).toFixed(0)+'%</div><div class="s">the rest is the owner\'s own cash</div></div>';
 
-    var W=700,H=200,L=20,R=20,pw=W-L-R,y=52,barH=54;
+    var W=700,H=225,L=20,R=20,pw=W-L-R,y=52,barH=54;
     var s='<text class="axis-t" x="'+L+'" y="30" style="font-size:12px;fill:var(--ink);font-weight:600">Funding the '+money(capex)+' capital cost</text>';
     var dw=gearing*pw;
-    s+='<rect x="'+L+'" y="'+y+'" width="'+Math.max(0,dw-2).toFixed(1)+'" height="'+barH+'" fill="var(--c1)" rx="2"><title>Debt: '+money(debt)+'</title></rect>';
-    s+='<rect x="'+(L+dw).toFixed(1)+'" y="'+y+'" width="'+Math.max(0,pw-dw).toFixed(1)+'" height="'+barH+'" fill="var(--c3)" rx="2"><title>Equity: '+money(equity)+'</title></rect>';
-    if(dw>90) s+='<text class="seg-t" x="'+(L+dw/2).toFixed(1)+'" y="'+(y+barH/2+4)+'" text-anchor="middle">DEBT '+money(debt)+'</text>';
-    if(pw-dw>90) s+='<text class="seg-t" x="'+(L+dw+(pw-dw)/2).toFixed(1)+'" y="'+(y+barH/2+4)+'" text-anchor="middle">EQUITY '+money(equity)+'</text>';
-    s+='<text class="axis-t" x="'+L+'" y="'+(y+barH+26)+'">Cheaper capital — repaid first, lower return required</text>';
-    s+='<text class="axis-t" x="'+(W-R)+'" y="'+(y+barH+26)+'" text-anchor="end">Expensive capital — paid last, bears the risk</text>';
-    s+='<text class="axis-t" x="'+L+'" y="'+(y+barH+48)+'" style="fill:var(--ink-2)">Equity cheque of '+money(equity)+' is what your return is measured against. Shrink it and the return rises.</text>';
+    s+='<rect x="'+L+'" y="'+y+'" width="'+Math.max(0,dw-2).toFixed(1)+'" height="'+barH+'" fill="var(--c1)" rx="2"><title>Borrowed: '+money(debt)+'</title></rect>';
+    s+='<rect x="'+(L+dw).toFixed(1)+'" y="'+y+'" width="'+Math.max(0,pw-dw).toFixed(1)+'" height="'+barH+'" fill="var(--c3)" rx="2"><title>Owner\'s own cash: '+money(equity)+'</title></rect>';
+    if(dw>110) s+='<text class="seg-t" x="'+(L+dw/2).toFixed(1)+'" y="'+(y+barH/2+4)+'" text-anchor="middle">BORROWED '+money(debt)+'</text>';
+    if(pw-dw>130) s+='<text class="seg-t" x="'+(L+dw+(pw-dw)/2).toFixed(1)+'" y="'+(y+barH/2+4)+'" text-anchor="middle">OWNER\'S CASH '+money(equity)+'</text>';
+    s+='<text class="axis-t" x="'+L+'" y="'+(y+barH+24)+'">Borrowed — cheap, repaid first</text>';
+    s+='<text class="axis-t" x="'+(W-R)+'" y="'+(y+barH+24)+'" text-anchor="end">Owner\'s own cash — expensive, paid last</text>';
+    s+='<text class="axis-t" x="'+L+'" y="'+(y+barH+50)+'" style="fill:var(--ink-2)">The owner must find '+money(equity)+' of their own cash to fund the rest.</text>';
+    s+='<text class="axis-t" x="'+L+'" y="'+(y+barH+68)+'" style="fill:var(--ink-2)">Their return is measured against that figure — so shrinking it raises the return.</text>';
     $("debtChart").innerHTML=s;
 
-    $("debtCaption").innerHTML="<b>Try this.</b> Note the supportable debt now, then raise the target DSCR from 1.30× to 1.60× — the level a lender demands for merchant battery revenue. Debt capacity falls by roughly 19%, and every pound of it must be replaced by equity. Nothing about the asset changed; only the lender's view of how reliable its income is. <b>That is how contract structure, not engineering, determines the return.</b>";
+    $("debtCaption").innerHTML="<b>Try this.</b> Note the largest loan available now, then raise the cover ratio from 1.30 to 1.60 — the level a lender demands when a battery's income depends entirely on market prices. The loan falls by roughly 19%, and every pound of it has to be replaced by the owner's own cash. Nothing about the physical asset changed — only the lender's view of how reliable the income is. <b>That is how the contract, rather than the engineering, decides the owner's return.</b>";
   }
 
   function render(){
