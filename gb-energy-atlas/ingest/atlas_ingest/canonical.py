@@ -373,6 +373,7 @@ class Builder:
         """Re-apply audited manual edits (ops.manual_overrides) after every rebuild; they never get lost."""
         cols = {"canonical_name": "canonical_name", "status_code": "status_code", "technology_code": "technology_code", "installed_capacity_mw": "installed_capacity_mw",
                 "planning_reference": "planning_reference", "planning_authority": "planning_authority", "notes": "notes"}
+        prov_field = {"status_code": "status", "technology_code": "technology"}
         n = 0
         for o in self.conn.execute("SELECT * FROM ops.manual_overrides"):
             col = cols.get(o["field_name"])
@@ -381,9 +382,14 @@ class Builder:
                 continue
             val = o["value_num"] if o["value_num"] is not None else o["value_text"]
             self.conn.execute(f"UPDATE atlas.assets SET {col} = %s, confidence = 'verified', updated_at = now() WHERE asset_id = %s", (val, row["asset_id"]))
+            pfield = prov_field.get(o["field_name"], o["field_name"])
+            # One manual observation per override (rebuilds must not pile them up), and it is the single preferred value:
+            # the source observations stay visible as the alternatives it overrode.
+            self.conn.execute("DELETE FROM atlas.field_provenance WHERE asset_id=%s AND field_name=%s AND value_kind='manual' AND source_key='manual'", (row["asset_id"], pfield))
+            self.conn.execute("UPDATE atlas.field_provenance SET is_preferred=false, selection_reason=NULL WHERE asset_id=%s AND field_name=%s", (row["asset_id"], pfield))
             self.conn.execute("""INSERT INTO atlas.field_provenance (asset_id, entity_type, entity_id, field_name, value_text, value_num, value_kind, source_key, observed_at, is_preferred, selection_reason)
                                  VALUES (%s,'asset',%s,%s,%s,%s,'manual','manual',%s,true,%s)""",
-                              (row["asset_id"], row["asset_id"], o["field_name"], o["value_text"], o["value_num"], o["decided_at"].date(), f"Manual override: {o['reason']}"))
+                              (row["asset_id"], row["asset_id"], pfield, o["value_text"], o["value_num"], o["decided_at"].date(), f"Manual override: {o['reason']}"))
             n += 1
         self.conn.commit()
         self.stats["overrides"] = n
@@ -428,6 +434,14 @@ class Builder:
                 for o in lst:
                     o["is_preferred"] = o is best
                     o["selection_reason"] = why if o is best else None
+            if pref.get("status") is None:
+                # No source states a development stage. A CfD award is still published evidence of a project in the pipeline,
+                # so show that (its label says the stage is not stated) rather than 'Unknown'.
+                award = next((o for o in obs.get("status_context", []) if o["value_text"] == "cfd_awarded"), None)
+                if award is not None:
+                    pref["status"] = award
+                    award["is_preferred"] = True
+                    award["selection_reason"] = "No source states a development stage; the CfD award is the only stage evidence available"
             g = lambda f: (pref.get(f) or {}).get("value_num") if (pref.get(f) or {}).get("value_num") is not None else (pref.get(f) or {}).get("value_text")  # noqa: E731
             status = g("status") or "unknown"
             status_obs = pref.get("status")
