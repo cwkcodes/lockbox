@@ -296,3 +296,25 @@ def test_licence_export_policy_is_in_the_registry_and_read_model(loaded):
     # the read model must carry the facts the exporter needs to apply it
     cols = {r["attname"] for r in db.execute("SELECT attname FROM pg_attribute WHERE attrelid='atlas.asset_flat'::regclass AND attnum > 0 AND NOT attisdropped")}
     assert {"asset_id", "technology_code", "status_code", "installed_capacity_mw", "geom"} <= cols
+
+
+def test_reseeding_the_registry_keeps_what_the_last_run_found(db, tmp_path):
+    """Every CLI call re-seeds the registry; that must not erase why a source was blocked, or its licence-relevant policy."""
+    from atlas_ingest import registry
+    from atlas_ingest.adapters.base import Adapter
+    from atlas_ingest.http import ManualReviewRequired
+
+    class Blocked(Adapter):
+        source_key = "neso_tec"
+
+        def discover(self):
+            raise ManualReviewRequired("robots.txt on api.neso.energy disallows automated access; download the file manually")
+
+    assert run_source(db, Blocked())["outcome"] == "manual_review_required"
+    registry.seed(db); db.commit()
+    row = db.execute("SELECT access_status, access_notes FROM ops.source_registry WHERE source_key='neso_tec'").fetchone()
+    assert row["access_status"] == "manual_review_required" and "robots.txt" in row["access_notes"]
+    # the static policy columns are still refreshed from the code-defined registry
+    db.execute("UPDATE ops.source_registry SET export_policy='include' WHERE source_key='crown_estate_wind_sites'"); db.commit()
+    registry.seed(db); db.commit()
+    assert db.execute("SELECT export_policy FROM ops.source_registry WHERE source_key='crown_estate_wind_sites'").fetchone()["export_policy"] == "exclude"

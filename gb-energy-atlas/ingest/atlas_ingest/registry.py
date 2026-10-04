@@ -161,10 +161,15 @@ def seed(conn) -> None:
             "commercial_use_notes", "export_policy", "export_policy_reason", "access_status", "access_notes", "known_limitations"]
     for s in S:
         vals = [s.get(c) for c in cols]
-        updates = ", ".join(f"{c}=EXCLUDED.{c}" for c in cols[1:] if c not in ("access_status",))
+        # access_status / access_notes describe what actually happened when the source was last run, so re-seeding
+        # (which every CLI call does) must not overwrite them once the source has been run.
+        updates = ", ".join(f"{c}=EXCLUDED.{c}" for c in cols[1:] if c not in ("access_status", "access_notes"))
         conn.execute(
             f"INSERT INTO ops.source_registry ({', '.join(cols)}) VALUES ({', '.join(['%s']*len(cols))}) "
-            f"ON CONFLICT (source_key) DO UPDATE SET {updates}, access_status = CASE WHEN ops.source_registry.access_status = 'never_run' "
+            f"ON CONFLICT (source_key) DO UPDATE SET {updates}, "
+            f"access_notes = CASE WHEN ops.source_registry.access_status = 'never_run' OR ops.source_registry.access_notes IS NULL "
+            f"THEN EXCLUDED.access_notes ELSE ops.source_registry.access_notes END, "
+            f"access_status = CASE WHEN ops.source_registry.access_status = 'never_run' "
             f"THEN EXCLUDED.access_status ELSE ops.source_registry.access_status END",
             vals,
         )
