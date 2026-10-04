@@ -4,10 +4,10 @@ from __future__ import annotations
 import re
 import unicodedata
 
-_LEGAL = re.compile(
-    r"\b(limited|ltd|plc|llp|lp|llc|inc|co|company|holdings?|group|uk|u\.k|gb|\(uk\)|"
-    r"renewables? (?:uk|limited)|energy (?:uk|limited))\b\.?"
-)
+# Only generic legal/territorial suffixes are removed, one token at a time, so that "SSE Renewables Limited" and
+# "SSE Renewables Ltd." always reduce to the same key. Words that distinguish trading entities ("renewables",
+# "energy") are deliberately kept: "SSE plc" and "SSE Renewables" are different organisations.
+_LEGAL = re.compile(r"\b(limited|ltd|plc|llp|lp|llc|inc|co|company|holdings?|group|uk|u\.k|gb|\(uk\))\b\.?")
 # Words that carry no identity for a project name.
 GENERIC_TOKENS = {
     "wind", "farm", "windfarm", "turbine", "turbines", "solar", "pv", "photovoltaic", "park", "array",
