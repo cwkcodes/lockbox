@@ -108,7 +108,9 @@ test.describe("map application", () => {
     await expect(page.getByLabel("Admin token")).toBeVisible();
     await page.getByLabel("Admin token").fill("wrong");
     await page.getByRole("button", { name: "Sign in" }).click();
-    await expect(page.getByRole("alert")).toBeVisible();
+    // 401 "invalid token" when ADMIN_TOKEN is configured, 403 "disabled" when it is unset or still the default in production
+    // (filtering by text also excludes Next.js's always-present empty route-announcer alert)
+    await expect(page.getByRole("alert").filter({ hasText: /invalid token|admin is disabled/ })).toBeVisible();
   });
 
   test("dashboard, organisations, turbines and methodology pages render", async ({ page }) => {

@@ -25,6 +25,9 @@ def main(argv: list[str] | None = None) -> int:
     w = sub.add_parser("worker", help="process queued admin jobs (ops.job_requests)")
     w.add_argument("--once", action="store_true")
     sub.add_parser("build", help="resolve entities into canonical assets, run QA, queue research, refresh read model")
+    rp = sub.add_parser("report", help="completeness review: cross-source gaps, unmatched records, duplicates (Markdown)")
+    rp.add_argument("--out", help="write to this file instead of stdout")
+    rp.add_argument("--top", type=int, default=25, help="rows per section")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -82,6 +85,15 @@ def main(argv: list[str] | None = None) -> int:
             print("research queue items:", qa.research_queue(conn))
             qa.refresh_views(conn)
             print("read model refreshed")
+        elif args.cmd == "report":
+            from .reports import completeness_review
+            text = completeness_review(conn, args.top)
+            if args.out:
+                from pathlib import Path
+                Path(args.out).write_text(text, encoding="utf-8")
+                print(f"wrote {args.out}")
+            else:
+                print(text)
         elif args.cmd == "status":
             for r in conn.execute("SELECT source_key, access_status, records_imported, records_rejected, latest_publication_date FROM ops.source_registry ORDER BY source_key"):
                 print(r)

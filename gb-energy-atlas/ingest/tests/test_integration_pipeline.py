@@ -318,3 +318,18 @@ def test_reseeding_the_registry_keeps_what_the_last_run_found(db, tmp_path):
     db.execute("UPDATE ops.source_registry SET export_policy='include' WHERE source_key='crown_estate_wind_sites'"); db.commit()
     registry.seed(db); db.commit()
     assert db.execute("SELECT export_policy FROM ops.source_registry WHERE source_key='crown_estate_wind_sites'").fetchone()["export_policy"] == "exclude"
+
+
+def test_completeness_review_lists_gaps_and_unperformable_checks(loaded):
+    from atlas_ingest.reports import completeness_review
+    text = completeness_review(loaded)
+    assert "Synthetic Orphan Solar" in text                      # a CfD-only project is reported as found outside REPD
+    assert "`neso_tec`" in text and "cannot be performed" in text   # missing sources are named, never silently skipped
+    assert "`repd`" not in text.split("cannot be performed")[1].split("\n")[0]
+    assert "leads for investigation" in text
+
+
+def test_completeness_review_runs_on_an_empty_database(db):
+    from atlas_ingest.reports import completeness_review
+    text = completeness_review(db)
+    assert "_None found in the loaded data._" in text and "## 6. Location coverage" in text
