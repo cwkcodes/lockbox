@@ -1,0 +1,77 @@
+# GB Renewable Energy Atlas – database, web app and ingestion worker.
+#   cp .env.example .env   # then edit: set POSTGRES_PASSWORD, ADMIN_TOKEN, ATLAS_CONTACT
+#   docker compose up -d db
+#   docker compose run --rm migrate
+#   docker compose run --rm ingest ingest repd crown_estate_wind_sites cfd_results ons_lad
+#   docker compose run --rm ingest build
+#   docker compose up -d web worker
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: atlas
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atlas -d atlas"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    build: { context: ., dockerfile: ingest/Dockerfile }
+    entrypoint: ["python", "scripts/migrate.py"]
+    command: []
+    environment:
+      DATABASE_URL: postgresql://atlas:${POSTGRES_PASSWORD}@db:5432/atlas
+    depends_on:
+      db: { condition: service_healthy }
+    profiles: ["tools"]
+
+  ingest:
+    build: { context: ., dockerfile: ingest/Dockerfile }
+    command: ["status"]
+    environment: &ingest_env
+      DATABASE_URL: postgresql://atlas:${POSTGRES_PASSWORD}@db:5432/atlas
+      ATLAS_CONTACT: ${ATLAS_CONTACT:?set ATLAS_CONTACT in .env (an e-mail address publishers can reach you on)}
+      ATLAS_RESPECT_ROBOTS: "1"
+      ATLAS_ROBOTS_OVERRIDE: ${ATLAS_ROBOTS_OVERRIDE:-}
+      OVERPASS_URL: ${OVERPASS_URL:-}
+      ODS_API_KEY_UKPN: ${ODS_API_KEY_UKPN:-}
+      ODS_API_KEY_ENWL: ${ODS_API_KEY_ENWL:-}
+      ODS_API_KEY_SPEN: ${ODS_API_KEY_SPEN:-}
+    volumes:
+      - rawdata:/data
+      - ./manual:/manual:ro      # drop manually downloaded files here for `ingest --file /manual/<name>`
+    depends_on:
+      db: { condition: service_healthy }
+    profiles: ["tools"]
+
+  worker:
+    build: { context: ., dockerfile: ingest/Dockerfile }
+    command: ["worker"]          # processes ingest/build jobs requested from the admin console
+    environment: *ingest_env
+    volumes:
+      - rawdata:/data
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+
+  web:
+    build: { context: ./web }
+    environment:
+      DATABASE_URL: postgresql://atlas:${POSTGRES_PASSWORD}@db:5432/atlas
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?set a long random ADMIN_TOKEN in .env}
+      TCE_EXPORT_REVIEWED: ${TCE_EXPORT_REVIEWED:-false}
+      NEXT_PUBLIC_SITE_NAME: GB Renewable Energy Atlas
+    ports:
+      - "3000:3000"
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  rawdata:
