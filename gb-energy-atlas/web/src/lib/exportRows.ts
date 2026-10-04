@@ -35,6 +35,16 @@ export async function exportRows(filters: Filters): Promise<ExportResult> {
     [...where.params, [...excluded]]);
 
   const attrByKey = new Map(registry.map((r) => [r.source_key, r]));
+
+  // Name the publisher and dataset: several sources share the same generic licence sentence, which alone does not say where the data came from.
+
+  const credit = (k: string): string | null => {
+
+    const r = attrByKey.get(k);
+
+    return r?.attribution ? `${r.organisation} – ${r.dataset}: ${r.attribution}` : null;
+
+  };
   const used = new Set<string>();
   const rows: Record<string, unknown>[] = [];
   let dropped = 0, blanked = 0;
@@ -46,7 +56,7 @@ export async function exportRows(filters: Filters): Promise<ExportResult> {
     if (r.coordinate_source_key && excluded.has(String(r.coordinate_source_key))) { out.lat = null; out.lon = null; out.bng_e = null; out.bng_n = null; blanked++; }
     keys.forEach((k) => used.add(k));
     delete out.status_source_key; delete out.coordinate_source_key; delete out.source_keys; delete out.aliases; delete out.colour;
-    out.attribution = keys.map((k) => attrByKey.get(k)?.attribution).filter(Boolean).join(" | ");
+    out.attribution = keys.map((k) => credit(k)).filter(Boolean).join(" | ");
     rows.push(out);
   }
   const notes: string[] = [
@@ -59,7 +69,7 @@ export async function exportRows(filters: Filters): Promise<ExportResult> {
   }
   if (dropped) notes.push(`${dropped} record(s) supported only by excluded sources were omitted.`);
   if (blanked) notes.push(`${blanked} field value(s) derived from excluded sources were blanked.`);
-  const attribution = [...new Set([...used].map((k) => attrByKey.get(k)?.attribution).filter((x): x is string => !!x))];
+  const attribution = [...new Set([...used].map((k) => credit(k)).filter((x): x is string => !!x))];
   return { rows, attribution, notes, columns: rows[0] ? Object.keys(rows[0]) : [] };
 }
 
