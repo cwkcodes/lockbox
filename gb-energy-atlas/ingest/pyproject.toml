@@ -1,0 +1,25 @@
+[project]
+name = "atlas-ingest"
+version = "0.1.0"
+description = "Source adapters, normalisation, entity resolution and QA for the GB Renewable Energy Atlas"
+requires-python = ">=3.11"
+dependencies = [
+  "psycopg[binary]>=3.2",
+  "rapidfuzz>=3.9",
+  "pyproj>=3.6",
+  "shapely>=2.0",
+  "openpyxl>=3.1",
+  "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+atlas-ingest = "atlas_ingest.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["atlas_ingest*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
